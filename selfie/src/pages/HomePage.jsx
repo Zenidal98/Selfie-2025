@@ -13,7 +13,6 @@ const HomePage = () => {
 
       {/* Form di Login */}
       <div className="card p-4 shadow" style={{ width: "300px" }}>
-        <h4 className="text-center mb-3">Login</h4>
         <form>
           <button className="btn btn-primary w-100">Login</button>
         </form>
