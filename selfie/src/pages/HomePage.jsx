@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 const HomePage = () => {
   return (
-    <div className="d-flex flex-column justify-content-center align-items-center vh-100 bg-white">
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100">
       {/* Messaggio di benvenuto */}
       <div className="bg-primary text-white text-center py-3 px-5 rounded mb-4">
         <h1>Benvenuto in Selfie!</h1>
