@@ -2,4 +2,55 @@ html body {
   background-color: #add8e6; /* Azzurro chiaro */
   margin: 0;
   height: 100vh;
+  overflow: hidden;     /* per non far scendere la parte sotto dei vari menu a tendina di home*/
+}
+
+/* Wrapper che contiene il bottone e la tendina */
+.section-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+  height: 150px;
+}
+
+/* Box principale */
+.section-box {
+  width: 350px;
+  height: 120px;
+  text-align: center;
+  line-height: 120px;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+  opacity: 0.9;
+}
+
+/* Quando si passa sopra, il box sale */
+.section-box.hovered {
+  transform: translateY(-300px);
+}
+
+/* Tendina inizialmente nascosta */
+.dropdown-box {
+  position: absolute;
+  top: -100px; /* Allineata sotto il box */
+  width: 350px;
+  height: 200px;
+  background: rgba(98, 95, 95, 0.8);
+  color: white;
+  text-align: center;
+  line-height: 100px;
+  border-radius: 10px;
+  transition: opacity 0.3s ease-in-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* La tendina appare quando il box è hoverato */
+.section-wrapper:hover .dropdown-box {
+  opacity: 1;
+  pointer-events: auto;
 }

@@ -8,6 +8,7 @@ const RegisterPage = () => {
     cognome: "",
     username: "",
     password: "",
+    conferma:"",
     dataNascita: "",
     foto: null,
   });
@@ -35,6 +36,7 @@ const RegisterPage = () => {
           <input type="text" name="cognome" className="form-control mb-2" placeholder="Cognome" onChange={handleChange} required />
           <input type="text" name="username" className="form-control mb-2" placeholder="Nome utente" onChange={handleChange} required />
           <input type="password" name="password" className="form-control mb-2" placeholder="Password" onChange={handleChange} required />
+          <input type="password" name="conferma" className="form-control mb-2" placeholder="Conferma Password" onChange={handleChange} required />
           <input type="date" name="dataNascita" className="form-control mb-2" onChange={handleChange} required />
           <input type="file" name="foto" className="form-control mb-3" onChange={handleFileChange} accept="image/*" />
           <button className="btn btn-primary w-100">Registrati</button>
