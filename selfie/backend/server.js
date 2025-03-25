@@ -10,12 +10,23 @@ dotenv.config();
 
 const app = express();
 
+app.use(express.json());
+
 app.get("/", (req,res) => {
     res.send("Server pronto");
 })
 
-console.log(process.env.MONGO_URI);
+//console.log(process.env.MONGO_URI);
+app.get("/api/plutos", async(req,res) => {
+    try {
+        const plutos = await Pluto.find({});
+        res.status(200).json({ success:true, data: plutos});
+    } catch (error) {
+        console.log("Error in fetching plutos", error.message);
+        res.status(500).json({ success:false, message: "Server Error"});
+    }
 
+})
 app.post("/api/plutos", async (req,res) => {
     const pluto = req.body;
 
@@ -28,11 +39,23 @@ app.post("/api/plutos", async (req,res) => {
         await newPluto.save();
         res.status(201).json({ success: true, data: newPluto });
     } catch (error) {
-        console.error("Error in creating product:", error.message);
+        console.error("Error in creating pluto:", error.message);
         res.status(500).json({ success: false, message: "Server Error"});
     }
 });
 
+app.delete("/api/plutos/:id", async (req,res) => {
+    const {id} =req.params;
+    console.log("delete pluto with id:",id);
+
+    try {
+        await Pluto.findByIdAndDelete(id);
+        res.status(200).json({ success:true, message: "Pluto deleted"});
+    } catch (error) {
+        console.error("Error in deleting plutos", error.message);
+        res.status(404).json({ success:false, message: "Pluto not found"});
+    }
+})
 
 app.listen(5000, () => {
     connectDB();
