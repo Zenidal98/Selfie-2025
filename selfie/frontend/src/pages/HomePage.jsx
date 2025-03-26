@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "../index.css";
 
 const sections = [
   { name: "Note", path: "/note", color: "bg-primary" },
@@ -10,42 +10,27 @@ const sections = [
 ];
 
 const HomePage = () => {
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [dateTime, setDateTime] = useState(new Date());
+  const user = { nome: "Mario", cognome: "Rossi" }; // Da sostituire con dati dinamici
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="container-fluid d-flex flex-column align-items-center justify-content-center vh-100">
-      {/* Titolo e Data */}
-      <div className="w-100 d-flex justify-content-between p-3">
-        <h2 className="text-white">Benvenuto Nome Cognome!</h2>
-        <h4 className="text-white">
-          {new Date().toLocaleDateString("it-IT", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}{" "}
-          {new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
-        </h4>
+    <div className="container text-center mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>Benvenuto {user.nome} {user.cognome}</h3>
+        <h5>{dateTime.toLocaleString()}</h5>
       </div>
-
-      {/* Sezioni */}
-      <div className="sections-container">
-        {sections.map((section, index) => (
-          <div
-            key={index}
-            className={`section-wrapper ${activeIndex === index ? "active" : activeIndex !== null ? "hidden" : ""}`}
-            onMouseEnter={() => setActiveIndex(index)}
-            onMouseLeave={() => setActiveIndex(null)}
-          >
-            {/* Box principale */}
-            <div className={`section-box ${section.color}`}>{section.name}</div>
-
-            {/* Tendina che appare sotto */}
-            <div className="dropdown-box">
-              <Link to={section.path} className="text-white">
-                {section.name}
-              </Link>
-            </div>
+      <div className="d-flex justify-content-around flex-wrap">
+        {sections.map((section) => (
+          <div key={section.name} className={`section-box ${section.color}`}>
+            <span>{section.name}</span>
+            <div className="preview-content">Preview dei contenuti...</div>
           </div>
         ))}
       </div>
@@ -54,5 +39,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-

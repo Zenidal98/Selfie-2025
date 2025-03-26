@@ -2,78 +2,39 @@ html body {
   background-color: #add8e6; /* Azzurro chiaro */
   margin: 0;
   height: 100vh;
-  overflow: hidden;     /* per non far scendere la parte sotto dei vari menu a tendina di home*/
 }
 
-/* Contenitore di tutti e 4 i box usato per settare distanze ed altri parametri */
-.sections-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  position: relative;
-  margin-top: auto;
-}
-
-/* Wrapper che contiene il box e la tendina */
-.section-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 300px;
-  height: 200px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-/* Box  */
 .section-box {
-  width: 150px;
-  height: 120px;
-  text-align: center;
-  line-height: 120px;
+  width: 100px;
+  height: 100px;
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
   font-weight: bold;
-  border-radius: 10px;
-  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out;
-  opacity: 0.9;
-}
-
-/* Effetto quando il box è attivo */
-.section-wrapper.active {
-  transform: translateY(-300px);    /*era 150*/
-}
-
-/* Il box attivo diventa più grande */
-.section-wrapper.active .section-box {
-  width: 300px;
-  height: 180px;
-}
-
-/* Tendina */
-.dropdown-box {
-  position: absolute;
-  top: 140px;
-  width: 150px;
-  height: 0;
-  background: rgba(98, 95, 95, 0.8);
-  color: white;
-  text-align: center;
-  border-radius: 10px;
-  transition: height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  opacity: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+  position: relative;
   overflow: hidden;
 }
 
-/* La tendina si allunga e appare */
-.section-wrapper.active .dropdown-box {
-  height: 400px;
-  opacity: 1;
-  width: 500px;
+.section-box:hover {
+  width: 200px;
+  height: 200px;
 }
 
-/* Gli altri quadrati spariscono mentre uno è attivo */
-.section-wrapper.hidden {
+.preview-content {
   opacity: 0;
-  transform: scale(0.8);
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  font-size: 0.8em;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.section-box:hover .preview-content {
+  opacity: 1;
 }
