@@ -1,12 +1,13 @@
 html body {
-  background-color: #add8e6; /* Azzurro chiaro */
+  background-color: #add8e6;
   margin: 0;
   height: 100vh;
 }
 
+/* Box */
 .section-box {
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
   margin: 10px;
   display: flex;
   align-items: center;
@@ -20,11 +21,13 @@ html body {
   overflow: hidden;
 }
 
+/* Espansione box */
 .section-box:hover {
-  width: 200px;
-  height: 200px;
+  width: 600px;
+  height: 600px;
 }
 
+/* Contenuto aggiuntivo che appare */
 .preview-content {
   opacity: 0;
   position: absolute;
@@ -37,4 +40,22 @@ html body {
 
 .section-box:hover .preview-content {
   opacity: 1;
+}
+
+/* Testo al centro del box */
+.section-box span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+/* Quando il box si espande, il testo va in alto a destra */
+.section-box:hover span {
+  top: 10px;
+  left: auto;
+  right: 10px;
+  transform: none;
+  font-size: 1.5rem;
 }

@@ -30,7 +30,7 @@ const HomePage = () => {
         {sections.map((section) => (
           <div key={section.name} className={`section-box ${section.color}`}>
             <span>{section.name}</span>
-            <div className="preview-content">Preview dei contenuti...</div>
+            <div className="preview-content">Qui poi ci fa l'effettivo contenuto salvato di ogni sezione</div>
           </div>
         ))}
       </div>
