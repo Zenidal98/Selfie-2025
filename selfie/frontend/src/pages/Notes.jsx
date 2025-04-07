@@ -5,6 +5,7 @@ import { Tooltip } from "bootstrap";
 const Notes = () => {
 
   // State management per opzioni di tipografia delle note
+  const [text, setText] = useState("");
   const [bold, setBold] = useState(false);
   const [italic, setItalic] = useState(false);
   const [underline, setUnderline] = useState(false);
@@ -13,8 +14,8 @@ const Notes = () => {
   // 3 opzioni di dimensione carattere
   const fontSizes = [
     { label: "Regular", size: "16px" },
-    { label: "Big", size: "24px"},
-    { label: "Very Big", size: "32px"},
+    { label: "Large", size: "24px"},
+    { label: "Extra Large", size: "32px"},
   ];
 
   // funzione che cicla tra i tre size (mi piaceva l'idea di usare un solo pulsante)
@@ -31,8 +32,7 @@ const Notes = () => {
   }, []);
 
   // funzioni per preparare l'alert
-
-  const alertRef = useRef(null);         // le ref servono per il load order del dom
+  const alertRef = useRef(null);         // le ref servono perchè con getElementById verrebbe null (lo script è eseguito prima del dom load)
   const saveBtnRef = useRef(null);      
   
   useEffect(() => {
@@ -75,16 +75,21 @@ const Notes = () => {
        <p className="h1 my-3">Selfie Scribe</p>
         <div role="toolbar" aria-label="Opzioni di formattazione del testo">
           {/* le iniezioni JS servono a syncare lo stato del bottone e quello della variabile associata, gli eventi click cambiano il valore */}
-          <button className={` btn btn-outline-dark mt-3 mx-2 rounded ${bold ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Bold" onClick={() => setBold(!bold)}><b> B </b></button>
-          <button className={` btn btn-outline-dark mt-3 mx-2 px-3 rounded ${italic ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Italic" onClick={() => setItalic(!italic)}><i> I </i></button>
-          <button className={` btn btn-outline-dark mt-3 mx-2 rounded ${underline ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Underlined" onClick={() => setUnderline(!underline)}><u> U </u></button>
-          <button className="btn btn-outline-dark mt-3 mx-2 rounded" onClick={cycleFontSize} data-bs-toggle="tooltip" data-bs-title="Change font size">{fontSizes[fontIndex].label}</button>
+          <button className={` btn btn-outline-dark mt-3 mx-2 rounded ${bold ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Bold" aria-pressed={bold} aria-label="Bold" onClick={() => setBold(!bold)}><b> B </b></button>
+          <button className={` btn btn-outline-dark mt-3 mx-2 px-3 rounded ${italic ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Italic" aria-pressed={italic} aria-label="Italic" onClick={() => setItalic(!italic)}><i> I </i></button>
+          <button className={` btn btn-outline-dark mt-3 mx-2 rounded ${underline ? "active" : ""}`} data-bs-toggle="tooltip" data-bs-title="Underlined" aria-pressed={underline} aria-label="Underlined" onClick={() => setUnderline(!underline)}><u> U </u></button>
+          <button className="btn btn-outline-dark mt-3 mx-2 rounded" onClick={cycleFontSize} data-bs-toggle="tooltip" data-bs-title="Change font size" aria-label={`Font size: ${fontSizes[fontIndex].label}`}>{fontSizes[fontIndex].label}</button>
         </div>
-        <textarea className="col-8 mt-3 bg-light" rows="15" placeholder="Scripta Manent"></textarea>
+        <textarea className="col-8 mt-3 bg-light" rows="15" placeholder="Scripta Manent" value={text} onChange={(e) => setText(e.target.value)} style={{
+          fontsize: fontSizes[fontIndex].size,
+          fontWeight: bold ? "bold" : "normal",
+          fontStyle: italic ? "italic" : "normal",
+          textDecoration: underline ? "underline" : "normal",
+        }} ></textarea>
       </div>
       <div>
-        <button className={`btn btn-primary my-3 rounded`} ref={saveBtnRef}> Salva Nota </button>
-        <div ref={alertRef}></div>
+        <button className="btn btn-primary my-3 rounded" ref={saveBtnRef}> Salva Nota </button>
+        <div ref={alertRef}></div> {/* ref definite sopra per puntare qua nel dom  */}
       </div>
     </div>
   );

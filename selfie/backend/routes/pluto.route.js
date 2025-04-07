@@ -1,11 +1,13 @@
 import express from "express";
-import { getPlutos, createPlutos, updatePlutos, deletePlutos } from "../controllers/pluto.controller.js";
+import { getPlutos, createPlutos, updatePlutos, deletePlutos, getPlutoByID } from "../controllers/pluto.controller.js";
 
 const router = express.Router();
 
-router.get("", getPlutos);
+router.get("/", getPlutos);
 
-router.post("/", createPlutos);
+router.get("/:id", getPlutoByID);
+
+router.post("", createPlutos);
 
 router.put("/:id", updatePlutos);
 

@@ -58,7 +58,24 @@ export const deletePlutos = async (req,res) => {
         await Pluto.findByIdAndDelete(id);
         res.status(200).json({ success:true, message: "Pluto deleted"});
     } catch (error) {
-        console.error("Error in deleting plutos", error.message);
+        console.error("Error in deleting pluto", error.message);
         res.status(404).json({ success:false, message: "Pluto not found"});
     }
 };
+
+export const getPlutoByID = async (req,res) => {
+    const {id} = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)){
+        return res.status(404).json({ success:false, message: "Invalid Pluto id" });
+    }
+
+    try {
+        const pluto = await Pluto.findById(id);
+        res.status(200).json({ success: true, data: pluto});
+    } catch (error) {
+        console.error(`Error in fetching pluto with id: ${id} `, error.message);
+        res.status(404).json({ success: false, message:"Error: pluto not found"});
+        return 
+    }
+}
