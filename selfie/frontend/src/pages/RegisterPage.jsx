@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios"
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -22,10 +23,19 @@ const RegisterPage = () => {
     setFormData({ ...formData, foto: e.target.files[0] });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Dati registrazione:", formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // evita il refresh della pagina
+    
+    try {
+      const response = await axios.post("http://localhost:5000/api/register", formData);
+      console.log("Registrazione avvenuta:", response.data);
+      alert("Utente registrato con successo!");
+    } catch (error) {
+      console.error("Errore durante la registrazione:", error);
+      alert("Registrazione fallita.");
+    }
   };
+  
 
   return (
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
