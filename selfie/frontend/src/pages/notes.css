@@ -1,0 +1,13 @@
+.notebox {
+  min-height: 40vh;
+  text-align: left;
+  display: block;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f8f9fa;
+  /*color: #212529;              Per ora sto usando gli stessi identici colori di bs, potrebbe cambiare*/
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #dee2e6;
+} 
