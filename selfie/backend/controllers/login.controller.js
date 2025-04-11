@@ -1,4 +1,5 @@
 import Register from "../models/register.model.js";   //usa lo stesso schema modello di register tanto sono sempre quelli i campi
+import bcrypt from "bcryptjs";
 
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
@@ -14,7 +15,10 @@ export const loginUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "Utente non trovato" });
     }
 
-    if (user.password !== password) {
+    // Confronta la password in chiaro con quella crittografata
+    const isMatch = await bcrypt.compare(password, user.password); // Usa bcrypt per confrontare la password
+
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: "Password errata" });
     }
 

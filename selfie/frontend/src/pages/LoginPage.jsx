@@ -18,6 +18,9 @@ const LoginPage = () => {
       const res = await axios.post("http://localhost:5000/api/login", credentials);
       console.log("Utente:", res.data.data);
 
+      // salva utente nel localStorage, mi serve per far si che nella home appaia il nome e cognome legato all'username di login e non uno a caso
+      localStorage.setItem("utente", JSON.stringify(res.data.data));
+
       // Reindirizza alla home
       navigate("/home");
     } catch (err) {
