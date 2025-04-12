@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios"
 
@@ -23,13 +23,17 @@ const RegisterPage = () => {
     setFormData({ ...formData, foto: e.target.files[0] });
   };
 
+  const navigate = useNavigate(); // lo uso per tornare subito a login dopo registrazione riuscita
+
   const handleSubmit = async (e) => {
     e.preventDefault(); // evita il refresh della pagina
-    
+
     try {
       const response = await axios.post("http://localhost:5000/api/register", formData);
       console.log("Registrazione avvenuta:", response.data);
       alert("Utente registrato con successo!");
+      navigate("/login");
+
     } catch (error) {
       console.error("Errore durante la registrazione:", error);
       alert("Registrazione fallita.");
