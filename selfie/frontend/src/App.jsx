@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import Notes from "./pages/Notes.jsx";
+import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 
 const App = () => {               // ho messo che / parte da /login
   return (  
@@ -14,6 +15,7 @@ const App = () => {               // ho messo che / parte da /login
       <Route path="/register" element={<RegisterPage />} /> 
       <Route path="/home" element={<HomePage />} />
       <Route path="/notes" element={<Notes />} />  
+      <Route path="/pomodoro" element={<PomodoroPage/>} />
       </Routes>
     </Router>
   );
