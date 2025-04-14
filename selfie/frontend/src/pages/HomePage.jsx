@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../index.css";
 
 const sections = [
-  { name: "Note", path: "/note", color: "bg-primary" },
+  { name: "Note", path: "/notes", color: "bg-primary" },
   { name: "Progetti", path: "/progetti", color: "bg-success" },
   { name: "Calendario", path: "/calendario", color: "bg-warning" },
   { name: "Pomodoro", path: "/pomodoro", color: "bg-danger" },
