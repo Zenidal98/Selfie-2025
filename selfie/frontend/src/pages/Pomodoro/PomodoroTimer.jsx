@@ -149,26 +149,24 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
       </div>
 
       {/* PULSANTI */}
-      <div className="btn-group mb-3">
+      <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
         <button className="btn btn-success" onClick={toggleTimer}>
-          {isRunning ? "Pausa" : "Start"}
+         {isRunning ? "Pausa" : "Start"}
         </button>
         <button className="btn btn-secondary" onClick={resetTimer}>
-          Reset
+         Reset
+        </button>
+        <button className="btn btn-warning" onClick={nextTime}>
+         ⏭ Prossimo tempo
+        </button>
+        <button className="btn btn-info" onClick={restartCycle}>
+         🔁 Ricomincia ciclo
+        </button>
+        <button className="btn btn-danger" onClick={finishCycle}>
+         ✅ Termina ciclo
         </button>
       </div>
 
-      <div className="btn-group">
-        <button className="btn btn-warning" onClick={nextTime}>
-          ⏭ Prossimo tempo
-        </button>
-        <button className="btn btn-info" onClick={restartCycle}>
-          🔁 Ricomincia ciclo
-        </button>
-        <button className="btn btn-danger" onClick={finishCycle}>
-          ✅ Termina ciclo
-        </button>
-      </div>
     </div>
   );
 };
