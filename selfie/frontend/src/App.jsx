@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
-import Notes from "./pages/Notes.jsx";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
 

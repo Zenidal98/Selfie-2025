@@ -1,11 +1,25 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
+import axios from "axios";
 
 const NoteEditor = () => {
+  const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
-  const [showEditor, setShowEditor] = useState(true); // for mobile toggle
+  const [tags, setTags] = useState ([]);
+  const [tagInput, setTagInput] = useState ("");
+  const [createdAt] = useState(new Date());           
+  const [lastEdited, setLastEdited] = useState(new Date());
+  const [showEditor, setShowEditor] = useState(true); // toggle, per dispositivi mobile
   const textareaRef = useRef();
 
+  // aggiorna la data di modifica ====================================================
+  
+  useEffect(() => {
+    setLastEdited(new Date());
+  }, [title, markdown, tags]);
+  
+  // aggiunge la formattazione al testo ==============================================
+  
   const applyMarkdown = (type) => {
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
@@ -15,25 +29,25 @@ const NoteEditor = () => {
 
     switch (type) {
       case "bold":
-        newText = `**${selected || "bold text"}**`;
+        newText = `**${selected || "bold"}**`;
         break;
       case "italic":
-        newText = `*${selected || "italic text"}*`;
+        newText = `*${selected || "italic"}*`;
         break;
       case "h1":
-        newText = `# ${selected || "Heading 1"}`;
+        newText = `# ${selected || "Title"}`;
         break;
       case "h2":
-        newText = `## ${selected || "Heading 2"}`;
+        newText = `## ${selected || "Subtitle"}`;
         break;
       case "ul":
-        newText = `- ${selected || "List item"}`;
+        newText = `- ${selected || "li"}`;
         break;
       case "ol":
-        newText = `1. ${selected || "List item"}`;
+        newText = `1. ${selected || "ol"}`;
         break;
       default:
-        newText = selected;
+        return;
     }
 
     const updated = markdown.slice(0, start) + newText + markdown.slice(end);
@@ -44,10 +58,106 @@ const NoteEditor = () => {
       textarea.setSelectionRange(start + newText.length, start + newText.length);
     }, 0);
   };
+  
+  // gestione dei tag ============================================================
+  const addTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tags.includes(trimmed) && tags.length < 5) {
+      setTags([...tags, trimmed]);
+      setTagInput("");
+    }
+  };
 
+  const removeTag = (tag) => {
+    setTags(tags.filter((t) => t !== tag));
+  };
+  
+  // data ========================================================================
+  const formatDate = (date) =>
+    date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  
+  // salvataggio delle note ======================================================
+  
+  const saveNote = async () => {
+    const userId = localStorage.getItem("userId") || "prova";      //controlla
+    const noteData = {
+      userId,
+      title,
+      markdown,
+      tags,
+      createdAt,
+      lastEdited: new Date(),      // obv aggiorna la data
+    };
+    
+    try {
+      await axios.post("/api/notes/save", noteData);
+      alert("Nota Salvata!");
+    } catch (error) {
+      console.error("Errore durante il salvataggio:", error);
+      alert("Errore nel salvataggio");
+    }
+  };
+
+  //#################################################################################
   return (
     <div className="container py-4">
-      {/* Mobile toggle button */}
+      <h1> Selfie Scribe</h1>
+      {/* Titolo della nota*/}
+      <div>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Titolo della nota"
+          className="form-control form-control-lg"
+        />
+      </div>
+      {/* Tag delle note */}
+      <div className="mb-3">
+        <div className="my-2 d-flex flex-wrap align-items-center gap-2">
+          {tags.map((tag, index) => (
+            <span key={index} className="badge bg-primary text-white p-2">
+              {tag}
+              <button
+                onClick={() => removeTag(tag)}
+                className="btn-close btn-close-white btn-sm ms-2"
+                aria-label={`Remove tag ${tag}`}
+              />
+            </span>
+          ))}
+        </div>
+        {tags.length < 5 && (
+          <div className="input-group input-group-sm">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Aggiungi un tag!"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addTag()}
+            />
+            <button onClick={addTag} className="btn btn-outline-secondary">
+              Add
+            </button>
+          </div>
+        )}
+      </div>
+      {/* sezione delle date */}
+      <div className="text-muted small mb-3">
+        <span className="me-3">
+          <strong>Ultima modifica:</strong> {formatDate(lastEdited)}
+        </span>
+        <span>
+          <strong>Data di creazione:</strong> {formatDate(createdAt)}
+        </span>
+      </div>
+      {/* Toggle per mobile */}
       <button
         className="btn btn-secondary w-100 mb-3 d-md-none"
         onClick={() => setShowEditor(!showEditor)}
@@ -55,8 +165,8 @@ const NoteEditor = () => {
         {showEditor ? "Show Preview" : "Show Editor"}
       </button>
 
-      {/* Formatting buttons */}
-      <div className="btn-group flex-wrap mb-3">
+      {/* Toolbar di formattazione */}
+      <div className="btn-group flex-wrap my-3">
         <button onClick={() => applyMarkdown("bold")} className="btn btn-outline-dark btn-sm">
           Bold
         </button>
@@ -86,7 +196,7 @@ const NoteEditor = () => {
             onChange={(e) => setMarkdown(e.target.value)}
             className="form-control"
             rows={15}
-            placeholder="Write your notes in markdown..."
+            placeholder="Scripta Manent!"
             style={{ resize: "vertical" }}
           />
         </div>
@@ -99,6 +209,12 @@ const NoteEditor = () => {
             dangerouslySetInnerHTML={{ __html: marked.parse(markdown) }}
           />
         </div>
+      </div>
+      {/* Save Button */}
+      <div className="text-end mt-3">
+        <button className="btn btn-success" onClick={saveNote}>
+          Salva Nota
+        </button>
       </div>
     </div>
   );
