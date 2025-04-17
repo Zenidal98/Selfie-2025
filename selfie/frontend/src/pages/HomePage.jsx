@@ -1,37 +1,63 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../index.css";
 
 const sections = [
-  { name: "Note", path: "/notes", color: "bg-primary" },
+  { name: "Note", path: "/note", color: "bg-primary" },
   { name: "Progetti", path: "/progetti", color: "bg-success" },
   { name: "Calendario", path: "/calendario", color: "bg-warning" },
   { name: "Pomodoro", path: "/pomodoro", color: "bg-danger" },
 ];
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const [dateTime, setDateTime] = useState(new Date());
-  const [utente, setUtente] = useState(null);
+
+  const utenteLoggato = JSON.parse(localStorage.getItem("utente"));
 
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
     }, 1000);
-
-    const utenteSalvato = localStorage.getItem("utente");
-    if (utenteSalvato) {
-      setUtente(JSON.parse(utenteSalvato));
-    }
-
     return () => clearInterval(timer);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("utente");
+    navigate("/login");
+  };
 
   return (
     <div className="container text-center mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3>Benvenuto {utente?.nome} {utente?.cognome}!</h3>
-        <h5>{dateTime.toLocaleString("it-IT", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</h5>
+        <h4>
+          Benvenuto {utenteLoggato?.nome} {utenteLoggato?.cognome}!
+        </h4>
+        <div>
+          <p className="mb-1">
+            {dateTime.toLocaleDateString("it-IT", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            {dateTime.toLocaleTimeString("it-IT", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+          <button onClick={handleLogout} className="btn btn-outline-danger position-fixed"
+                style={{
+                    top: "20px",
+                    left: "20px",
+                    zIndex: 999,
+                    }}
+          >
+           Logout
+          </button>
+        </div>
       </div>
 
       <div className="d-flex justify-content-around flex-wrap">

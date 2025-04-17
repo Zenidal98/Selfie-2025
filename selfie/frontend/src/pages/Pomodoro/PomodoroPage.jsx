@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import PomodoroTimer from "./PomodoroTimer";
 import PomodoroSettings from "./PomodoroSettings";
-//import "./Pomodoro.css";
+import PomodoroTimer from "./PomodoroTimer";
+import BackHomeButton from "../BackHomeButton";
 
 const PomodoroPage = () => {
   const [settings, setSettings] = useState({
@@ -10,19 +10,25 @@ const PomodoroPage = () => {
     cycles: 5,
   });
 
+  const handleSettingsChange = (newSettings) => {
+    setSettings(newSettings);
+  };
+                           // backhomebutton serve per tornare indietro, è presente in ogni pagina
   return (
-    <div className="container text-center mt-4">
-      <h2 className="mb-4">🍅 Pomodoro</h2>
+    <div className="container py-4">                                       
+      <BackHomeButton />                 
+
+      <h2 className="text-center mb-4">🍅 Modalità Pomodoro</h2>
+
       <PomodoroTimer
         studyDuration={settings.studyMinutes}
         breakDuration={settings.breakMinutes}
         cycles={settings.cycles}
       />
-      <PomodoroSettings onSettingsChange={setSettings} />
+
+      <PomodoroSettings onSettingsChange={handleSettingsChange} />
     </div>
   );
 };
 
 export default PomodoroPage;
-
-// ci vanno pomodorotask e pomodorosettings sotto a timer ovviamente
