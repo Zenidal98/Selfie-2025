@@ -1,69 +1,81 @@
 import React, { useState } from "react";
-import { calcolaCicliOttimali } from "./PomodoroUtils";
+import { calcolaCicliStandard } from "./PomodoroUtils";
 
 const PomodoroSettings = ({ onSettingsChange }) => {
-  const [studyMinutes, setStudyMinutes] = useState(30);
-  const [breakMinutes, setBreakMinutes] = useState(5);
-  const [cycles, setCycles] = useState(5);
-  const [totalTime, setTotalTime] = useState("");
+  const [totalHours, setTotalHours] = useState("");
+  const [totalMinutes, setTotalMinutes] = useState("");
+  const [outputPreview, setOutputPreview] = useState(null);
+  const [error, setError] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (totalTime) {
-      const { studio, pausa, cicli } = calcolaCicliOttimali(parseInt(totalTime));
-      onSettingsChange({ studyMinutes: studio, breakMinutes: pausa, cycles: cicli });
-    } else {
-      onSettingsChange({ studyMinutes, breakMinutes, cycles });
+    const total = parseInt(totalHours || 0) * 60 + parseInt(totalMinutes || 0);
+
+    const result = calcolaCicliStandard(total);
+
+    if (result.error) {
+      setError(result.error);
+      setOutputPreview(null);
+      return;
     }
+
+    setError("");
+    setOutputPreview(result);
+
+    onSettingsChange({
+      studyMinutes: result.studio,
+      breakMinutes: result.pausa,
+      cycles: result.cicli
+    });
   };
 
   return (
-    <div className="card mt-4 p-3 shadow" style={{ maxWidth: "400px", margin: "0 auto" }}>
-      <h5 className="mb-3 text-center">Impostazioni Pomodoro</h5>
+    <div className="card mt-4 p-3 shadow" style={{ maxWidth: "500px", margin: "0 auto" }}>
+      <h5 className="mb-3 text-center">Se vuoi fare invece dei cicli personalizzati inserisci ore e minuti disponibili qui</h5>
+
       <form onSubmit={handleSubmit}>
-        <div className="mb-2">
-          <label>Minuti di studio:</label>
-          <input
-            type="number"
-            className="form-control"
-            value={studyMinutes}
-            onChange={(e) => setStudyMinutes(parseInt(e.target.value))}
-            min={1}
-          />
+        <div className="row mb-3">
+          <div className="col">
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Ore"
+              value={totalHours}
+              onChange={(e) => setTotalHours(e.target.value)}
+              min={0}
+            />
+          </div>
+          <div className="col">
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Minuti"
+              value={totalMinutes}
+              onChange={(e) => setTotalMinutes(e.target.value)}
+              min={0}
+            />
+          </div>
         </div>
-        <div className="mb-2">
-          <label>Minuti di pausa:</label>
-          <input
-            type="number"
-            className="form-control"
-            value={breakMinutes}
-            onChange={(e) => setBreakMinutes(parseInt(e.target.value))}
-            min={1}
-          />
-        </div>
-        <div className="mb-2">
-          <label>Numero di cicli:</label>
-          <input
-            type="number"
-            className="form-control"
-            value={cycles}
-            onChange={(e) => setCycles(parseInt(e.target.value))}
-            min={1}
-          />
-        </div>
-        <div className="mb-3">
-          <label>Oppure tempo totale disponibile (minuti):</label>
-          <input
-            type="number"
-            className="form-control"
-            value={totalTime}
-            onChange={(e) => setTotalTime(e.target.value)}
-            min={1}
-          />
-        </div>
+
         <button className="btn btn-primary w-100">Applica impostazioni</button>
       </form>
+
+      {error && (
+        <div className="alert alert-danger mt-3 text-center">
+          {error}
+        </div>
+      )}
+
+      {outputPreview && (
+        <div className="alert alert-info mt-3 text-center">
+          <strong>Output:</strong><br />
+          {outputPreview.cicli} cicli da {outputPreview.studio} min studio + {outputPreview.pausa} min pausa<br />
+          {outputPreview.resto > 0 && (
+            <>Ultima pausa estesa a {outputPreview.pausaFinale} minuti</>
+          )}
+        </div>
+      )}
     </div>
   );
 };

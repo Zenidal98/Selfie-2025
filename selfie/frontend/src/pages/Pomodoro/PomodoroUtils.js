@@ -1,22 +1,20 @@
-export const calcolaCicliOttimali = (totaleMinuti) => {
-    let best = {
-      studio: 30,
-      pausa: 5,
-      cicli: 5,
-    };
-  
-    for (let pausa = 5; pausa <= 15; pausa += 5) {
-      for (let studio = 25; studio <= 50; studio += 5) {
-        const durataCiclo = studio + pausa;
-        const cicli = Math.floor(totaleMinuti / durataCiclo);
-        const tempoUsato = cicli * durataCiclo;
-  
-        if (tempoUsato === totaleMinuti && cicli > best.cicli) {
-          best = { studio, pausa, cicli };
-        }
-      }
-    }
-  
-    return best;
+export const calcolaCicliStandard = (totaleMinuti) => {
+  const tempoCiclo = 35;
+  const studioBase = 30;
+  const pausaBase = 5;
+
+  if (totaleMinuti < tempoCiclo) {
+    return { error: "Non ha senso lavorare meno di 35 minuti :(" };
+  }
+
+  const cicli = Math.floor(totaleMinuti / tempoCiclo);
+  const resto = totaleMinuti % tempoCiclo;
+
+  return {
+    cicli,
+    studio: studioBase,
+    pausa: pausaBase,
+    pausaFinale: pausaBase + resto,
+    resto,
   };
-  
+};

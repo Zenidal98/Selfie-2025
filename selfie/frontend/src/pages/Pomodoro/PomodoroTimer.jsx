@@ -9,6 +9,15 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
   const [isComplete, setIsComplete] = useState(false);
   const intervalRef = useRef(null);
 
+  useEffect(() => {
+    setSecondsLeft(studyDuration * 60);
+    setIsRunning(false);
+    setIsStudyTime(true);
+    setCurrentCycle(1);
+    setIsComplete(false);
+    clearInterval(intervalRef.current);
+  }, [studyDuration, breakDuration, cycles]);
+
   const sendNotification = (msg) => {
     if (window.Notification && Notification.permission === "granted") {
       new Notification(msg);
@@ -117,56 +126,38 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
     <div className="pomodoro-timer mb-4 p-3 shadow rounded">
       <h5>{isStudyTime ? "🧠 Studio" : "☕ Pausa"} – Ciclo {currentCycle}/{cycles}</h5>
 
-      {/* ANIMAZIONI */}
       {isRunning && (
-        isStudyTime ? (
-          <div className="study-animation"></div>
-        ) : (
-          <div className="break-animation"></div>
-        )
+        isStudyTime ? <div className="study-animation"></div> : <div className="break-animation"></div>
       )}
 
-      {/* ANIMAZIONE FINALE */}
-      {isComplete && (
-        <div className="completion-animation my-3">🎉 Fine sessione!</div>
-      )}
+      {isComplete && <div className="completion-animation my-3">🎉 Fine sessione!</div>}
 
-      {/* TIMER */}
       <h1 className="display-3 my-3">{formatTime(secondsLeft)}</h1>
 
-      {/* BARRA PROGRESSO */}
       <div className="progress my-3" style={{ height: "15px" }}>
         <div
           className="progress-bar bg-success"
-          role="progressbar"
-          style={{
-            width: `${(currentCycle / cycles) * 100}%`
-          }}
-          aria-valuenow={(currentCycle / cycles) * 100}
-          aria-valuemin="0"
-          aria-valuemax="100"
-        ></div>
+          style={{ width: `${(currentCycle / cycles) * 100}%` }}
+        />
       </div>
 
-      {/* PULSANTI */}
       <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
         <button className="btn btn-success" onClick={toggleTimer}>
-         {isRunning ? "Pausa" : "Start"}
+          {isRunning ? "Pausa" : "Start"}
         </button>
         <button className="btn btn-secondary" onClick={resetTimer}>
-         Reset
+          Reset
         </button>
         <button className="btn btn-warning" onClick={nextTime}>
-         ⏭ Prossimo tempo
+          ⏭ Prossimo tempo
         </button>
         <button className="btn btn-info" onClick={restartCycle}>
-         🔁 Ricomincia ciclo
+          🔁 Ricomincia ciclo
         </button>
         <button className="btn btn-danger" onClick={finishCycle}>
-         ✅ Termina ciclo
+          ✅ Termina ciclo
         </button>
       </div>
-
     </div>
   );
 };
