@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../index.css";
 
 const sections = [
-  { name: "Note", path: "/note", color: "bg-primary" },
+  { name: "Note", path: "/notes", color: "bg-primary" },
   { name: "Progetti", path: "/progetti", color: "bg-success" },
   { name: "Calendario", path: "/calendario", color: "bg-warning" },
   { name: "Pomodoro", path: "/pomodoro", color: "bg-danger" },
@@ -14,7 +14,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [dateTime, setDateTime] = useState(new Date());
 
-  const utenteLoggato = JSON.parse(localStorage.getItem("utente"));
+  const utenteLoggato = JSON.parse(sessionStorage.getItem("utente"));
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -24,8 +24,8 @@ const HomePage = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("utente");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("utente");
     navigate("/login");
   };
 

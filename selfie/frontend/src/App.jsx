@@ -5,6 +5,7 @@ import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
 const App = () => {               // ho messo che / parte da /login
   return (  
@@ -13,9 +14,9 @@ const App = () => {               // ho messo che / parte da /login
       <Route path="/" element={<Navigate to="/login" />} />                        
       <Route path="/login" element={<LoginPage />} /> 
       <Route path="/register" element={<RegisterPage />} /> 
-      <Route path="/home" element={<HomePage />} />
-      <Route path="/notes" element={<NoteEditor />} />  
-      <Route path="/pomodoro" element={<PomodoroPage/>} />
+      <Route path="/home" element={<ProtectedRoute> <HomePage /> </ProtectedRoute>} />
+      <Route path="/notes" element={<ProtectedRoute> <NoteEditor /> </ProtectedRoute>} />  
+      <Route path="/pomodoro" element={<ProtectedRoute> <PomodoroPage /> </ProtectedRoute>}/>
       </Routes>
     </Router>
   );

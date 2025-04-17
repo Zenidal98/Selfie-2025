@@ -22,9 +22,9 @@ const LoginPage = () => {
       // decodifichiamo il token per ottenere i dati utente
       const user = jwtDecode(token);
 
-      // salva token e user nel local storage
-      localStorage.setItem("token", token);
-      localStorage.setItem("utente", JSON.stringify(user));
+      // salva token e user nel session storage, in questo modo se si chiude la pagina si deve riaccedere, cosi come se si apre il 
+      sessionStorage.setItem("token", token);                     // link in una nuova pagina
+      sessionStorage.setItem("utente", JSON.stringify(user));
 
       // 🔁 Vai alla home
       navigate("/home");
