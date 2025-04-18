@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB } from './config/db.js';
-import plutoRoutes from './routes/pluto.route.js';
 import registerRoutes from './routes/register.route.js'
 import loginRoutes from "./routes/login.route.js";
+import pomodoroRoutes from "./routes/pomodoro.route.js";
 
 dotenv.config();
 
@@ -16,11 +16,11 @@ app.use(cors({ origin: "http://localhost:3000" }));
 
 app.use(express.json());
 
-app.use("/api/plutos", plutoRoutes);
-
 app.use("/api/register", registerRoutes);
 
 app.use("/api/login", loginRoutes);
+
+app.use("/api/pomodoro", pomodoroRoutes);
 
 //console.log(process.env.MONGO_URI);
 
