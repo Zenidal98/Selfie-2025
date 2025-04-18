@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../index.css";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const sections = [
   { name: "Note", path: "/note", color: "bg-primary" },
@@ -13,7 +15,7 @@ const sections = [
 const HomePage = () => {
   const navigate = useNavigate();
   const [dateTime, setDateTime] = useState(new Date());
-
+  const [report, setReport] = useState(null);
   const utenteLoggato = JSON.parse(sessionStorage.getItem("utente"));
 
   useEffect(() => {
@@ -23,6 +25,22 @@ const HomePage = () => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        if (!token) return;
+        const decoded = jwtDecode(token);
+        const res = await axios.get(`http://localhost:5000/api/pomodoro/last/${decoded.id}`);
+        setReport(res.data.data);
+      } catch (err) {
+        console.error("Errore caricamento pomodoro:", err.message);
+      }
+    };
+
+    fetchReport();
+  }, []);
+
   const handleLogout = () => {
     sessionStorage.clear();
     navigate("/login");
@@ -30,8 +48,7 @@ const HomePage = () => {
 
   return (
     <div className="container mt-4">
-
-      {/* 🔓 Pulsante Logout */}
+      {/* Logout */}
       <div className="d-flex justify-content-start mb-3">
         <button onClick={handleLogout} className="btn btn-outline-danger">
           Logout
@@ -55,7 +72,7 @@ const HomePage = () => {
         </p>
       </div>
 
-      {/* Sezioni */}
+      {/* Riquadri Sezioni */}
       <div className="d-flex justify-content-around flex-wrap">
         {sections.map((section) => (
           <div key={section.name} className={`section-box ${section.color}`}>
@@ -63,9 +80,17 @@ const HomePage = () => {
             <Link to={section.path} className="start-link">
               Clicca qui per cominciare
             </Link>
-            <div className="preview-content">
-              Qui poi ci fa l'effettivo contenuto salvato di ogni sezione
-            </div>
+
+            {/* Preview Pomodoro */}
+            {section.name === "Pomodoro" && report && (
+              <div className="preview-content text-white text-start px-2">
+                <strong>Ultimo Pomodoro:</strong><br />
+                Cicli: {report.cyclesCompleted}<br />
+                Studio: {report.studyDuration} min<br />
+                Pausa: {report.breakDuration} min<br />
+                Totale: {report.totalStudyTime} min
+              </div>
+            )}
           </div>
         ))}
       </div>
