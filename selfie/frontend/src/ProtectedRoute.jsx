@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 
 
 const ProtectedRoute = ({ children }) => {
+  
   const token = sessionStorage.getItem("token");
 
   if (!token) {
