@@ -3,7 +3,7 @@ import { marked } from "marked";
 import axios from "axios";
 
 const NoteEditor = () => {
-  const [title, setTitle] = useState("");
+const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState ([]);
   const [tagInput, setTagInput] = useState ("");
@@ -81,11 +81,16 @@ const NoteEditor = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+  // fetch del nome utente =======================================================
   
+  const storedUser = JSON.parse(localStorage.getItem("utente"));
+  const userId = storedUser?._id;
+  const username = storedUser.username;
+
   // salvataggio delle note ======================================================
   
   const saveNote = async () => {
-    const userId = localStorage.getItem("userId") || "prova";      //controlla
     const noteData = {
       userId,
       title,

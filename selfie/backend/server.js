@@ -5,6 +5,7 @@ import { connectDB } from './config/db.js';
 import plutoRoutes from './routes/pluto.route.js';
 import registerRoutes from './routes/register.route.js'
 import loginRoutes from "./routes/login.route.js";
+import noteRoutes from "./routes/notes.routes.js"
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ app.use("/api/plutos", plutoRoutes);
 app.use("/api/register", registerRoutes);
 
 app.use("/api/login", loginRoutes);
+
+app.use("/api/notes", noteRoutes);
 
 //console.log(process.env.MONGO_URI);
 

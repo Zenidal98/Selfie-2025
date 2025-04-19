@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 export const getPlutos = async(req,res) => {
     try {
         const plutos = await Pluto.find({});
-        res.status(200).json({ success:true, data: plutos});
+    res.status(200).json({ success:true, data: plutos});
     } catch (error) {
         console.log("Error in fetching plutos", error.message);
         res.status(500).json({ success:false, message: "Server Error"});

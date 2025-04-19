@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"; 
 
 const noteSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -9,4 +9,6 @@ const noteSchema = new mongoose.Schema({
   lastEdited: { type: Date, default: Date.now },
 });
 
-export default noteSchema;
+const Note = mongoose.model('Note', noteSchema);
+
+export default Note;
