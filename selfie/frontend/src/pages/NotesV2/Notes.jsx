@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import axios from "axios";
+import NotesList from "./NotesList";
 
 const NoteEditor = () => {
-const [title, setTitle] = useState("");
+  const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState ([]);
   const [tagInput, setTagInput] = useState ("");
@@ -11,6 +12,29 @@ const [title, setTitle] = useState("");
   const [lastEdited, setLastEdited] = useState(new Date());
   const [showEditor, setShowEditor] = useState(true); // toggle, per dispositivi mobile
   const textareaRef = useRef();
+
+  // Lista dell note (mtterla qui permette aggiornamenti in tempo reale)==============
+
+  const [notes, setNotes] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+
+  // Fetch utente ====================================================================
+  
+  const storedUser = JSON.parse(localStorage.getItem("utente")) || {};
+  const userId = storedUser?._id;
+  const username = storedUser.username;
+
+  // Fetch note dell'utente ==========================================================
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost:5000/api/notes/${userId}`)
+      .then(res => {
+        setNotes(res.data);
+        setFiltered(res.data);
+      })
+      .catch(console.error);
+  }, [userId]);
 
   // aggiorna la data di modifica ====================================================
   
@@ -82,11 +106,6 @@ const [title, setTitle] = useState("");
       minute: "2-digit",
     });
 
-  // fetch del nome utente =======================================================
-  
-  const storedUser = JSON.parse(localStorage.getItem("utente"));
-  const userId = storedUser?._id;
-  const username = storedUser.username;
 
   // salvataggio delle note ======================================================
   
@@ -220,6 +239,11 @@ const [title, setTitle] = useState("");
         <button className="btn btn-success" onClick={saveNote}>
           Salva Nota
         </button>
+      </div>
+      {/* Filtro note: vedi ./NotesList.jsx */ }
+      <div className="mt-5">
+        <h4 className="mb-3">Le Tue Note</h4>
+        <NotesList notes={notes} setFiltered={setFiltered} filtered={filtered}/>
       </div>
     </div>
   );
