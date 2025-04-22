@@ -7,7 +7,6 @@ import { jwtDecode } from "jwt-decode";
 
 const sections = [
   { name: "Note", path: "/note", color: "bg-primary" },
-  { name: "Progetti", path: "/progetti", color: "bg-success" },
   { name: "Calendario", path: "/calendario", color: "bg-warning" },
   { name: "Pomodoro", path: "/pomodoro", color: "bg-danger" },
 ];
@@ -24,8 +23,8 @@ const HomePage = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
+                        // serve per il report dell'ultimo pomodoro
+  useEffect(() => {                                  
     const fetchReport = async () => {
       try {
         const token = sessionStorage.getItem("token");
@@ -40,7 +39,7 @@ const HomePage = () => {
 
     fetchReport();
   }, []);
-
+                   //pulsante logout
   const handleLogout = () => {
     sessionStorage.clear();
     navigate("/login");
@@ -84,11 +83,11 @@ const HomePage = () => {
             {/* Preview Pomodoro */}
             {section.name === "Pomodoro" && report && (
               <div className="preview-content text-white text-start px-2">
-                <strong>Ultimo Pomodoro:</strong><br />
-                Cicli: {report.cyclesCompleted}<br />
-                Studio: {report.studyDuration} min<br />
-                Pausa: {report.breakDuration} min<br />
-                Totale: {report.totalStudyTime} min
+                <strong>Report ultimo Pomodoro:</strong><br />
+                Cicli completati: {report.cyclesCompleted}<br />
+                Durata singolo ciclo di studio: {report.studyDuration} minuti<br />
+                Durata singola pausa: {report.breakDuration} minuti<br />
+                Tempo totale di studio: {report.totalStudyTime} minuti
               </div>
             )}
           </div>

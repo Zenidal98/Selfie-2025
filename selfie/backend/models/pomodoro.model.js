@@ -25,9 +25,6 @@ const pomodoroSchema = new mongoose.Schema({
   totalStudyTime: {
     type: Number, // in minuti
     required: true
-  },
-  note: {
-    type: String
   }
 }, { timestamps: true });
 
