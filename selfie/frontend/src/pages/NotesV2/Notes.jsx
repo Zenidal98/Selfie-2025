@@ -4,11 +4,12 @@ import axios from "axios";
 import NotesList from "./NotesList";
 
 const NoteEditor = () => {
+  const [noteId, setNoteId] = useState(null);
   const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState ([]);
   const [tagInput, setTagInput] = useState ("");
-  const [createdAt] = useState(new Date());           
+  const [createdAt, setCreatedAt] = useState(new Date());           
   const [lastEdited, setLastEdited] = useState(new Date());
   const [showEditor, setShowEditor] = useState(true); // toggle, per dispositivi mobile
   const textareaRef = useRef();
@@ -26,7 +27,7 @@ const NoteEditor = () => {
 
   // Fetch note dell'utente ==========================================================
 
-  useEffect(() => {
+  const fetchNotes = () => {
     axios
       .get(`http://localhost:5000/api/notes/${userId}`)
       .then(res => {
@@ -34,6 +35,10 @@ const NoteEditor = () => {
         setFiltered(res.data);
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchNotes();
   }, [userId]);
 
   // aggiorna la data di modifica ====================================================
@@ -41,7 +46,29 @@ const NoteEditor = () => {
   useEffect(() => {
     setLastEdited(new Date());
   }, [title, markdown, tags]);
+ 
+  // Carica una nota preesitente nell'editor =========================================
+
+  const loadNote = note => {
+    setNoteId(note._id);
+    setTitle(note.title);
+    setMarkdown(note.markdown);
+    setTags(note.tags);
+    setCreatedAt(new Date(note.createdAt));
+    setLastEdited(new Date(note.lastEdited));
+    setShowEditor(true);
+  };
   
+  // Cancella una nota (chiede conferma) e refresha la lista =========================
+
+  const deleteNote = id => {
+    if (!window.confirm("Vuoi veramente cancellare questa nota?")) return;
+    axios
+      .delete(`/api/notes/${id}`)
+      .then(() => fetchNotes())
+      .catch(err => console.error(err));
+  };
+
   // aggiunge la formattazione al testo ==============================================
   
   const applyMarkdown = (type) => {
@@ -96,6 +123,12 @@ const NoteEditor = () => {
     setTags(tags.filter((t) => t !== tag));
   };
   
+  // Limita la lunghezza dei tag (altrimenti si sfonna tutto) ====================
+
+  const truncateTag = (str, max = 15) =>
+    str.length > max ? str.slice(0, max - 1) + "..." : str;
+  
+
   // data ========================================================================
   const formatDate = (date) =>
     date.toLocaleString(undefined, {
@@ -109,7 +142,7 @@ const NoteEditor = () => {
 
   // salvataggio delle note ======================================================
   
-  const saveNote = async () => {
+  const saveNote = () => {
     const noteData = {
       userId,
       title,
@@ -119,13 +152,27 @@ const NoteEditor = () => {
       lastEdited: new Date(),      // obv aggiorna la data
     };
     
-    try {
-      await axios.post("/api/notes/save", noteData);
-      alert("Nota Salvata!");
-    } catch (error) {
-      console.error("Errore durante il salvataggio:", error);
-      alert("Errore nel salvataggio");
-    }
+    const request = noteId                                       // se gia' c'e' la nota, diventa un update 
+    ? axios.put(`/api/notes/${noteId}`, noteData)
+    : axios.post(`/api/notes/save`, noteData);
+
+    request
+      .then(() => {
+        alert("Nota salvata con successo!")
+        fetchNotes();
+        // sgombra l'Editor
+        if (!noteId) {
+          setTitle("");
+          setMarkdown("");
+          setTags([]);
+          setCreatedAt(new Date());
+        }
+        setNoteId(null);
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Errore nel salvataggio");
+      });
   };
 
   //#################################################################################
@@ -147,7 +194,7 @@ const NoteEditor = () => {
         <div className="my-2 d-flex flex-wrap align-items-center gap-2">
           {tags.map((tag, index) => (
             <span key={index} className="badge bg-primary text-white p-2">
-              {tag}
+              {truncateTag(tag)}
               <button
                 onClick={() => removeTag(tag)}
                 className="btn-close btn-close-white btn-sm ms-2"
@@ -243,7 +290,13 @@ const NoteEditor = () => {
       {/* Filtro note: vedi ./NotesList.jsx */ }
       <div className="mt-5">
         <h4 className="mb-3">Le Tue Note</h4>
-        <NotesList notes={notes} setFiltered={setFiltered} filtered={filtered}/>
+        <NotesList 
+          notes={notes} 
+          setFiltered={setFiltered} 
+          filtered={filtered}
+          onSelect={loadNote}
+          onDelete={deleteNote}
+        />
       </div>
     </div>
   );

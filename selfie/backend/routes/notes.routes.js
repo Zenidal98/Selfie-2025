@@ -1,5 +1,5 @@
 import express from "express";
-import { saveNotes, getUserNotes, updateNote } from "../controllers/notes.controller.js"
+import { saveNotes, getUserNotes, updateNote, deleteNote } from "../controllers/notes.controller.js"
 const router = express.Router(); 
 
 // POST -> nuova nota
@@ -9,7 +9,10 @@ router.post('/save', saveNotes);
 router.get('/:userId', getUserNotes);
 
 // PUT -> modifica nota 
-router.put('/id', updateNote);
+router.put('/:noteId', updateNote);
+
+// DELETE -> cancella nota =========================================
+router.delete('/:noteId', deleteNote);
 
 export default router;
  

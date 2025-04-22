@@ -46,12 +46,12 @@ export const getUserNotes = async(req,res) => {
 // Modifica una nota =================================================================================================
 
 export const updateNote = async(req,res) => {
-  const { id } = req.params;
+  const { noteId } = req.params;
   const { title, markdown, tags, lastEdited } = req.body;
 
   try {
-    const updatedNote = await Note.findOneAndUpdate(
-      id,
+    const updatedNote = await Note.findByIdAndUpdate(
+      noteId,
       {
         title,
         markdown,
@@ -60,11 +60,24 @@ export const updateNote = async(req,res) => {
       },
       { new: true }
     );
-  } catch (error) {
-    
+    if (!updatedNote) return res.status(404).json({ error: "Not found"});
+    res.json({ message: "Updated succesfully"}, note: updatedNote);
+  } catch (err) {
+    res.status(500).json({ error: "Note update failed"});
   }
 };
 
+// Cancella una nota ==============================================================
 
+export const deleteNote = async(req, res) => {
+  const { noteId } = req.params;
+  try {
+    const deletedNote = await Note.findByIdAndDelete(noteId);
+    if (!deletedNote) return res.status(404).json({ error: "Not found"});
+    res.status(200).json({ message: "Deleted with success"});
+  } catch (err) {
+    res.status(500).json({ error: "Failed note deletion"});
+  }
+};
 
 

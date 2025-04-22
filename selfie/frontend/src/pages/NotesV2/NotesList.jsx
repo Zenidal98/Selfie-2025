@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 
-function NotesList({ notes, filtered, setFiltered}){
+function NotesList({ notes, filtered, setFiltered, onSelect, onDelete}) {
+  
   const [searchText, setSearchText] = useState("");
   const [tagFilter, setTagFilter] = useState("");
  
   // Modifica la lista quando i filtri vengono cambiati =========================================================================
-  // filtra creando condizioni che selezionano gli elementi, some(args) itera sui tag e controlla che almeno uno faccia match  
 
   useEffect(() => {
     const filteredList = notes.filter(n => {
       const matchesTitle = n.title.toLowerCase().includes(searchText.toLowerCase());
-      const matchesTag = !tagFilter || n.tags.some(tag => tag.toLowerCase() === tagFilter.toLowerCase());        
+      const matchesTag = !tagFilter || n.tags.includes(tagFilter);
       return matchesTitle && matchesTag;   
     });
     setFiltered(filteredList);
-    }, [notes, searchText, tagFilter]);
+    }, [notes, searchText, tagFilter, setFiltered]);
 
   // crea un solo array (grazie a flat) di tag UNICI (set), utile per i menu ==================================================== 
   const uniqueTagsList = Array.from(new Set(notes.flatMap(n => n.tags)));
@@ -32,6 +32,7 @@ function NotesList({ notes, filtered, setFiltered}){
         />
         <select
           className="form-select w-auto"
+          style={{ maxHeight: "200px", overflowY: "auto"}}
           value={tagFilter}
           onChange={e => setTagFilter(e.target.value)}
         >
@@ -50,10 +51,14 @@ function NotesList({ notes, filtered, setFiltered}){
             Nessuna nota trovata.
           </div>
         )}
-
+        {/* cards delle note */}
         {filtered.map(note => (
           <div key={note._id} className="col-12 col-md-6 col-lg-4">
-            <div className="card h-100 shadow-sm">
+            <div 
+              className="card h-100 shadow-sm"
+              style={{cursor: "pointer"}}
+              onClick={() => onSelect(note)}
+            >
               <div className="card-body d-flex flex-column">
                 <h5 className="card-title">{note.title}</h5>
                 <p className="card-text text-truncate">
@@ -77,7 +82,20 @@ function NotesList({ notes, filtered, setFiltered}){
                   ))}
                 </div>
               )}
+              {/* Delete button */}
+              <button 
+                type="button"
+                className="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 p-1 rounded"
+                onClick={e => {
+                  e.stopPropagation();
+                  onDelete(note._id);
+                }}
+              >
+                <strong>X</strong>
+              </button>
             </div>
+
+           
           </div>
         ))}
       </div>
