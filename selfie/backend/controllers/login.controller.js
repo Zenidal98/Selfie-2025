@@ -1,12 +1,9 @@
 import Register from "../models/register.model.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: "Inserisci username e password" });
-  }
 
   try {
     const user = await Register.findOne({ username });
@@ -16,17 +13,26 @@ export const loginUser = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Password errata" });
     }
 
-    // Rimuove la password dalla risposta
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    // questo è il token jwt che contiene tutti i campi che poi ci serviranno nella home. Cosi non uso piu local storage
+    const payload = {
+      id: user._id,
+      nome: user.nome,
+      cognome: user.cognome,
+      username: user.username,
+    };
 
-    res.status(200).json({ success: true, data: userWithoutPassword });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "3h" });
+
+    res.status(200).json({
+      success: true,
+      token,      // quello che usiamo poi nel frontend
+    });
+
   } catch (err) {
-    console.error("Errore nel login:", err);
     res.status(500).json({ success: false, message: "Errore server" });
   }
 };

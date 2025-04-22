@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Pomodoro.css";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
   const [secondsLeft, setSecondsLeft] = useState(studyDuration * 60);
@@ -65,6 +67,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
         sendNotification(`🧠 Inizio ciclo ${currentCycle + 1}`);
       } else {
         sendNotification("🎉 Tutti i cicli completati!");
+        handleSaveSession(); // ⬅️ Salvataggio sessione
         setIsComplete(true);
       }
     }
@@ -89,7 +92,25 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
       sendNotification(`✅ Passato al ciclo ${currentCycle + 1}`);
     } else {
       sendNotification("🎉 Tutti i cicli completati!");
+      handleSaveSession(); // ⬅️ Salvataggio
       setIsComplete(true);
+    }
+  };
+
+  const handleSaveSession = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const decoded = jwtDecode(token);
+      await axios.post("http://localhost:5000/api/pomodoro", {
+        userId: decoded.id,
+        studyDuration,
+        breakDuration,
+        cyclesCompleted: currentCycle,
+        totalStudyTime: currentCycle * studyDuration,
+        note: "Sessione salvata automaticamente"
+      });
+    } catch (error) {
+      console.error("Errore salvataggio pomodoro:", error.message);
     }
   };
 
@@ -97,22 +118,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
     if (secondsLeft === 0 && isRunning) {
       clearInterval(intervalRef.current);
       setIsRunning(false);
-
-      if (isStudyTime) {
-        setIsStudyTime(false);
-        setSecondsLeft(breakDuration * 60);
-        sendNotification("⏸️ Pausa iniziata!");
-      } else {
-        if (currentCycle < cycles) {
-          setIsStudyTime(true);
-          setCurrentCycle((prev) => prev + 1);
-          setSecondsLeft(studyDuration * 60);
-          sendNotification(`🧠 Inizio ciclo ${currentCycle + 1}`);
-        } else {
-          sendNotification("🎉 Tutti i cicli completati!");
-          setIsComplete(true);
-        }
-      }
+      nextTime();
     }
   }, [secondsLeft]);
 
