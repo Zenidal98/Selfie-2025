@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { marked } from "marked";
+import DOMPurify from 'dompurify';
 import axios from "axios";
 import NotesList from "./NotesList";
 
@@ -68,7 +70,15 @@ const NoteEditor = () => {
       .then(() => fetchNotes())
       .catch(err => console.error(err));
   };
-
+  
+  // HTML Sanitizing (pulisce il markdown per prevenire attacchi XSS) ================
+  
+  const renderMarkdown = (markdownText) => {
+    const rawHtml = marked.parse(markdownText);
+    const safeHtml = DOMPurify.sanitize(rawHtml);
+    return { __html: safeHtml };
+  };
+  
   // aggiunge la formattazione al testo ==============================================
   
   const applyMarkdown = (type) => {
@@ -174,6 +184,26 @@ const NoteEditor = () => {
         alert("Errore nel salvataggio");
       });
   };
+  
+  // resetta l'editor, per creare una nota nuova ====================================
+  
+  const resetEditor = () => {
+    setNoteId(null);
+    setTitle("");
+    setMarkdown("");
+    setTags([]);
+    setTagInput("");
+    setCreatedAt(new Date());
+    setLastEdited(new Date());
+  }
+
+  // redirect alla homepage =========================================================
+
+  const navigate = useNavigate();
+
+  const goHome = () => {
+    navigate("/home");
+  };
 
   //#################################################################################
   return (
@@ -277,7 +307,7 @@ const NoteEditor = () => {
           <div
             className="border rounded p-3 bg-light preview-box"
             style={{ minHeight: "300px", overflowY: "auto" }}
-            dangerouslySetInnerHTML={{ __html: marked.parse(markdown) }}
+            dangerouslySetInnerHTML={renderMarkdown(markdown)}
           />
         </div>
       </div>
@@ -286,6 +316,12 @@ const NoteEditor = () => {
         <button className="btn btn-success" onClick={saveNote}>
           Salva Nota
         </button>
+        <button className="btn btn-outline-dark mx-2" onClick={resetEditor}>
+          Nuova Nota
+        </button>
+        <button className="btn btn-outline-primary" onClick={goHome}>
+          Vai alla homepage
+        </button>   
       </div>
       {/* Filtro note: vedi ./NotesList.jsx */ }
       <div className="mt-5">
