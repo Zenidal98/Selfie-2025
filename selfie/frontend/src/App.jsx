@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import Calendar from "./pages/Calendar/Calendar.jsx";
 
 const App = () => {               // ho messo che / parte da /login
   return (  
@@ -17,6 +18,7 @@ const App = () => {               // ho messo che / parte da /login
       <Route path="/home" element={<ProtectedRoute> <HomePage /> </ProtectedRoute>} />
       <Route path="/notes" element={<ProtectedRoute> <NoteEditor /> </ProtectedRoute>} />  
       <Route path="/pomodoro" element={<ProtectedRoute> <PomodoroPage /> </ProtectedRoute>}/>
+      <Route path="/calendar" element={<ProtectedRoute> <Calendar/> </ProtectedRoute>}/>
       </Routes>
     </Router>
   );

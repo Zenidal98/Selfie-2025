@@ -7,7 +7,7 @@ import { jwtDecode } from "jwt-decode";
 
 const sections = [
   { name: "Note", path: "/notes", color: "bg-primary" },
-  { name: "Calendario", path: "/calendario", color: "bg-warning" },
+  { name: "Calendario", path: "/calendar", color: "bg-warning" },
   { name: "Pomodoro", path: "/pomodoro", color: "bg-danger" },
 ];
 

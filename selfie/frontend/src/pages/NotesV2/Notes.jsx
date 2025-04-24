@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { marked } from "marked";
 import DOMPurify from 'dompurify';
@@ -25,11 +25,11 @@ const NoteEditor = () => {
   
   const storedUser = JSON.parse(localStorage.getItem("utente")) || {};
   const userId = storedUser?._id;
-  const username = storedUser.username;
+  // const username = storedUser.username;
 
   // Fetch note dell'utente ==========================================================
 
-  const fetchNotes = () => {
+  const fetchNotes = useCallback(() => {
     axios
       .get(`http://localhost:5000/api/notes/${userId}`)
       .then(res => {
@@ -37,11 +37,11 @@ const NoteEditor = () => {
         setFiltered(res.data);
       })
       .catch(console.error);
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchNotes();
-  }, [userId]);
+  }, [userId, fetchNotes]);
 
   // aggiorna la data di modifica ====================================================
   
@@ -311,7 +311,7 @@ const NoteEditor = () => {
           />
         </div>
       </div>
-      {/* Save Button */}
+      {/* Toolbar ausiliaria */}
       <div className="text-end mt-3">
         <button className="btn btn-success" onClick={saveNote}>
           Salva Nota
