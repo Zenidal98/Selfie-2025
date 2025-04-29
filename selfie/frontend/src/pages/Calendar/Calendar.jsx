@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -10,16 +10,19 @@ import {
 import './calendar.css';
 import { useNavigate } from 'react-router-dom';
 
+
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];     // Locale da rivedere, lo so
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);                // La data che apri cliccando
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
   const firstDayIndex = getDay(monthStart);
+
+  const modalRef = useRef(null);
 
   const generateCalendar = () => {
     const cells = [];
@@ -41,7 +44,11 @@ const Calendar = () => {
         <div
           key={dateStr}
           className={`calendar-cell day ${dayClass}`}     // giorni weekend css diverso
-          onClick={() => alert(`Clicked on ${day}`)}
+          onClick={() => handleDayClick(day)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleDayClick(day); }}
+          aria-label={`Info su ${format(day, 'PPPP')}`}
         >
           <div className="day-number">{dayNum}</div>
         </div>
@@ -58,7 +65,17 @@ const Calendar = () => {
   const goHome = () => {
     navigate("/home");
   };
-
+  
+  const handleDayClick = (day) => {
+    setSelectedDate(day);
+    if (!window.bootstrap) {
+      alert("qualcosa non va!");
+    } 
+    if (modalRef.current) {
+      const modalTest = new window.bootstrap.Modal(modalRef.current);
+      modalTest.show();
+    }
+  }
 
   return (
     <div className="container mt-4">
@@ -76,6 +93,48 @@ const Calendar = () => {
         ))}
       </div>
       <div className="calendar-grid-body">{generateCalendar()}</div>
+      {/* Modal */}
+      <div
+        className="modal fade"
+        id="dayModal"
+        tabIndex="-1"
+        aria-labelledby="dayModalLabel"
+        aria-hidden="true"
+        ref={modalRef}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+
+            <div className="modal-header">
+              <h5 className="modal-title" id="dayModalLabel">
+                {selectedDate ? format(selectedDate, 'PPPP') : 'Day Details'}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+
+            <div className="modal-body">
+              <p>📅 Events or information for this day will go here.</p>
+              {/* Placeholder for future events list */}
+              <ul>
+                <li>Example Event 1</li>
+                <li>Example Event 2</li>
+              </ul>
+
+              <div className="d-grid gap-2 mt-3">
+                <button className="btn btn-primary" type="button">
+                  ➕ Add New Event
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
