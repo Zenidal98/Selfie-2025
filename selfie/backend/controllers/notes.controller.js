@@ -1,12 +1,14 @@
 import Note from "../models/notes.model.js";
-
+import Event from "../models/event.model.js";
+ 
+import { format } from 'date-fns';
 // Crea una nuova nota nel db ========================================================================================
 
 export const saveNotes = async(req,res) => {
   const { userId, title, markdown, tags, createdAt, lastEdited } = req.body;
   
   if (!userId || !title || !markdown) {
-    return res.status(400).json({ error: 'Missing mandatory fields'});
+    return res.status(400).json({ error: "Missing mandatory fields"});
   }
 
   try {
@@ -20,12 +22,24 @@ export const saveNotes = async(req,res) => {
     });
 
     await newNote.save();
-
-    res.status(201).json({ message: 'Nota salvata con successo', note: newNote});
     
+    // crea anche un nuovo Evento associato =========================================================================
+
+    const eventDate = format(newNote.createdAt, 'yyyy-MM-dd');
+
+    const newNoteEvent = new Event({
+      userId,
+      date: eventDate,
+      text: `{ Note created: "${title}"}`,
+      type: 'note',
+      noteId: newNote._id            // foreign key 
+    });
+    
+    await newNoteEvent.save();
+    res.status(201).json({ message: "Nota salvata con successo", note: newNote});
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error. '});
+    res.status(500).json({ error: "Server error. "});
   }
 };
 
@@ -39,7 +53,7 @@ export const getUserNotes = async(req,res) => {
     res.status(200).json(notes);    
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error. '});
+    res.status(500).json({ error: "Server error. "});
   }
 };
 
@@ -74,6 +88,10 @@ export const deleteNote = async(req, res) => {
   try {
     const deletedNote = await Note.findByIdAndDelete(noteId);
     if (!deletedNote) return res.status(404).json({ error: "Not found"});
+    
+    // cancella l'evento associato ==============================================
+    await Event.deleteOne({ noteId: id });
+
     res.status(200).json({ message: "Deleted with success"});
   } catch (err) {
     res.status(500).json({ error: "Failed note deletion"});

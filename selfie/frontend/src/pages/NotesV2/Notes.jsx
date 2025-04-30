@@ -64,11 +64,11 @@ const NoteEditor = () => {
   // Cancella una nota (chiede conferma) e refresha la lista =========================
 
   const deleteNote = id => {
-    if (!window.confirm("Vuoi veramente cancellare questa nota?")) return;
-    axios
-      .delete(`/api/notes/${id}`)
-      .then(() => fetchNotes())
-      .catch(err => console.error(err));
+    if (window.confirm("Vuoi veramente cancellare questa nota?")) {
+      axios.delete(`/api/notes/${id}`)
+        .then(() => fetchNotes())
+        .catch(err => console.error(err));
+    }
   };
   
   // HTML Sanitizing (pulisce il markdown per prevenire attacchi XSS) ================

@@ -6,6 +6,7 @@ import registerRoutes from './routes/register.route.js'
 import loginRoutes from "./routes/login.route.js";
 import noteRoutes from "./routes/notes.routes.js"
 import pomodoroRoutes from "./routes/pomodoro.route.js";
+import eventRoutes from "./routes/event.route.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use("/api/pomodoro", pomodoroRoutes);
 
 app.use("/api/notes", noteRoutes);
 
+app.use("/api/events", eventRoutes);
 //console.log(process.env.MONGO_URI);
 
 app.listen(PORT, () => {

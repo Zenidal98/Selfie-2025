@@ -38,12 +38,12 @@
 }
 
 .weekday {
-  background-color: #ffffff;
-  }
+  background-color: #ffffff; /* Neutral light tone for weekdays */
+}
 
 .weekend {
-  background-color: #ffe5e5; 
-  }
+  background-color: #ffe5e5; /* Subtle reddish hue for weekends */
+}
 
 @media (max-width: 768px) {
   .calendar-cell {
