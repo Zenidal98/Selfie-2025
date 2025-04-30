@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import "./Pomodoro.css";
+import "./PomodoroPage.css";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
