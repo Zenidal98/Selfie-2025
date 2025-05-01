@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./pages/Login/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
