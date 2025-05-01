@@ -2,10 +2,10 @@ import Register from "../models/register.model.js";
 import bcrypt from "bcrypt";
 
 export const registerUser = async (req, res) => {
-  const { nome, cognome, username, password, conferma, dataNascita, foto } = req.body;
+  const { nome, cognome, username, email, password, conferma, dataNascita} = req.body;
 
-  // Verifica che tutti i campi obbligatori siano presenti
-  if (!nome || !cognome || !username || !password || !conferma) {
+  // Verifica che tutti i campi obbligatori siano presenti tranne datanascita che mettiamo come facoltativo
+  if (!nome || !cognome || !username || !password || !conferma || !email) {
     return res.status(400).json({ success: false, message: "Campi mancanti" });
   }
 
@@ -25,7 +25,7 @@ export const registerUser = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, salt);
 
   try {
-    const newUser = new Register({nome, cognome, username, password: hashedPassword, dataNascita, foto,});
+    const newUser = new Register({nome, cognome, username, email, password: hashedPassword, dataNascita});
 
     await newUser.save();
 
