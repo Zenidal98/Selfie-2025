@@ -27,6 +27,7 @@
   display: flex;
   flex-direction: column;
   height: calc(100vh - 80px);
+  transition: all 0.4s ease;
 }
 
 .section {
@@ -41,27 +42,37 @@
   text-shadow: 0 0 5px #000;
   transition: flex 0.5s ease, transform 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
+  padding: 1rem;
 }
 
 .section:hover {
-  transform: scale(1.01);
-}
-
-.section.expanded {
   flex: 3;
+  transform: scale(1.01);
 }
 
 .section-label {
   font-size: 3rem;
   margin: 0;
+  z-index: 2;
 }
 
 .section-details {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 1.5rem;
+  background: none; /* ✅ RIMOSSO sfondo grigio */
+  padding: 1rem;
   width: 100%;
-  text-align: center;
   margin-top: 1rem;
+  text-align: center;
+  color: white;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7); /* ✅ leggibilità su immagine */
+  transition: all 0.5s ease;
+  opacity: 0;
+  max-height: 0;
+}
+
+.section:hover .section-details {
+  opacity: 1;
+  max-height: 500px;
 }
 
 /* Sezioni specifiche con immagini via CSS */
@@ -76,4 +87,12 @@
 
 .section.pomodoro {
   background-image: url('../../img/pomodorotimer.jpg');
+}
+
+/*Per ora lo lascio cosi altrimenti le parole dentro al riquadro in alto sono nere su sfondo nere e non si vede nulla*/ 
+
+.pomodoro-timer h5,
+.pomodoro-timer h1 {
+  color: white !important;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
 }

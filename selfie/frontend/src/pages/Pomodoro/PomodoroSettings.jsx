@@ -1,3 +1,4 @@
+//File per calcolare i vari tempi nei cicli personalizzati
 import React, { useState } from "react";
 import { calcolaCicliStandard } from "./PomodoroUtils";
 
@@ -37,27 +38,12 @@ const PomodoroSettings = ({ onSettingsChange }) => {
       <form onSubmit={handleSubmit}>
         <div className="row mb-3">
           <div className="col">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Ore"
-              value={totalHours}
-              onChange={(e) => setTotalHours(e.target.value)}
-              min={0}
-            />
+            <input type="number" className="form-control" placeholder="Ore" value={totalHours} onChange={(e) => setTotalHours(e.target.value)} min={0}/>
           </div>
           <div className="col">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Minuti"
-              value={totalMinutes}
-              onChange={(e) => setTotalMinutes(e.target.value)}
-              min={0}
-            />
+            <input type="number" className="form-control" placeholder="Minuti" value={totalMinutes} onChange={(e) => setTotalMinutes(e.target.value)} min={0}/>
           </div>
         </div>
-
         <button className="btn btn-primary w-100">Applica impostazioni</button>
       </form>
 

@@ -78,7 +78,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
     setIsRunning(false);
     setIsStudyTime(true);
     setSecondsLeft(studyDuration * 60);
-    sendNotification(`🔁 Ricominciato ciclo ${currentCycle}`);
+    sendNotification(` Ricominciato ciclo ${currentCycle}`);
   };
 
   const finishCycle = () => {
@@ -89,9 +89,9 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
       setCurrentCycle((prev) => prev + 1);
       setIsStudyTime(true);
       setSecondsLeft(studyDuration * 60);
-      sendNotification(`✅ Passato al ciclo ${currentCycle + 1}`);
+      sendNotification(` Passato al ciclo ${currentCycle + 1}`);
     } else {
-      sendNotification("🎉 Tutti i cicli completati!");
+      sendNotification(" Tutti i cicli completati!");
       handleSaveSession(); // ⬅️ Salvataggio
       setIsComplete(true);
     }
@@ -130,7 +130,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
 
   return (
     <div className="pomodoro-timer mb-4 p-3 shadow rounded">
-      <h5>{isStudyTime ? "🧠 Studio" : "☕ Pausa"} – Ciclo {currentCycle}/{cycles}</h5>
+      <h5>{isStudyTime ? " Studio" : " Pausa"} – Ciclo {currentCycle}/{cycles}</h5>
 
       {isRunning && (
         isStudyTime ? <div className="study-animation"></div> : <div className="break-animation"></div>
@@ -148,21 +148,11 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
       </div>
 
       <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
-        <button className="btn btn-success" onClick={toggleTimer}>
-          {isRunning ? "Pausa" : "Start"}
-        </button>
-        <button className="btn btn-secondary" onClick={resetTimer}>
-          Reset
-        </button>
-        <button className="btn btn-warning" onClick={nextTime}>
-          ⏭ Prossimo tempo
-        </button>
-        <button className="btn btn-info" onClick={restartCycle}>
-          🔁 Ricomincia ciclo
-        </button>
-        <button className="btn btn-danger" onClick={finishCycle}>
-          ✅ Termina ciclo
-        </button>
+        <button className="btn btn-success" onClick={toggleTimer}> {isRunning ? "Pausa" : "Start"} </button>
+        <button className="btn btn-secondary" onClick={resetTimer}> Reset </button>
+        <button className="btn btn-warning" onClick={nextTime}> Prossimo tempo </button>
+        <button className="btn btn-info" onClick={restartCycle}> Ricomincia ciclo </button>
+        <button className="btn btn-danger" onClick={finishCycle}>  Termina ciclo </button>
       </div>
     </div>
   );

@@ -13,7 +13,6 @@ const sections = [
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(null);
   const [report, setReport] = useState(null);
   const utente = JSON.parse(sessionStorage.getItem("utente"));
 
@@ -46,37 +45,32 @@ const HomePage = () => {
 
       <div className="section-container">
         {sections.map((sec) => (
-          <div
-            key={sec.id}
-            className={`section ${sec.id} ${expanded === sec.id ? "expanded" : ""}`}
-            onClick={() => setExpanded(prev => (prev === sec.id ? null : sec.id))}
-          >
+          <div key={sec.id} className={`section ${sec.id}`}>
             <h2 className="section-label">{sec.label}</h2>
-            {expanded === sec.id && (
-              <div className="section-details">
-                <button className="btn btn-light mb-3" onClick={() => navigate(sec.path)}>
-                  Vai a {sec.label}
-                </button>
+            <div className="section-details">
+              <button className="btn btn-light mb-3" onClick={() => navigate(sec.path)}>
+                Vai a {sec.label}
+              </button>
 
-                {sec.id === "pomodoro" && report && (
-                  <div className="text-white text-start">
-                    <strong>Report ultimo Pomodoro:</strong><br />
-                    Cicli completati: {report.cyclesCompleted}<br />
-                    Studio: {report.studyDuration} min<br />
-                    Pausa: {report.breakDuration} min<br />
-                    Totale: {report.totalStudyTime} min
-                  </div>
-                )}
+              {sec.id === "pomodoro" && report && (
+                <div className="text-white text-start">
+                  <p className="text-white text-center">Puoi creare e organizzare cicli di studio.</p>
+                  <strong>Report ultimo Pomodoro:</strong><br />
+                  Cicli completati: {report.cyclesCompleted}<br />
+                  Studio: {report.studyDuration} min<br />
+                  Pausa: {report.breakDuration} min<br />
+                  Totale: {report.totalStudyTime} min
+                </div>
+              )}
 
-                {sec.id === "note" && (
-                  <p className="text-white">Puoi scrivere e rivedere le tue note.</p>
-                )}
+              {sec.id === "note" && (
+                <p className="text-white">Puoi scrivere e rivedere le tue note.</p>
+              )}
 
-                {sec.id === "calendario" && (
-                  <p className="text-white">Consulta i tuoi eventi e appuntamenti.</p>
-                )}
-              </div>
-            )}
+              {sec.id === "calendario" && (
+                <p className="text-white">Consulta i tuoi eventi e appuntamenti.</p>
+              )}
+            </div>
           </div>
         ))}
       </div>

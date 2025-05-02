@@ -1,3 +1,4 @@
+//File che contiene l'algoritmo dietro alla funzione per calcolare i cicli personalizzati secondo lo schema 35 minuti (30+5)
 export const calcolaCicliStandard = (totaleMinuti) => {
   const tempoCiclo = 35;
   const studioBase = 30;
