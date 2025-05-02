@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/Login/LoginPage.jsx";
 import RegisterPage from "./pages/Register/RegisterPage.jsx";
-import HomePage from "./pages/HomePage";
+import HomePage from "./pages/Home/HomePage.jsx";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
 import ProtectedRoute from "./ProtectedRoute.jsx";
