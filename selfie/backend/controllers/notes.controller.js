@@ -30,7 +30,7 @@ export const saveNotes = async(req,res) => {
     const newNoteEvent = new Event({
       userId,
       date: eventDate,
-      text: `{ Note created: "${title}"}`,
+      text: `Note created: "${title}"`,
       type: 'note',
       noteId: newNote._id            // foreign key 
     });
