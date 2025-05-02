@@ -61,16 +61,6 @@ const NoteEditor = () => {
     setShowEditor(true);
   };
   
-  // Cancella una nota (chiede conferma) e refresha la lista =========================
-
-  const deleteNote = id => {
-    if (window.confirm("Vuoi veramente cancellare questa nota?")) {
-      axios.delete(`/api/notes/${id}`)
-        .then(() => fetchNotes())
-        .catch(err => console.error(err));
-    }
-  };
-  
   // HTML Sanitizing (pulisce il markdown per prevenire attacchi XSS) ================
   
   const renderMarkdown = (markdownText) => {
@@ -149,6 +139,17 @@ const NoteEditor = () => {
       minute: "2-digit",
     });
 
+  // resetta l'editor, per creare una nota nuova ====================================
+  
+  const resetEditor = () => {
+    setNoteId(null);
+    setTitle("");
+    setMarkdown("");
+    setTags([]);
+    setTagInput("");
+    setCreatedAt(new Date());
+    setLastEdited(new Date());
+  };
 
   // salvataggio delle note ======================================================
   
@@ -162,22 +163,14 @@ const NoteEditor = () => {
       lastEdited: new Date(),      // obv aggiorna la data
     };
     
-    const request = noteId                                       // se gia' c'e' la nota, diventa un update 
+    const request = noteId      // se gia' c'e' la nota, diventa un update 
     ? axios.put(`/api/notes/${noteId}`, noteData)
     : axios.post(`/api/notes/save`, noteData);
 
     request
       .then(() => {
         alert("Nota salvata con successo!")
-        fetchNotes();
-        // sgombra l'Editor
-        if (!noteId) {
-          setTitle("");
-          setMarkdown("");
-          setTags([]);
-          setCreatedAt(new Date());
-        }
-        setNoteId(null);
+        fetchNotes();        
       })
       .catch(err => {
         console.error(err);
@@ -185,17 +178,7 @@ const NoteEditor = () => {
       });
   };
   
-  // resetta l'editor, per creare una nota nuova ====================================
   
-  const resetEditor = () => {
-    setNoteId(null);
-    setTitle("");
-    setMarkdown("");
-    setTags([]);
-    setTagInput("");
-    setCreatedAt(new Date());
-    setLastEdited(new Date());
-  }
 
   // redirect alla homepage =========================================================
 
@@ -204,6 +187,19 @@ const NoteEditor = () => {
   const goHome = () => {
     navigate("/home");
   };
+  
+  // Cancella una nota (chiede conferma) e refresha la lista =========================
+  
+  const deleteNote = id => {
+    if (window.confirm("Vuoi veramente cancellare questa nota?")) {
+      axios.delete(`/api/notes/${id}`)
+        .then(alert("Nota cancellata con successo!!"))
+        .then(fetchNotes())
+        .catch(err => console.error(err));
+      resetEditor();
+    }
+  };
+  
 
   //#################################################################################
   return (

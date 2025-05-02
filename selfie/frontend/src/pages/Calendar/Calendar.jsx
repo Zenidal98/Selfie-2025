@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -9,17 +9,28 @@ import {
 } from 'date-fns';
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
+import CalendarModal from './calendarModal';
+import { Modal } from 'bootstrap';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  
+  const modalRef = useRef(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const firstDayIndex = getDay(monthStart);
+  
+  const showModal = (date) => {
+    setSelectedDate(date);
+    const modal = new Modal(modalRef.current);
+    modal.show();
+  };
 
   const generateCalendar = () => {
     const cells = [];
@@ -42,7 +53,7 @@ const Calendar = () => {
         <div
           key={dateStr}
           className={`calendar-cell day ${dayClass}`}
-          onClick={() => alert(`Clicked on ${dateStr}`)}
+          onClick={() => showModal(dateStr)}
         >
           <div className="day-number">{dayNum}</div>
         </div>
@@ -73,6 +84,7 @@ const Calendar = () => {
       </div>
       <div className="calendar-grid-body">{generateCalendar()}</div>
       <button className='btn btn-outline-primary mt-5' onClick={goHome}>Alla Homepage</button>
+      <CalendarModal modalRef={modalRef} selectedDate={selectedDate}></CalendarModal>
     </div>
   );
 };
