@@ -7,10 +7,12 @@ import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import Calendar from "./pages/Calendar/Calendar.jsx";
+import { TimeMachineProvider } from './TimeMachine.jsx';
 
 const App = () => {               // ho messo che / parte da /login
   return (  
     <Router>
+      <TimeMachineProvider>
       <Routes>
       <Route path="/" element={<Navigate to="/login" />} />                        
       <Route path="/login" element={<LoginPage />} /> 
@@ -20,6 +22,7 @@ const App = () => {               // ho messo che / parte da /login
       <Route path="/pomodoro" element={<ProtectedRoute> <PomodoroPage /> </ProtectedRoute>}/>
       <Route path="/calendar" element={<ProtectedRoute> <Calendar/> </ProtectedRoute>}/>
       </Routes>
+      </TimeMachineProvider>
     </Router>
   );
 };
