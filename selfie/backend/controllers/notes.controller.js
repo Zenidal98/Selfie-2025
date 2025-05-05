@@ -90,7 +90,7 @@ export const deleteNote = async(req, res) => {
     if (!deletedNote) return res.status(404).json({ error: "Not found"});
     
     // cancella l'evento associato ==============================================
-    await Event.deleteOne({ noteId: id });
+    await Event.deleteOne({ noteId: noteId });
 
     res.status(200).json({ message: "Deleted with success"});
   } catch (err) {

@@ -1,10 +1,10 @@
 import express from "express";
-import {  createEvent, getEventsByDate, updateEvent, deleteEvent} from "../controllers/event.controller.js"
+import {  createEvent, getEvents, updateEvent, deleteEvent} from "../controllers/event.controller.js"
 
 const router = express.Router();
 
 // GET -> eventi dell'utente in tale data ========================
-router.get('/:date', getEventsByDate);
+router.get('/', getEvents);
 
 // POST -> crea un nuovo evento (di tipo "manuale") ==============
 router.post('/', createEvent);

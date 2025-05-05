@@ -1,14 +1,24 @@
 import Event from "../models/event.model.js";
 
-export const getEventsByDate = async (req, res) => {
-  const { date } = req.params;
-  const { userId } = req.query;
+export const getEvents = async (req, res) => {
+  //const { date } = req.params;
+  const { userId, start, end } = req.query;
 
-  if (!userId) return res.status(400).json({ error: "Missing userId" });
+  if (!userId || !start || !end) {
+    return res.status(400).json({ error: "Missing query arguments" });
+  }
 
   try {
-    const events = await Event.find({ date });
-    res.json(events);
+    const events = await Event.find({ 
+      userId,
+      date: { $gte: start, $lte: end } 
+    }).lean();
+
+    res.json(events.map(e => ({
+      date: e.date,
+      type: e.type,
+      text: e.text
+    })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch events' });
   }

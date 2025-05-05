@@ -1,9 +1,11 @@
+/* Layout grid for header & body */
 .calendar-grid-header,
 .calendar-grid-body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
 }
 
+/* Base cell styling */
 .calendar-cell {
   border: 1px solid #dee2e6;
   padding: 10px;
@@ -14,12 +16,28 @@
   position: relative;
 }
 
+/* Weekday vs weekend backgrounds */
+.weekday {
+  background-color: #ffffff; /* Neutral light tone for weekdays */
+}
+
+.weekend {
+  background-color: #ffe5e5; /* Subtle reddish hue for weekends */
+}
+
+/* Empty slots before/after month days */
+.empty {
+  background-color: #f1f1f1;
+}
+
+/* Header cells */
 .header {
   background-color: #f8f9fa;
   font-weight: bold;
   text-align: center;
 }
 
+/* Day cells hover effect */
 .day {
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -29,22 +47,12 @@
   background-color: #e2e6ea;
 }
 
+/* Day number styling */
 .day-number {
   font-weight: bold;
 }
 
-.empty {
-  background-color: #f1f1f1;
-}
-
-.weekday {
-  background-color: #ffffff; /* Neutral light tone for weekdays */
-}
-
-.weekend {
-  background-color: #ffe5e5; /* Subtle reddish hue for weekends */
-}
-
+/* Responsive tweaks */
 @media (max-width: 768px) {
   .calendar-cell {
     min-height: 60px;
@@ -52,12 +60,39 @@
   }
 }
 
-/* Unica cosa che ho aggiunto in questo file, mette semplicemente l'immagine di sfondo */
+/* Page-level background image */
 body {
   background-image: url('../../img/calendar.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+}
+
+/* ──────────── Additions for event indicators ──────────── */
+
+/* Container for the little icons/dots at bottom */
+.event-indicators {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+/* Icon sizing */
+.note-icon,
+.manual-icon {
+  font-size: 0.8rem;
+}
+
+/* Colored icons for each type */
+.note-icon {
+  color: #0d6efd;    /* blue for “notes” */
+}
+
+.manual-icon {
+  color: #198754;    /* green for “manual” */
 }
 
