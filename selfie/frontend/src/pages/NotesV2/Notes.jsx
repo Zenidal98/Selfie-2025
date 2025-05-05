@@ -4,6 +4,7 @@ import { marked } from "marked";
 import DOMPurify from 'dompurify';
 import axios from "axios";
 import NotesList from "./NotesList";
+import './Notes.css'
 
 const NoteEditor = () => {
   const [noteId, setNoteId] = useState(null);
@@ -203,34 +204,34 @@ const NoteEditor = () => {
 
   //#################################################################################
   return (
-    <div className="container py-4">
-      <h1> Selfie Scribe</h1>
-      {/* Titolo della nota*/}
-      <div>
+    <div className="notes-wrapper">
+      <div className="notes-content">
+        <h1>Selfie Scribe</h1>
+
+        {/* Titolo */}
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Titolo della nota"
-          className="form-control form-control-lg"
+          className="form-control form-control-sm mb-2"
         />
-      </div>
-      {/* Tag delle note */}
-      <div className="mb-3">
-        <div className="my-2 d-flex flex-wrap align-items-center gap-2">
+
+        {/* Tag */}
+        <div className="mb-2 d-flex flex-wrap gap-2">
           {tags.map((tag, index) => (
-            <span key={index} className="badge bg-primary text-white p-2">
+            <span key={index} className="badge bg-primary text-white">
               {truncateTag(tag)}
               <button
                 onClick={() => removeTag(tag)}
                 className="btn-close btn-close-white btn-sm ms-2"
-                aria-label={`Remove tag ${tag}`}
               />
             </span>
           ))}
         </div>
+
         {tags.length < 5 && (
-          <div className="input-group input-group-sm">
+          <div className="input-group input-group-sm mb-2">
             <input
               type="text"
               className="form-control"
@@ -239,96 +240,59 @@ const NoteEditor = () => {
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTag()}
             />
-            <button onClick={addTag} className="btn btn-outline-secondary">
-              Add
-            </button>
+            <button onClick={addTag} className="btn btn-outline-secondary">Add</button>
           </div>
         )}
-      </div>
-      {/* sezione delle date */}
-      <div className="text-muted small mb-3">
-        <span className="me-3">
-          <strong>Ultima modifica:</strong> {formatDate(lastEdited)}
-        </span>
-        <span>
-          <strong>Data di creazione:</strong> {formatDate(createdAt)}
-        </span>
-      </div>
-      {/* Toggle per mobile */}
-      <button
-        className="btn btn-secondary w-100 mb-3 d-md-none"
-        onClick={() => setShowEditor(!showEditor)}
-      >
-        {showEditor ? "Show Preview" : "Show Editor"}
-      </button>
 
-      {/* Toolbar di formattazione */}
-      <div className="btn-group flex-wrap my-3">
-        <button onClick={() => applyMarkdown("bold")} className="btn btn-outline-dark btn-sm">
-          Bold
-        </button>
-        <button onClick={() => applyMarkdown("italic")} className="btn btn-outline-dark btn-sm">
-          Italic
-        </button>
-        <button onClick={() => applyMarkdown("h1")} className="btn btn-outline-dark btn-sm">
-          Title
-        </button>
-        <button onClick={() => applyMarkdown("h2")} className="btn btn-outline-dark btn-sm">
-          Subtitle
-        </button>
-        <button onClick={() => applyMarkdown("ul")} className="btn btn-outline-dark btn-sm">
-          • List
-        </button>
-        <button onClick={() => applyMarkdown("ol")} className="btn btn-outline-dark btn-sm">
-          1. List
-        </button>
-      </div>
+        {/* Date info */}
+        <div className="text-muted small mb-2">
+          <strong>Ultima modifica:</strong> {formatDate(lastEdited)}{" | "}
+          <strong>Creata:</strong> {formatDate(createdAt)}
+        </div>
 
-      <div className="row">
-        {/* Editor */}
-        <div className={`col-md-6 ${showEditor ? "" : "d-none d-md-block"} mb-3`}>
+        {/* Toolbar */}
+        <div className="btn-group btn-group-sm mb-2">
+          <button onClick={() => applyMarkdown("bold")} className="btn btn-outline-light">Bold</button>
+          <button onClick={() => applyMarkdown("italic")} className="btn btn-outline-light">Italic</button>
+          <button onClick={() => applyMarkdown("h1")} className="btn btn-outline-light">H1</button>
+          <button onClick={() => applyMarkdown("h2")} className="btn btn-outline-light">H2</button>
+          <button onClick={() => applyMarkdown("ul")} className="btn btn-outline-light">• List</button>
+          <button onClick={() => applyMarkdown("ol")} className="btn btn-outline-light">1. List</button>
+        </div>
+
+        {/* Editor + Preview */}
+        <div className="notes-main">
           <textarea
             ref={textareaRef}
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
             className="form-control"
-            rows={15}
             placeholder="Scripta Manent!"
-            style={{ resize: "vertical" }}
           />
-        </div>
-
-        {/* Preview */}
-        <div className={`col-md-6 ${showEditor ? "d-none d-md-block" : ""}`}>
           <div
-            className="border rounded p-3 bg-light preview-box"
-            style={{ minHeight: "300px", overflowY: "auto" }}
+            className="preview-box p-2"
             dangerouslySetInnerHTML={renderMarkdown(markdown)}
           />
         </div>
-      </div>
-      {/* Toolbar ausiliaria */}
-      <div className="text-end mt-3">
-        <button className="btn btn-success" onClick={saveNote}>
-          Salva Nota
-        </button>
-        <button className="btn btn-outline-dark mx-2" onClick={resetEditor}>
-          Nuova Nota
-        </button>
-        <button className="btn btn-outline-primary" onClick={goHome}>
-          Vai alla homepage
-        </button>   
-      </div>
-      {/* Filtro note: vedi ./NotesList.jsx */ }
-      <div className="mt-5">
-        <h4 className="mb-3">Le Tue Note</h4>
-        <NotesList 
-          notes={notes} 
-          setFiltered={setFiltered} 
-          filtered={filtered}
-          onSelect={loadNote}
-          onDelete={deleteNote}
-        />
+
+        {/* Pulsanti */}
+        <div className="notes-buttons">
+          <button className="btn btn-success" onClick={saveNote}>Salva</button>
+          <button className="btn btn-outline-light" onClick={resetEditor}>Nuova</button>
+          <button className="btn btn-outline-info" onClick={goHome}>Home</button>
+        </div>
+
+        {/* Lista note */}
+        <div className="notes-footer">
+          <h6 className="mt-2">Le tue note</h6>
+          <NotesList
+            notes={notes}
+            setFiltered={setFiltered}
+            filtered={filtered}
+            onSelect={loadNote}
+            onDelete={deleteNote}
+          />
+        </div>
       </div>
     </div>
   );

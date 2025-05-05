@@ -1,0 +1,98 @@
+/* Sfondo generale della pagina */
+.notes-wrapper {
+    height: 100vh;
+    background-image: url('../../img/notes.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Contenitore centrale compatto */
+  .notes-content {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 1100px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Titolo e input */
+  .notes-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .notes-content input[type="text"] {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Toolbar markdown compatta */
+  .btn-group {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Area principale divisa */
+  .notes-main {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    overflow: hidden;
+  }
+  
+  /* Editor e Preview: metà schermo, compatti */
+  .notes-main textarea,
+  .notes-main .preview-box {
+    flex: 1;
+    resize: none;
+    height: 100%;
+    min-height: 200px;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  
+  /* Preview box su sfondo chiaro */
+  .preview-box {
+    background-color: rgba(255, 255, 255, 0.85);
+    color: black;
+    border-radius: 8px;
+  }
+  
+  /* Pulsanti salvataggio */
+  .notes-buttons {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  
+  /* Tag + date + note list */
+  .notes-footer {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    overflow-y: auto;
+    max-height: 25%;
+  }
+  
+  /* Riduci margini badge */
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  /* Lista note */
+  .notes-list {
+    margin-top: 0.5rem;
+    overflow-y: auto;
+    max-height: 100%;
+  }
+  

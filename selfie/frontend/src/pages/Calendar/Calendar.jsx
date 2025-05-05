@@ -69,9 +69,10 @@ const Calendar = () => {
   const goHome = () => {
     navigate("/home");
   };
-
+                           /*Ho button da sopra calendarmodal modalref a sopra h2 classname = ecc, ho cambiato div classname da mt-4 a mt-1*/
   return (
-    <div className="container mt-4">
+    <div className="container mt-1">
+      <button className='btn btn-outline-primary mt-5' onClick={goHome}>Torna alla home</button>         
       <h2 className="text-center mb-4">
         {format(currentDate, 'MMMM yyyy')}
       </h2>
@@ -83,7 +84,6 @@ const Calendar = () => {
         ))}
       </div>
       <div className="calendar-grid-body">{generateCalendar()}</div>
-      <button className='btn btn-outline-primary mt-5' onClick={goHome}>Alla Homepage</button>
       <CalendarModal modalRef={modalRef} selectedDate={selectedDate}></CalendarModal>
     </div>
   );

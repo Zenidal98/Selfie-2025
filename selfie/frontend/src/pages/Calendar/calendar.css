@@ -52,3 +52,12 @@
   }
 }
 
+/* Unica cosa che ho aggiunto in questo file, mette semplicemente l'immagine di sfondo */
+body {
+  background-image: url('../../img/calendar.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
