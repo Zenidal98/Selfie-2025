@@ -1,7 +1,35 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 
-const CalendarModal = ({ modalRef, selectedDate, selectedEvents }) => {
+const CalendarModal = ({ 
+  modalRef, 
+  selectedDate, 
+  selectedEvents,
+  onEventAdded
+}) => {
+
+  const [newText, setNewText] = useState('');
+  const storedUser = JSON.parse(localStorage.getItem('utente')) || {};
+  const userId = storedUser._id;
+
+  const handleAdd = async () => {
+    if (!newText.trim()) return;
+    
+    try {
+      await axios.post('api/events', {
+        userId,
+        date: selectedDate,
+        text: newText.trim(),
+      });
+      setNewText('');
+      onEventAdded();
+      const modal = new window.bootstrap.Modal(modalRef.current);
+      modal.show();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
   return (
     <div className="modal fade" tabIndex="-1" ref={modalRef}>
       <div className="modal-dialog">
@@ -31,11 +59,34 @@ const CalendarModal = ({ modalRef, selectedDate, selectedEvents }) => {
                 ))}
               </ul>
             )}
+
+            {/* Form per aggiungere attivita' */}
+            <div>
+              <label htmlFor="new-evt" className="form-label">New Activity:</label>
+              <div className="input-group">
+                <input
+                  id="new-evt"
+                  type="text"
+                  className="form-control"  
+                  value={newText}
+                  onChange={e => setNewText(e.target.value)}
+                  placeholder="Insert your new activity here"
+                />
+                <button 
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={handleAdd}
+                >Add +
+                </button>
+              </div>
+            </div>
         </div>
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>  
+            {/* bottone per ora non lo cancello, ma e' spostato nel form
             <button type="button" className="btn btn-primary">Add Activity</button>
+            */}
           </div>
 
         </div>

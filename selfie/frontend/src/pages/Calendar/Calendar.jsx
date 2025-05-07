@@ -21,6 +21,8 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [eventsMap, setEventsMap] = useState({});
   const [selectedEvents, setSelectedEvents] = useState([]);
+  // Semanticamente non rappresenta niente, ma permette di refreshare ==================
+  const [monthTrigger, setMonthTrigger] = useState(0);
 
   const modalRef = useRef(null);
 
@@ -30,7 +32,7 @@ const Calendar = () => {
   const firstDayIndex = getDay(monthStart);
   
   
-  // Fetch all months' worth of events ===============================================
+  // Fetch degli eventi del mese ===============================================
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('utente')) || {};
     const userId = storedUser._id;
@@ -51,8 +53,23 @@ const Calendar = () => {
         setEventsMap(map);
       })
       .catch(console.error);
-  }, [monthStart, monthEnd]);
+  }, [monthStart, monthEnd, monthTrigger]);
   
+  // forza il refresh ===============================================================
+  const refreshMonth = () => setMonthTrigger(t => t + 1); 
+  
+  // aggiorna la lista del modale quando aggiungi eventi ============================
+  useEffect(() => {
+    if (selectedDate) {
+      setSelectedEvents(eventsMap[selectedDate] || []);
+    }
+  }, [eventsMap, selectedDate]);
+  
+  // gestisce la cancellazione di un evento ============================================
+  // const handleEventDeletion
+  
+
+
 
   const showModal = (dateStr) => {
     setSelectedDate(dateStr);
@@ -63,21 +80,21 @@ const Calendar = () => {
 
   const generateCalendar = () => {
     const cells = [];
-    // Empty cells before month start
+    // Crea le celle di padding della prima settimana ============================== 
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(<div key={`empty-${i}`} className="calendar-cell empty" />);
     }
 
-    // Day cells
+    // Crea le celle dei vari giorni ================================================
     monthDays.forEach((day) => {
       const dayNum = getDate(day);
       const dateStr = format(day, 'yyyy-MM-dd');
       const dayOfWeek = getDay(day);
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday 
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // per i giorni rossi
       const dayClass = isWeekend ? 'weekend' : 'weekday';
       
       const dayEvents = eventsMap[dateStr] || [];
-      const types = [...new Set(dayEvents.map(e => e.type))];
+      const types = [...new Set(dayEvents.map(e => e.type))]; // basta un solo evento per tipo per avere l'icona
 
       cells.push(
         <div
@@ -86,11 +103,11 @@ const Calendar = () => {
           onClick={() => showModal(dateStr)}
         >
           <div className="day-number">{dayNum}</div>
-
+          {/* aggiunge le icone del caso */}
           {dayEvents.length > 0 && (
             <div className="event-indicators">
               {types.includes('note') && <i className="bi bi-stickies-fill note-icon" />}
-              {types.includes('manual') && <i className="bi bi-plus-cricle manual-icon" />}
+              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" />}
             </div>
           )}
         </div>
@@ -121,7 +138,12 @@ const Calendar = () => {
         ))}
       </div>
       <div className="calendar-grid-body">{generateCalendar()}</div>
-      <CalendarModal modalRef={modalRef} selectedDate={selectedDate} selectedEvents={selectedEvents}></CalendarModal>
+      <CalendarModal 
+        modalRef={modalRef} 
+        selectedDate={selectedDate} 
+        selectedEvents={selectedEvents}
+        onEventAdded={refreshMonth}
+      />
     </div>
   );
 };
