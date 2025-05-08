@@ -6,6 +6,10 @@ import {
   getDate,
   format,
   eachDayOfInterval,
+  addMonths,
+  subMonths,
+  addYears,
+  subYears,
 } from 'date-fns';
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
@@ -128,13 +132,44 @@ const Calendar = () => {
   const goHome = () => {
     navigate("/home");
   };
-                           /*Ho button da sopra calendarmodal modalref a sopra h2 classname = ecc, ho cambiato div classname da mt-4 a mt-1*/
+  
+  // cambio mese/anno =====================================================================
+  const goToPreviousMonth = () => setCurrentDate(prev => subMonths(prev, 1));
+  const goToNextMonth = () => setCurrentDate(prev => addMonths(prev, 1));
+  const goToPreviousYear = () => setCurrentDate(prev => subYears(prev, 1));
+  const goToNextYear = () => setCurrentDate(prev => addYears(prev, 1));
+
+
+  /*Ho button da sopra calendarmodal modalref a sopra h2 classname = ecc, ho cambiato div classname da mt-4 a mt-1*/
   return (
     <div className="container mt-1">
-      <button className='btn btn-outline-primary mt-5' onClick={goHome}>Torna alla home</button>         
-      <h2 className="text-center mb-4">
-        {format(currentDate, 'MMMM yyyy')}
-      </h2>
+
+      <button className='btn btn-outline-primary mt-5 mb-2' onClick={goHome}>Torna alla home</button>
+      <div className='d-flex justify-content-center align-items-center mb-3'>
+        
+        <div className='btn-group me-2'>
+          <button className='btn btn-outline-secondary' onClick={goToPreviousYear}>
+            &laquo;
+          </button>
+          <button className='btn btn-outline-secondary' onClick={goToPreviousMonth} >
+            &lsaquo;
+          </button>
+        </div>
+
+        <h2 className="mx-3 mb-2">
+          {format(currentDate, 'MMMM yyyy')}
+        </h2>
+        
+        <div className='btn-group ms-2'>
+          <button className='btn btn-outline-secondary' onClick={goToNextMonth}>
+            &rsaquo;
+          </button>
+          <button className='btn btn-outline-secondary' onClick={goToNextYear}>
+            &raquo;
+          </button>
+        </div>
+
+      </div>
       <div className="calendar-grid-header">
         {daysOfWeek.map((day) => (
           <div key={day} className="calendar-cell header">
