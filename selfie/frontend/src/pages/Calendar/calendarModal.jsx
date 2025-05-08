@@ -5,10 +5,12 @@ const CalendarModal = ({
   modalRef, 
   selectedDate, 
   selectedEvents,
-  onEventAdded
+  onEventAdded,
+  onEventDeleted,
 }) => {
 
   const [newText, setNewText] = useState('');
+  const [deletingIds, setDeletingIds] = useState(new Set()) // assicura id unici
   const storedUser = JSON.parse(localStorage.getItem('utente')) || {};
   const userId = storedUser._id;
 
@@ -16,7 +18,7 @@ const CalendarModal = ({
     if (!newText.trim()) return;
     
     try {
-      await axios.post('api/events', {
+      await axios.post('/api/events', {
         userId,
         date: selectedDate,
         text: newText.trim(),
@@ -29,7 +31,25 @@ const CalendarModal = ({
       console.error(err);
     }
   };
-  
+ 
+  const handleDelete = async (eventId) => {
+    if (!window.confirm('Do you really want to delete this activity?')) return;
+    setDeletingIds(ids => new Set(ids).add(eventId));
+    try {
+      await axios.delete(`/api/events/${eventId}`);
+      onEventDeleted(eventId, selectedDate);
+    } catch (err) {
+      console.error(err);
+      alert('Error in deleting events');
+    } finally {
+      setDeletingIds(ids => {
+        const tempSet = new Set(ids);
+        tempSet.delete(eventId);
+        return tempSet;
+      });
+    }
+  };
+
   return (
     <div className="modal fade" tabIndex="-1" ref={modalRef}>
       <div className="modal-dialog">
@@ -52,9 +72,17 @@ const CalendarModal = ({
                   <li
                     key = {index}
                     className = {`list-group-item ${
-                      event.type === 'note' ? 'list-group-item-info' : 'list-group-item-success'}`}
+                      event.type === 'note' ? 'list-group-item-info' : 'list-group-item-success'} d-flex justify-content-between align-items-center`}
                   >
-                    {event.text}
+                    <span>{event.text}</span>
+                    {event.type === 'manual' && (
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(event._id)}
+                        disabled={deletingIds.has(event._id)}
+                      >{deletingIds.has(event._id) ? '...' : 'x'}
+                      </button>
+                    )}
                   </li>    
                 ))}
               </ul>
@@ -62,7 +90,7 @@ const CalendarModal = ({
 
             {/* Form per aggiungere attivita' */}
             <div>
-              <label htmlFor="new-evt" className="form-label">New Activity:</label>
+              <label htmlFor="new-evt" className="form-label mt-2">New Activity:</label>
               <div className="input-group">
                 <input
                   id="new-evt"

@@ -15,6 +15,7 @@ export const getEvents = async (req, res) => {
     }).lean();
 
     res.json(events.map(e => ({
+      _id: e._id,
       date: e.date,
       type: e.type,
       text: e.text

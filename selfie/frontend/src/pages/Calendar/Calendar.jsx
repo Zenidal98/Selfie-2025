@@ -66,11 +66,16 @@ const Calendar = () => {
   }, [eventsMap, selectedDate]);
   
   // gestisce la cancellazione di un evento ============================================
-  // const handleEventDeletion
+  const handleEventDeletion = (deletedId, date) => {
+    setEventsMap(map => {
+      const dayEvents = (map[date] || []).filter(event => event._id !== deletedId);
+      return { ...map, [date]: dayEvents };
+    });
+    if (selectedDate === date) {
+      setSelectedEvents(events => events.filter(event => event._id !== deletedId));
+    }
+  };
   
-
-
-
   const showModal = (dateStr) => {
     setSelectedDate(dateStr);
     setSelectedEvents(eventsMap[dateStr] || []);
@@ -143,6 +148,7 @@ const Calendar = () => {
         selectedDate={selectedDate} 
         selectedEvents={selectedEvents}
         onEventAdded={refreshMonth}
+        onEventDeleted={handleEventDeletion}
       />
     </div>
   );
