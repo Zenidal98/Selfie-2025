@@ -27,14 +27,13 @@ const Calendar = () => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   // Semanticamente non rappresenta niente, ma permette di refreshare ==================
   const [monthTrigger, setMonthTrigger] = useState(0);
-
   const modalRef = useRef(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayIndex = getDay(monthStart);
-  
+  const lastDayIndex = getDay(monthStart);
   
   // Fetch degli eventi del mese ===============================================
   useEffect(() => {
@@ -43,15 +42,15 @@ const Calendar = () => {
     if (!userId) return;
 
     const start = format(monthStart, 'yyyy-MM-dd');
-    const end   = format(monthEnd,   'yyyy-MM-dd');
+    const end = format(monthEnd,   'yyyy-MM-dd');
 
     axios
       .get(`/api/events?userId=${userId}&start=${start}&end=${end}`)
       .then((res) => {
-        // build date→events map
+        // mappa gli eventi sulle date del mese associate
         const map = {};
         res.data.forEach(evt => {
-          map[evt.date] = map[evt.date] || [];
+          map[evt.date] = map[evt.date] || []; // assicura non ci siano valori undefined
           map[evt.date].push(evt);
         });
         setEventsMap(map);
@@ -122,7 +121,7 @@ const Calendar = () => {
         </div>
       );
     });
-
+   
     return cells;
   };
   
@@ -156,7 +155,7 @@ const Calendar = () => {
           </button>
         </div>
 
-        <h2 className="mx-3 mb-2">
+        <h2 className="mx-3 mb-2 px-5">
           {format(currentDate, 'MMMM yyyy')}
         </h2>
         

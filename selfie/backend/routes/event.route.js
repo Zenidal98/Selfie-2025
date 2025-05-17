@@ -3,7 +3,7 @@ import {  createEvent, getEvents, updateEvent, deleteEvent} from "../controllers
 
 const router = express.Router();
 
-// GET -> eventi dell'utente in tale data ========================
+// GET -> eventi dell'utente in tale periodo (periodo e id definiti nella query, vedi controller) ========================
 router.get('/', getEvents);
 
 // POST -> crea un nuovo evento (di tipo "manuale") ==============

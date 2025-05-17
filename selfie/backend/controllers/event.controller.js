@@ -1,7 +1,6 @@
 import Event from "../models/event.model.js";
 
 export const getEvents = async (req, res) => {
-  //const { date } = req.params;
   const { userId, start, end } = req.query;
 
   if (!userId || !start || !end) {
@@ -13,7 +12,7 @@ export const getEvents = async (req, res) => {
       userId,
       date: { $gte: start, $lte: end } 
     }).lean();
-
+// lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
     res.json(events.map(e => ({
       _id: e._id,
       date: e.date,

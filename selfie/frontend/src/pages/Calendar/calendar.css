@@ -69,7 +69,6 @@ body {
   background-repeat: no-repeat;
 }
 
-/* ──────────── Additions for event indicators ──────────── */
 
 /* Container for the little icons/dots at bottom */
 .event-indicators {
@@ -95,4 +94,5 @@ body {
 .manual-icon {
   color: #198754;    /* green for “manual” */
 }
+
 
