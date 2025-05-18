@@ -25,19 +25,19 @@
   background-color: #ffe5e5; /* Subtle reddish hue for weekends */
 }
 
-/* Empty slots before/after month days */
+/* celle inattive di padding */
 .empty {
   background-color: #f1f1f1;
 }
 
-/* Header cells */
+/* Celle dei nomi dei giorni */
 .header {
   background-color: #f8f9fa;
   font-weight: bold;
   text-align: center;
 }
 
-/* Day cells hover effect */
+/* hover effect */
 .day {
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -47,12 +47,12 @@
   background-color: #e2e6ea;
 }
 
-/* Day number styling */
+/* Numero del giorno */
 .day-number {
   font-weight: bold;
 }
 
-/* Responsive tweaks */
+/* dettagli per il responsive (WIP) */
 @media (max-width: 768px) {
   .calendar-cell {
     min-height: 60px;
@@ -60,7 +60,7 @@
   }
 }
 
-/* Page-level background image */
+/* Immagine di bg */
 body {
   background-image: url('../../img/calendar.jpg');
   background-size: cover;
@@ -70,7 +70,7 @@ body {
 }
 
 
-/* Container for the little icons/dots at bottom */
+/* Robe varie per le icone */
 .event-indicators {
   position: absolute;
   bottom: 4px;
@@ -80,19 +80,18 @@ body {
   gap: 4px;
 }
 
-/* Icon sizing */
 .note-icon,
 .manual-icon {
-  font-size: 0.8rem;
+  font-size: 1.5rem;
 }
 
-/* Colored icons for each type */
 .note-icon {
-  color: #0d6efd;    /* blue for “notes” */
+  color: #0d6efd;    
 }
 
 .manual-icon {
-  color: #198754;    /* green for “manual” */
+  color: #198754; 
 }
 
+/* DA AGGIUNGERE LE ROBE DEL POMODORO */
 

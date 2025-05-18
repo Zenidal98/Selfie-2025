@@ -11,20 +11,21 @@ const CalendarModal = ({
 
   const [newText, setNewText] = useState('');
   const [deletingIds, setDeletingIds] = useState(new Set()) // assicura id unici
-  const storedUser = JSON.parse(localStorage.getItem('utente')) || {};
+  const storedUser = JSON.parse(localStorage.getItem('utente')) //|| {}; tanto se spunta {} siamo fregati lo stesso
   const userId = storedUser._id;
 
   const handleAdd = async () => {
+    // check che la textbox non sia vuota
     if (!newText.trim()) return;
     
     try {
-      await axios.post('/api/events', {
+      const res = await axios.post('/api/events', {
         userId,
         date: selectedDate,
         text: newText.trim(),
       });
       setNewText('');
-      onEventAdded();
+      onEventAdded(res.data); // in realtà mi serve solo la data qui, ma almeno così sono certo che l'oggetto evento sia lo stesso 
       const modal = new window.bootstrap.Modal(modalRef.current);
       modal.show();
     } catch (err) {
@@ -32,8 +33,9 @@ const CalendarModal = ({
     }
   };
  
-  const handleDelete = async (eventId) => {
+  const handleDelete = async (eventId) => {   
     if (!window.confirm('Do you really want to delete this activity?')) return;
+    // "Marca" unicamente gli eventi che dovranno essere filtrati via
     setDeletingIds(ids => new Set(ids).add(eventId));
     try {
       await axios.delete(`/api/events/${eventId}`);
@@ -42,6 +44,7 @@ const CalendarModal = ({
       console.error(err);
       alert('Error in deleting events');
     } finally {
+      // se tutto è andato bene rimuove l'evento dalla lista nera
       setDeletingIds(ids => {
         const tempSet = new Set(ids);
         tempSet.delete(eventId);
