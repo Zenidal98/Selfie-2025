@@ -9,7 +9,7 @@ router.get('/', getEvents);
 // POST -> crea un nuovo evento (di tipo "manuale") ==============
 router.post('/', createEvent);
 
-// PUT -> aggiorna un evento preesistente =========================
+// PUT -> aggiorna un evento preesistente NON ATTUALMENTE IN UTILIZZO=========================
 router.put('/:id', updateEvent);
 
 // DELETE -> cancella un evento preesistente =====================

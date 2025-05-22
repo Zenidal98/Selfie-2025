@@ -16,6 +16,7 @@ export const getEvents = async (req, res) => {
     res.json(events.map(e => ({
       _id: e._id,
       date: e.date,
+      time: e.time,
       type: e.type,
       text: e.text
     })));
@@ -25,13 +26,16 @@ export const getEvents = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
-  const { userId, date, text } = req.body;
+  const { userId, date, text, time } = req.body;
   if (!date || !text || !userId) return res.status(400).json({ error: 'Missing mandatory fields'});
+  // se manca il tempo o non e' valido metto l'evento in cima alla lista
+  if (!time || !/^\d{2}:\d{2}$/.test(time)) time = '00:00';
   
   try {
     const newEvent = new Event({ 
       userId,
       date,
+      time,
       text,
       type: 'manual',
       noteId: null
@@ -45,6 +49,7 @@ export const createEvent = async (req, res) => {
   }
 };
 
+// per ora non la sto usando, ma non si sa mai
 export const updateEvent = async (req, res) => {
   const { id } = req.params;
   const { text } = req.body;

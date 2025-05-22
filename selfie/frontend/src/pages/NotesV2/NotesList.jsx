@@ -87,6 +87,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete}) {
                 type="button"
                 className="btn btn-danger btn-sm position-absolute bottom-1 end-0 m-2 p-1"
                 onClick={e => {
+                  /* altrimenti conterebbe anche il click sulla card*/
                   e.stopPropagation();
                   onDelete(note._id);
                 }}

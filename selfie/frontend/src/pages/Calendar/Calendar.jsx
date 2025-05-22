@@ -198,7 +198,7 @@ const Calendar = () => {
           <div key={d} className="calendar-cell header">{d}</div>
         ))}
       </div>
-      <div className="calendar-grid-body">{generateCalendar()}</div>
+      <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
       
       <CalendarModal
         modalRef={modalRef}

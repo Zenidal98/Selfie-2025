@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { parse, format } from "date-fns";
 
 const CalendarModal = ({ 
   modalRef, 
@@ -11,6 +12,7 @@ const CalendarModal = ({
 
   const [newText, setNewText] = useState('');
   const [deletingIds, setDeletingIds] = useState(new Set()) // assicura id unici
+  const [newTime, setNewTime] = useState('00:00'); // orario dell'attivita' (del form)
   const storedUser = JSON.parse(localStorage.getItem('utente')) //|| {}; tanto se spunta {} siamo fregati lo stesso
   const userId = storedUser._id;
 
@@ -23,13 +25,17 @@ const CalendarModal = ({
         userId,
         date: selectedDate,
         text: newText.trim(),
+        time: newTime
       });
+      // resetta lo stato
       setNewText('');
-      onEventAdded(res.data); // in realtà mi serve solo la data qui, ma almeno così sono certo che l'oggetto evento sia lo stesso 
+      setNewTime("00:00");
+      onEventAdded(res.data); // così sono certo che l'oggetto evento sia lo stesso ( poi mi servono date e time)
       const modal = new window.bootstrap.Modal(modalRef.current);
       modal.show();
     } catch (err) {
       console.error(err);
+      alert('Error in adding event. Please try again');
     }
   };
  
@@ -53,6 +59,9 @@ const CalendarModal = ({
     }
   };
 
+  // Ordina gli eventi per orario
+  const sortedEvents = [...selectedEvents].sort((a, b) => a.time.localeCompare(b.time));
+  
   return (
     <div className="modal fade" tabIndex="-1" ref={modalRef}>
       <div className="modal-dialog">
@@ -67,25 +76,39 @@ const CalendarModal = ({
 
           <div className="modal-body">
             <p><em>Cosa farai oggi?</em></p>
-            {selectedEvents.length === 0 ? (
+            {sortedEvents.length === 0 ? (
               <p><em>No events for this day</em></p>
             ) : ( 
               <ul className="list-group">
-                {selectedEvents.map((event, index) => (
+                {sortedEvents.map((event, index) => (
                   <li
                     key = {index}
                     className = {`list-group-item ${
-                      event.type === 'note' ? 'list-group-item-info' : 'list-group-item-success'} d-flex justify-content-between align-items-center`}
+                      event.type === 'note' ? 'list-group-item-info' : 'list-group-item-success'} `}
                   >
-                    <span>{event.text}</span>
-                    {event.type === 'manual' && (
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleDelete(event._id)}
-                        disabled={deletingIds.has(event._id)}
-                      >{deletingIds.has(event._id) ? '...' : 'x'}
-                      </button>
-                    )}
+                    <div className="text-wrap text-break">
+                      {event.text}
+                    </div>
+                      <div className="d-flex justify-content-end align-items-center mt-2 flex-wrap gap-2">
+                        <span className="badge rounded-pill bg-secondary mx-2">
+                          {event.time}
+                        </span>
+                        {event.type === 'manual' && (
+                          <button
+                            className="btn btn-sm btn-outline-danger rounded-pill mx-2"
+                            onClick={() => handleDelete(event._id)}
+                            disabled={deletingIds.has(event._id)}
+                          >{deletingIds.has(event._id) ? '...' : 'x'}
+                        </button>
+                        )}
+                        {event.type === 'note' && (
+                          <button
+                            className="btn btn-sm btn-outline-primary rounded-pill mx-2"
+                            onClick={() => alert("Wanna go to the note editor and cancel this?")}
+                          >?
+                          </button>
+                        )}
+                      </div>
                   </li>    
                 ))}
               </ul>
@@ -102,6 +125,15 @@ const CalendarModal = ({
                   value={newText}
                   onChange={e => setNewText(e.target.value)}
                   placeholder="Insert your new activity here"
+                />
+                <input
+                  id = "new-evt"
+                  type = "time"
+                  //min = "00:00"
+                  //max = "23:59"
+                  className="form-control"
+                  value = {newTime}
+                  onChange = {e => setNewTime(e.target.value)}
                 />
                 <button 
                   className="btn btn-primary"
