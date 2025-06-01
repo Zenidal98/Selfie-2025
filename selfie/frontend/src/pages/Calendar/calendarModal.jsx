@@ -131,6 +131,7 @@ const CalendarModal = ({
                   type = "time"
                   //min = "00:00"
                   //max = "23:59"
+                  //eh niente, i browser hanno deciso di fare come vogliono loro
                   className="form-control"
                   value = {newTime}
                   onChange = {e => setNewTime(e.target.value)}

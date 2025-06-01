@@ -9,11 +9,14 @@ import CalendarModal from './calendarModal';
 import { Modal } from 'bootstrap';
 import axios from 'axios';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { useTimeMachine } from '../../TimeMachine'
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const Calendar = () => {
-  const [currentDate,  setCurrentDate]  = useState(new Date());
+  const { virtualNow, isSynced, setIsSynced, lastManualChange } = useTimeMachine(); 
+
+  const [currentDate,  setCurrentDate]  = useState(virtualNow);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [monthTrigger, setMonthTrigger] = useState(0);
@@ -28,9 +31,21 @@ const Calendar = () => {
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayIndex = getDay(monthStart);
 
+  //controlla che virtualNow non sia già stato pickato altrove prima del render di calendar
+  useEffect(() => {
+    setCurrentDate(virtualNow);
+  }, []);
+
+  // aggiorna quando ti sposti con la tm
+  useEffect(() => {
+    if (lastManualChange !== null) {
+      setCurrentDate(virtualNow);
+    }
+  }, [lastManualChange]);
+
   // fetch dei mesi NON in cache ======================================================
   const fetchMonth = async (key, start, end) => {
-    if (eventsCache[key]) return; // ce l'ho già
+    if (eventsCache[key]) return; // ce l'ho già:
     try {
       const stored = JSON.parse(localStorage.getItem('utente')) || {};
       const userId = stored._id;
@@ -125,12 +140,14 @@ const Calendar = () => {
 
   // Funzioni per cambiare mese / anno. IMPORTANTE: il modale viene azzerato per evitare il flicker bug
   const changeMonth = changeIndex => {
+    setIsSynced(false); // per "staccarsi" liberamente dal mese di arrivo della tm
     setCurrentDate(d => addMonths(d, changeIndex));
     setSelectedDate(null);
     setSelectedEvents([]);
   };
 
   const changeYear = changeIndex => {
+    setIsSynced(false);
     setCurrentDate(d => addYears(d, changeIndex));
     setSelectedDate(null);
     setSelectedEvents([]);
