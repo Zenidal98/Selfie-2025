@@ -34,7 +34,7 @@ export const saveNotes = async(req,res) => {
       time: eventTime,
       text: `Note created: "${title}"`,
       type: 'note',
-      noteId: newNote._id            // foreign key 
+      noteId: newNote._id            // foreign key, circa 
     });
     
     await newNoteEvent.save();

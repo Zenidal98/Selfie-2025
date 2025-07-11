@@ -5,8 +5,10 @@ import DOMPurify from 'dompurify';
 import axios from "axios";
 import NotesList from "./NotesList";
 import './Notes.css'
+import { useTimeMachine } from "../../TimeMachine";
 
 const NoteEditor = () => {
+  const { virtualNow } = useTimeMachine // stesso discorso che calendar
   const [noteId, setNoteId] = useState(null);
   const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");

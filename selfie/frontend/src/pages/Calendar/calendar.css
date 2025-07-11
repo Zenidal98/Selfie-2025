@@ -1,11 +1,9 @@
-/* Layout grid for header & body */
 .calendar-grid-header,
 .calendar-grid-body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
 }
 
-/* Base cell styling */
 .calendar-cell {
   border: 1px solid #dee2e6;
   padding: 10px;
@@ -16,28 +14,26 @@
   position: relative;
 }
 
-/* Weekday vs weekend backgrounds */
+/* colori diversi se weekend o no */
 .weekday {
-  background-color: #ffffff; /* Neutral light tone for weekdays */
+  background-color: #ffffff; 
 }
 
 .weekend {
-  background-color: #ffe5e5; /* Subtle reddish hue for weekends */
+  background-color: #ffe5e5; 
 }
 
-/* celle inattive di padding */
 .empty {
   background-color: #f1f1f1;
 }
 
-/* Celle dei nomi dei giorni */
 .header {
   background-color: #f8f9fa;
   font-weight: bold;
   text-align: center;
 }
 
-/* hover effect */
+
 .day {
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -47,12 +43,11 @@
   background-color: #e2e6ea;
 }
 
-/* Numero del giorno */
 .day-number {
   font-weight: bold;
 }
 
-/* dettagli per il responsive (WIP) */
+/* Responsive */
 @media (max-width: 768px) {
   .calendar-cell {
     min-height: 60px;
@@ -60,7 +55,7 @@
   }
 }
 
-/* Immagine di bg */
+/* background */
 body {
   background-image: url('../../img/calendar.jpg');
   background-size: cover;
@@ -70,7 +65,7 @@ body {
 }
 
 
-/* Robe varie per le icone */
+/* robe varie per le icone */
 .event-indicators {
   position: absolute;
   bottom: 4px;
@@ -90,8 +85,7 @@ body {
 }
 
 .manual-icon {
-  color: #198754; 
+  color: #198754;    
 }
 
-/* DA AGGIUNGERE LE ROBE DEL POMODORO */
 
