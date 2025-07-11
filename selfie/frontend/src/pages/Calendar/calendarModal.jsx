@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { parse, format } from "date-fns";
+import { useTimeMachine } from "../../TimeMachine";   
 
 const CalendarModal = ({ 
   modalRef, 
@@ -9,6 +10,8 @@ const CalendarModal = ({
   onEventAdded,
   onEventDeleted,
 }) => {
+
+  const { virtualNow } = useTimeMachine();
 
   const [newText, setNewText] = useState('');
   const [deletingIds, setDeletingIds] = useState(new Set()) // assicura id unici

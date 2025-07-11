@@ -9,11 +9,14 @@ import CalendarModal from './calendarModal';
 import { Modal } from 'bootstrap';
 import axios from 'axios';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { useTimeMachine } from '../../TimeMachine'; 
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const Calendar = () => {
-  const [currentDate,  setCurrentDate]  = useState(new Date());
+  const { virtualNow } = useTimeMachine();            // ottiene la data della time machine
+
+  const [currentDate,  setCurrentDate]  = useState(virtualNow);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [monthTrigger, setMonthTrigger] = useState(0);
@@ -27,6 +30,11 @@ const Calendar = () => {
   const monthKey = format(monthStart, 'yyyy-MM');
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayIndex = getDay(monthStart);
+
+  // synca la currentDate con la time machine
+  useEffect(() => {
+    setCurrentDate(virtualNow);
+  }, [virtualNow]);
 
   // fetch dei mesi NON in cache ======================================================
   const fetchMonth = async (key, start, end) => {

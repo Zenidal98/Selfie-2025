@@ -26,7 +26,7 @@ export const saveNotes = async(req,res) => {
     // crea anche un nuovo Evento associato =========================================================================
 
     const eventDate = format(newNote.createdAt, 'yyyy-MM-dd');
-    const eventTime = format(newNote.createdAt, 'HH-mm');
+    const eventTime = format(newNote.createdAt, 'HH:mm');
 
     const newNoteEvent = new Event({
       userId,
