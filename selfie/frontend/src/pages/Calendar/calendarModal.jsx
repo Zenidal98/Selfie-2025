@@ -148,52 +148,60 @@ const CalendarModal = ({
             )}
 
             {/* Form per aggiungere attivita' */}
-            <div>
-              <label htmlFor="new-evt" className="form-label mt-2">New Activity:</label>
-              <div className="input-group">
+            <div className="mt-4">
+              <h5>Add a New Activity</h5>
+  
+              <div className="mb-3">
+                <label htmlFor="new-evt-text" className="form-label">Activity Description</label>
                 <input
-                  id="new-evt"
+                  id="new-evt-text"
                   type="text"
-                  className="form-control"  
+                  className="form-control"
                   value={newText}
                   onChange={e => setNewText(e.target.value)}
-                  placeholder="Insert your new activity here"
+                  placeholder="e.g., Study for exam"
                 />
-                <input
-                  id = "new-evt"
-                  type = "time"
-                  //min = "00:00"
-                  //max = "23:59"
-                  //eh niente, i browser hanno deciso di fare come vogliono loro
-                  className="form-control"
-                  value = {newTime}
-                  onChange = {e => setNewTime(e.target.value)}
-                />
-                <button 
-                  className="btn btn-primary"
-                  type="button"
-                  onClick={handleAdd}
-                >Add +
-                </button>
               </div>
-              <div className="input-group mt-2">
-                <input
-                  type="time"
-                  className="form-control mb-2"
-                  value={newEndTime}
-                  onChange={(e) => setNewEndTime(e.target.value)}
-                  placeholder="End time"
-                />
 
+              <div className="row mb-3">
+                <div className="col-md-6 mb-2">
+                  <label htmlFor="new-evt-start" className="form-label">Start Time</label>
+                  <input
+                    id="new-evt-start"
+                    type="time"
+                    className="form-control"
+                    value={newTime}
+                    onChange={e => setNewTime(e.target.value)}
+                  />
+                </div>
+
+                <div className="col-md-6 mb-2">
+                  <label htmlFor="new-evt-end" className="form-label">End Time</label>
+                  <input
+                    id="new-evt-end"
+                    type="time"
+                    className="form-control"
+                    value={newEndTime}
+                    onChange={e => setNewEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="spanning-days" className="form-label">Spanning Days</label>
                 <input
+                  id="spanning-days"
                   type="number"
-                  className="form-control mb-2"
+                  className="form-control"
                   min="1"
                   value={spanningDays}
                   onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)}
-                  placeholder="Spanning days"
                 />
+                <div className="form-text">Defaults to 1 (same-day activity)</div>
+              </div>
 
+              <div className="mb-3">
+                <label className="form-label">Recurrence</label>
                 <select
                   className="form-select mb-2"
                   value={recurrence.frequency}
@@ -206,31 +214,49 @@ const CalendarModal = ({
                 </select>
 
                 {recurrence.frequency && (
-                  <>
-                    <input
-                      type="number"
-                      className="form-control mb-2"
-                      min="1"
-                      value={recurrence.interval}
-                      onChange={(e) =>
-                        setRecurrence({ ...recurrence, interval: parseInt(e.target.value) || 1 })
-                      }
-                      placeholder="Recurrence interval"
-                    />
-                    <input
-                      type="date"
-                      className="form-control mb-2"
-                      value={recurrence.endDate}
-                      onChange={(e) =>
-                        setRecurrence({ ...recurrence, endDate: e.target.value })
-                      }
-                      placeholder="Recurrence end date"
-                    />
-                  </>
+                  <div className="row">
+                    <div className="col-md-6 mb-2">
+                      <label htmlFor="rec-interval" className="form-label">Repeat Every</label>
+                        <input
+                          id="rec-interval"
+                          type="number"
+                          className="form-control"
+                          min="1"
+                          value={recurrence.interval}
+                          onChange={(e) =>
+                            setRecurrence({ ...recurrence, interval: parseInt(e.target.value) || 1 })
+                          }
+                        />
+                    </div>
+
+                    <div className="col-md-6 mb-2">
+                      <label htmlFor="rec-enddate" className="form-label">Until (optional)</label>
+                      <input
+                        id="rec-enddate"
+                        type="date"
+                        className="form-control"
+                        value={recurrence.endDate}
+                        onChange={(e) =>
+                          setRecurrence({ ...recurrence, endDate: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
+
+              <div className="d-grid">
+                <button 
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={handleAdd}
+                >
+                  Add +
+                </button>
+              </div>
             </div>
-        </div>
+            
+          </div>
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>  

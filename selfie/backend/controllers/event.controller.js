@@ -14,9 +14,20 @@ export const getEvents = async (req, res) => {
       
       $or: [
         { date: { $gte: start, $lte: end } },
-        { endDate: { $gte: start, $lte: end } },
-        //eventi che spannano prima e dopo l'inero mese
-        { date: { $lte: start }, endDate: {$gte: end} }
+        // eventi che spannano oltre la fine
+        {
+          spanningDays: {$gt: 1},
+          date: { $lte: end}
+        },
+        
+        {
+          'recurrence.frequency': {$ne: null},
+          date: {$lte: end},
+          $or: [
+            { 'recurrence.endDate': null},
+            { 'recurrence.endDate': {$gte: start} }
+          ]
+        }
       ]
     }).lean();
     // lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
