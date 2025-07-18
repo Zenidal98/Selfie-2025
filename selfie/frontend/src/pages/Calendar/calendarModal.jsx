@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { parse, format } from "date-fns";
 import { useTimeMachine } from "../../TimeMachine";   
@@ -15,24 +15,54 @@ const CalendarModal = ({
 
   const [newText, setNewText] = useState('');
   const [deletingIds, setDeletingIds] = useState(new Set()) // assicura id unici
-  const [newTime, setNewTime] = useState('00:00'); // orario dell'attivita' (del form)
+  const [newTime, setNewTime] = useState('00:00'); // orario inizio dell'attivita' (del form)
+  const [newEndTime, setNewEndTime] = useState('00:00'); // fine
+  const [spanningDays, setSpanningDays] = useState(1); 
+  const [recurrence, setRecurrence] = useState({
+    frequency: '',
+    interval: 1,
+    endDate: '',
+  });
+
   const storedUser = JSON.parse(localStorage.getItem('utente')) //|| {}; tanto se spunta {} siamo fregati lo stesso
-  const userId = storedUser._id;
+  const userId = storedUser?._id;
 
   const handleAdd = async () => {
     // check che la textbox non sia vuota
     if (!newText.trim()) return;
     
     try {
-      const res = await axios.post('/api/events', {
+      const payload = {
         userId,
         date: selectedDate,
         text: newText.trim(),
-        time: newTime
-      });
+        time: newTime,
+        endTime: newEndTime || null,
+        spanningDays: spanningDays,
+        type: 'manual'
+      };
+      
+      if (recurrence.frequency) {
+        payload.recurrence = {
+          frequency: recurrence.frequency,
+          interval: recurrence.interval,
+          endDate: recurrence.endDate || null
+        };
+      }
+
+
+      const res = await axios.post('/api/events', payload);
       // resetta lo stato
       setNewText('');
       setNewTime("00:00");
+      setNewEndTime("00:00");
+      setSpanningDays(1);
+      setRecurrence({
+        frequency: '',
+        interval: 1,
+        endDate: '',
+      });
+      
       onEventAdded(res.data); // così sono certo che l'oggetto evento sia lo stesso ( poi mi servono date e time)
       const modal = new window.bootstrap.Modal(modalRef.current);
       modal.show();
@@ -62,7 +92,7 @@ const CalendarModal = ({
     }
   };
 
-  // Ordina gli eventi per orario
+  // Ordina gli eventi per orario (d'inizio)
   const sortedEvents = [...selectedEvents].sort((a, b) => a.time.localeCompare(b.time));
   
   return (
@@ -145,6 +175,59 @@ const CalendarModal = ({
                   onClick={handleAdd}
                 >Add +
                 </button>
+              </div>
+              <div className="input-group mt-2">
+                <input
+                  type="time"
+                  className="form-control mb-2"
+                  value={newEndTime}
+                  onChange={(e) => setNewEndTime(e.target.value)}
+                  placeholder="End time"
+                />
+
+                <input
+                  type="number"
+                  className="form-control mb-2"
+                  min="1"
+                  value={spanningDays}
+                  onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)}
+                  placeholder="Spanning days"
+                />
+
+                <select
+                  className="form-select mb-2"
+                  value={recurrence.frequency}
+                  onChange={(e) => setRecurrence({ ...recurrence, frequency: e.target.value })}
+                >
+                  <option value="">No recurrence</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                </select>
+
+                {recurrence.frequency && (
+                  <>
+                    <input
+                      type="number"
+                      className="form-control mb-2"
+                      min="1"
+                      value={recurrence.interval}
+                      onChange={(e) =>
+                        setRecurrence({ ...recurrence, interval: parseInt(e.target.value) || 1 })
+                      }
+                      placeholder="Recurrence interval"
+                    />
+                    <input
+                      type="date"
+                      className="form-control mb-2"
+                      value={recurrence.endDate}
+                      onChange={(e) =>
+                        setRecurrence({ ...recurrence, endDate: e.target.value })
+                      }
+                      placeholder="Recurrence end date"
+                    />
+                  </>
+                )}
               </div>
             </div>
         </div>

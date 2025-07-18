@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,
-  addMonths, subMonths, addYears, subYears,
+  addMonths, subMonths, addYears, subYears, parseISO, addDays 
 } from 'date-fns';
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import { Modal } from 'bootstrap';
 import axios from 'axios';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useTimeMachine } from '../../TimeMachine'; 
+import { RRule } from 'rrule';  
 
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -80,11 +81,50 @@ const Calendar = () => {
     fetchMonth(nextKey, nextStart, nextEnd);
   }, [monthKey, monthTrigger]);
 
+  // arrichisce gli eventi "grezzi" del fetch con le ricorrenze / eventi lunghi 
+  const expandEvents = (rawEvents, dateStr) => {
+    const enrichedEvents = [];
+    const current = parseISO(dateStr);
+
+    for (const evt of rawEvents){
+      const evtStart = parseISO(evt.date);
+      const evtDuration = evt.spanningDays || 1;
+
+      if (evt.recurrence?.frequency) {
+        const rule = new RRule({
+          freq : RRule[evt.recurrence.frequency],
+          interval : evt.recurrence.interval || 1,
+          dtstart: evtStart,
+          until: evt.recurrence.endDate ? parseISO(evt.recurrence.endDate) : undefined
+        });
+        //sfruttiamo la rule per espandere anche gli eventi che durano piu' di un giorno
+        const repetitions = rule.between(monthStart, monthEnd, true);
+        for (const rep of repetitions) {
+          const first = rep;
+          const end = addDays(first, evtDuration - 1);
+          if (current >= first && current <= end) {
+            enrichedEvents.push({...evt, date: format(first, 'yyyy-MM-dd') });
+          }
+        }
+      } else {
+        // caso di evento lungo ma senza ripetizioni
+        const end = addDays(evtStart, evtDuration -1 );
+        if (current >= evtStart && current <= end) {
+          enrichedEvents.push(evt);
+        }
+      }
+    }
+
+    return enrichedEvents;
+  };
+
   // synca il modale alla cache ===================================================
   useEffect(() => {
     if (selectedDate && selectedDate.startsWith(monthKey)) {
       const cm = eventsCache[monthKey] || {};
-      setSelectedEvents(cm[selectedDate] || []);
+      const rawEvents = Object.values(cm).flat();
+      const expanded = expandEvents(rawEvents, selectedDate);
+      setSelectedEvents(expanded);
     }
   }, [eventsCache, selectedDate, monthKey]);
 
@@ -135,7 +175,9 @@ const Calendar = () => {
     setSelectedDate(dateStr);
     // check di controllo
     const cm = eventsCache[monthKey] || {};
-    setSelectedEvents(cm[dateStr] || []);
+    const rawEvents = Object.values(cm).flat();
+    const expanded = expandEvents(rawEvents, dateStr);
+    setSelectedEvents(expanded);
     new Modal(modalRef.current).show();
   };
 
@@ -168,16 +210,19 @@ const Calendar = () => {
       const dow = getDay(day);
       // distinzione per fare i giorni del weekend di aspetto diverso
       const dayClass = (dow===0 || dow===6) ? 'weekend':'weekday';
-      const dayEvents = cm[dateStr] || [];
+
+      const rawEvents = Object.values(cm).flat();
+      const expandedToday = expandEvents(rawEvents, dateStr);
       // necessario per detrminare se c'è ALMENO UN evento di quel tipo in quel giorno
-      const types = [...new Set(dayEvents.map(e=>e.type))];
+      const types = [...new Set(expandedToday.map(e=>e.type))];
+      
       cells.push(
         <div key={dateStr}
              className={`calendar-cell day ${dayClass}`}
              onClick={()=>showModal(dateStr)}>
           <div className="day-number">{dayNum}</div>
           {/* rendering condizionae delle icone */}
-          {dayEvents.length>0 && (
+          {expandedToday.length>0 && (
             <div className="event-indicators">
               {types.includes('note') && <i className="bi bi-stickies-fill note-icon"/>}
               {types.includes('manual') && <i className="bi bi-plus-circle manual-icon"/>}

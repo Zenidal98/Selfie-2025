@@ -6,9 +6,18 @@ const eventSchema = new mongoose.Schema({
   text: { type: String, required: true },
   // per gestire i promemoria 'HH:mm'
   time: { type: String, default: '00:00'},
-  // per inserire l'attivita' di creazione nota
-  type: { type: String, enum: ['manual', 'note'], default: 'manual'},
-  noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null}
+  // per creare range orari
+  endTime: { type: String, default: null },
+  spanningDays: { type: Number, default: null },
+  // per inserire  l'attivita' di creazione nota
+  type: { type: String, enum: ['manual', 'note'], default: 'manual' },
+  // per eventi complessi
+  recurrence: {
+    frequency: { type: String, enum: ['DAILY','WEEKLY','MONTHLY'], default: null }, //il capslock li rende immediatamente compatibili con rrule (e quindi anche ics)
+    interval: { type: Number, default: 1 },
+    endDate: { type: String, default: null }
+  },
+  noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null }
 }, {
   timestamps: true
 });

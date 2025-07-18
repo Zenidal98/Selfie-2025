@@ -1,3 +1,4 @@
+import { interval } from "date-fns";
 import Event from "../models/event.model.js";
 
 export const getEvents = async (req, res) => {
@@ -10,15 +11,23 @@ export const getEvents = async (req, res) => {
   try {
     const events = await Event.find({ 
       userId,
-      date: { $gte: start, $lte: end } 
+      
+      $or: [
+        { date: { $gte: start, $lte: end } },
+        { endDate: { $gte: start, $lte: end } },
+        //eventi che spannano prima e dopo l'inero mese
+        { date: { $lte: start }, endDate: {$gte: end} }
+      ]
     }).lean();
-// lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
+    // lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
     res.json(events.map(e => ({
       _id: e._id,
       date: e.date,
       time: e.time,
+      endTime: e.endTime,
       type: e.type,
-      text: e.text
+      text: e.text,
+      recurrence: e.recurrence
     })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch events' });
@@ -26,16 +35,31 @@ export const getEvents = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
-  const { userId, date, text, time } = req.body;
+  let { userId, date, text, time, endTime, spanningDays, recurrence } = req.body;
   if (!date || !text || !userId) return res.status(400).json({ error: 'Missing mandatory fields'});
-  // se manca il tempo o non e' valido metto l'evento in cima alla lista
-  if (!time || !/^\d{2}:\d{2}$/.test(time)) time = '00:00';
+  // check della validita', default a 00:00 li piazza in cima alla lista del modale
+  time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00';
+  endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
+  spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;    // il cast a number e' pignolo, ma gestisce meglio i falsy
   
+  recurrence = recurrence && recurrence.frequency ? {
+    frequency: recurrence.frequency,
+    interval: Number(recurrence.interval) >= 1 ? Number(recurrence.interval) : 1,
+    endDate: recurrence.endDate || null
+  } : { 
+    frequency: null,
+    interval: 1,
+    endDate: null 
+  };
+
   try {
     const newEvent = new Event({ 
       userId,
       date,
       time,
+      endTime,
+      spanningDays,
+      recurrence,
       text,
       type: 'manual',
       noteId: null
@@ -52,10 +76,24 @@ export const createEvent = async (req, res) => {
 // per ora non la sto usando, ma non si sa mai
 export const updateEvent = async (req, res) => {
   const { id } = req.params;
-  const { text } = req.body;
+  const tempEv = {};
+  const { date, time, endTime, spanningDays, text, recurrence } = req.body;
+
+  if (date) tempEv.date = date;
+  tempEv.time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00'; 
+  tempEv.endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
+  tempEv.days = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;
+
+  if (recurrence) {
+    tempEv.recurrence = {
+      frequency: ['DAILY','WEEKLY','MONTHLY'].includes(recurrence.frequency) ? recurrence.frequency : null,
+      interval: Number(recurrence.interval) >= 1 ? Number (recurrence.interval) : 1,
+      endDate: recurrence.endDate || null
+    }
+  }
 
   try {
-    const updated = await Event.findByIdAndUpdate(id, { text }, { new: true });
+    const updated = await Event.findByIdAndUpdate(id, tempEv, { new: true }).lean();
     if(!updated) return res.status(404).json({ error: 'Event not found'});
     res.json({ message: "Updated event successfully", event: updated });
   } catch (err) {
