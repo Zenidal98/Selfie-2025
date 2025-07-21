@@ -1,5 +1,7 @@
-import { interval } from "date-fns";
+import { format, interval, parseISO } from "date-fns";
 import Event from "../models/event.model.js";
+import { RRule } from "rrule";
+import { v4 as uuidv4 } from 'uuid';
 
 export const getEvents = async (req, res) => {
   const { userId, start, end } = req.query;
@@ -38,7 +40,8 @@ export const getEvents = async (req, res) => {
       endTime: e.endTime,
       type: e.type,
       text: e.text,
-      recurrence: e.recurrence
+      recurrence: e.recurrence,
+      recurrenceId: e.recurrenceId
     })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch events' });
@@ -122,4 +125,24 @@ export const deleteEvent = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to delete event"})
   }
-}
+};
+
+export const deleteOccurrence = async (req,res) => {
+  const { recurrenceId, date } = req.params;
+
+  if (!recurrenceId || !date) return res.status(400).json({ error: 'Missing arguments'});
+  try {
+    const event = await Event.findOne({ recurrenceId });
+    if (!event) return res.status(404).json({ error: 'Series not found' });
+    
+    if (!event.exclusions.includes(date)) {
+      event.exclusions.push(date);
+      await event.save();
+    }
+
+    res.status(200).json({ message: `Excludes ${date} from recurrence` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to exclude occurrence'})
+  }
+};

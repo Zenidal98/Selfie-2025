@@ -1,5 +1,11 @@
 import mongoose from "mongoose";  
 
+const recurrenceSchema = new mongoose.Schema({
+  frequency: { type: String, enum: ['DAILY', 'WEEKLY', 'MONTHLY'], default: null },
+  interval: { type: String, default: 1 },
+  endDate: { type: String, default: null },
+}, { _id: false });
+
 const eventSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   date: { type: String, required: true }, // 'YYYY-MM-DD'
@@ -11,13 +17,11 @@ const eventSchema = new mongoose.Schema({
   spanningDays: { type: Number, default: null },
   // per inserire  l'attivita' di creazione nota
   type: { type: String, enum: ['manual', 'note'], default: 'manual' },
-  // per eventi complessi
-  recurrence: {
-    frequency: { type: String, enum: ['DAILY','WEEKLY','MONTHLY'], default: null }, //il capslock li rende immediatamente compatibili con rrule (e quindi anche ics)
-    interval: { type: Number, default: 1 },
-    endDate: { type: String, default: null }
-  },
-  noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null }
+  noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null },
+ 
+  recurrence: recurrenceSchema,
+  recurrenceId: { type: String, default: null },
+  exclusions: { type: [String], default: [] } //per cancellare singole istanze
 }, {
   timestamps: true
 });

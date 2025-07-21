@@ -101,9 +101,18 @@ const Calendar = () => {
         const repetitions = rule.between(monthStart, monthEnd, true);
         for (const rep of repetitions) {
           const first = rep;
+          const firstStr = format(first, 'yyyy-MM-dd');
+          
+          if (evt.exclusions?.includes(firstStr)) continue; 
+          
           const end = addDays(first, evtDuration - 1);
           if (current >= first && current <= end) {
-            enrichedEvents.push({...evt, date: format(first, 'yyyy-MM-dd') });
+            enrichedEvents.push({
+              ...evt,
+              date: firstStr,
+              _id: `${evt._id}_${firstStr}`, // id virtuale per eventi espasni
+              isVirtual: true
+            });
           }
         }
       } else {
@@ -134,8 +143,8 @@ const Calendar = () => {
   const handleEventDeletion = (deletedId, date) => {
     setEventsCache(c => {
       const m = { ...c };
-      // filtra solo gli eventi che non devono essre cancellati
-      const arr = (m[monthKey][date] || []).filter(e=>e._id!==deletedId);
+      // filtra solo gli eventi che non devono essre cancellati 
+      const arr = (m[monthKey][date] || []).filter(e=>!deletedId.startsWith(e._id));
       // aggiorna la map (in quel giorno) solo con gli eventi filtrati
       m[monthKey] = { ...m[monthKey], [date]: arr };
       return m;

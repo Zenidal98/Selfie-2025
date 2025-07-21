@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { parse, format } from "date-fns";
 import { useTimeMachine } from "../../TimeMachine";   
-
+import { v4 as uuidv4 } from 'uuid';
 const CalendarModal = ({ 
   modalRef, 
   selectedDate, 
@@ -48,6 +48,7 @@ const CalendarModal = ({
           interval: recurrence.interval,
           endDate: recurrence.endDate || null
         };
+        payload.recurrenceId = uuidv4();
       }
 
 
@@ -72,25 +73,36 @@ const CalendarModal = ({
     }
   };
  
-  const handleDelete = async (eventId) => {   
-    if (!window.confirm('Do you really want to delete this activity?')) return;
-    // "Marca" unicamente gli eventi che dovranno essere filtrati via
-    setDeletingIds(ids => new Set(ids).add(eventId));
+  const handleDelete = async (event, deleteAll) => {
+    const confirmMsg = deleteAll
+      ? 'Do you really want to delete **all** occurrences of this activity?'
+      : 'Do you want to delete **just this occurrence**?';
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingIds(ids => new Set(ids).add(event._id));
+
     try {
-      await axios.delete(`/api/events/${eventId}`);
-      onEventDeleted(eventId, selectedDate);
+      const endpoint = deleteAll
+        ? `/api/events/recurring/${event.recurrenceId}`
+        : `/api/events/${event._id}`;
+
+      await axios.delete(endpoint);
+
+      // Notify parent
+      onEventDeleted(event._id, selectedDate);
     } catch (err) {
       console.error(err);
-      alert('Error in deleting events');
+      alert('Error in deleting event(s).');
     } finally {
-      // se tutto è andato bene rimuove l'evento dalla lista nera
       setDeletingIds(ids => {
-        const tempSet = new Set(ids);
-        tempSet.delete(eventId);
-        return tempSet;
+        const next = new Set(ids);
+        next.delete(event._id);
+        return next;
       });
     }
   };
+
 
   // Ordina gli eventi per orario (d'inizio)
   const sortedEvents = [...selectedEvents].sort((a, b) => a.time.localeCompare(b.time));
@@ -126,13 +138,29 @@ const CalendarModal = ({
                         <span className="badge rounded-pill bg-secondary mx-2">
                           {event.time}
                         </span>
-                        {event.type === 'manual' && (
-                          <button
-                            className="btn btn-sm btn-outline-danger rounded-pill mx-2"
-                            onClick={() => handleDelete(event._id)}
-                            disabled={deletingIds.has(event._id)}
-                          >{deletingIds.has(event._id) ? '...' : 'x'}
-                        </button>
+                        {event.type === 'manual' && (event.isVirtual && event.recurrenceId ? (
+                            <>
+                              <button
+                                className="btn btn-outline-danger btn-sm me-2"
+                                onClick={() => handleDelete(event, false)}
+                              >
+                                Delete this only
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDelete(event, true)}
+                              >
+                                Delete all
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(event, false)}
+                            >
+                              Delete
+                            </button>
+                          )
                         )}
                         {event.type === 'note' && (
                           <button
