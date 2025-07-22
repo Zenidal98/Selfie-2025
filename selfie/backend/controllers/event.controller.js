@@ -1,6 +1,7 @@
 import { format, interval, parseISO } from "date-fns";
 import Event from "../models/event.model.js";
-import { RRule } from "rrule";
+import pkg from 'rrule';
+const { RRule } = pkg;
 import { v4 as uuidv4 } from 'uuid';
 
 export const getEvents = async (req, res) => {
@@ -32,6 +33,7 @@ export const getEvents = async (req, res) => {
         }
       ]
     }).lean();
+
     // lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
     res.json(events.map(e => ({
       _id: e._id,
@@ -41,7 +43,8 @@ export const getEvents = async (req, res) => {
       type: e.type,
       text: e.text,
       recurrence: e.recurrence,
-      recurrenceId: e.recurrenceId
+      recurrenceId: e.recurrenceId,
+      notificationPrefs: e.notificationPrefs // <-- AGGIUNTO per supportare notifiche
     })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch events' });
@@ -49,13 +52,14 @@ export const getEvents = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
-  let { userId, date, text, time, endTime, spanningDays, recurrence } = req.body;
+  let { userId, date, text, time, endTime, spanningDays, recurrence, notificationPrefs } = req.body;
   if (!date || !text || !userId) return res.status(400).json({ error: 'Missing mandatory fields'});
+
   // check della validita', default a 00:00 li piazza in cima alla lista del modale
   time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00';
   endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
-  spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;    // il cast a number e' pignolo, ma gestisce meglio i falsy
-  
+  spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1; // cast pignolo ma robusto
+
   recurrence = recurrence && recurrence.frequency ? {
     frequency: recurrence.frequency,
     interval: Number(recurrence.interval) >= 1 ? Number(recurrence.interval) : 1,
@@ -65,6 +69,14 @@ export const createEvent = async (req, res) => {
     interval: 1,
     endDate: null 
   };
+
+  // Aggiunta tua per supportare notifiche
+  notificationPrefs = notificationPrefs ? {
+    browser: !!notificationPrefs.browser,
+    email: !!notificationPrefs.email,
+    advance: Number(notificationPrefs.advance) || 0,
+    repeat: Number(notificationPrefs.repeat) || 1
+  } : undefined;
 
   try {
     const newEvent = new Event({ 
@@ -76,7 +88,8 @@ export const createEvent = async (req, res) => {
       recurrence,
       text,
       type: 'manual',
-      noteId: null
+      noteId: null,
+      notificationPrefs // <-- AGGIUNTO
     });
 
     await newEvent.save();
@@ -91,19 +104,30 @@ export const createEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
   const { id } = req.params;
   const tempEv = {};
-  const { date, time, endTime, spanningDays, text, recurrence } = req.body;
+  const { date, time, endTime, spanningDays, text, recurrence, notificationPrefs } = req.body;
 
   if (date) tempEv.date = date;
   tempEv.time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00'; 
   tempEv.endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
-  tempEv.days = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;
+  tempEv.spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;
+  if (text) tempEv.text = text;
 
   if (recurrence) {
     tempEv.recurrence = {
       frequency: ['DAILY','WEEKLY','MONTHLY'].includes(recurrence.frequency) ? recurrence.frequency : null,
-      interval: Number(recurrence.interval) >= 1 ? Number (recurrence.interval) : 1,
+      interval: Number(recurrence.interval) >= 1 ? Number(recurrence.interval) : 1,
       endDate: recurrence.endDate || null
     }
+  }
+
+  // Tua parte per aggiornare le notifiche
+  if (notificationPrefs) {
+    tempEv.notificationPrefs = {
+      browser: !!notificationPrefs.browser,
+      email: !!notificationPrefs.email,
+      advance: Number(notificationPrefs.advance) || 0,
+      repeat: Number(notificationPrefs.repeat) || 1
+    };
   }
 
   try {

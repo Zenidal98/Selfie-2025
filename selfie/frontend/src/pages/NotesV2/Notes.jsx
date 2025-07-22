@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 import axios from "axios";
 import NotesList from "./NotesList";
 import './Notes.css'
-import { useTimeMachine } from "../../TimeMachine";
+import { useTimeMachine } from '../../utils/TimeMachine';
 
 const NoteEditor = () => {
   const { virtualNow } = useTimeMachine // stesso discorso che calendar

@@ -5,9 +5,9 @@ import RegisterPage from "./pages/Register/RegisterPage.jsx";
 import HomePage from "./pages/Home/HomePage.jsx";
 import PomodoroPage from "./pages/Pomodoro/PomodoroPage.jsx";
 import NoteEditor from "./pages/NotesV2/Notes";
-import ProtectedRoute from "./ProtectedRoute.jsx";
+import ProtectedRoute from './utils/ProtectedRoute.jsx';
 import Calendar from "./pages/Calendar/Calendar.jsx";
-import { TimeMachineProvider } from './TimeMachine.jsx';
+import { TimeMachineProvider } from './utils/TimeMachine.jsx';
 
 const App = () => {               // ho messo che / parte da /login
   return (  

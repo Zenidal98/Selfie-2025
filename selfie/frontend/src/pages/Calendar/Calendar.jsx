@@ -1,17 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,
-  addMonths, subMonths, addYears, subYears, parseISO, addDays 
-} from 'date-fns';
+import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays} from 'date-fns';
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
 import CalendarModal from './calendarModal';
 import { Modal } from 'bootstrap';
 import axios from 'axios';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import { useTimeMachine } from '../../TimeMachine'; 
+import { useTimeMachine } from '../../utils/TimeMachine'; 
 import { RRule } from 'rrule';  
-
+import { showNotification } from '../../utils/notify';
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -23,7 +20,8 @@ const Calendar = () => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [monthTrigger, setMonthTrigger] = useState(0);
   const [eventsCache, setEventsCache]   = useState({});   
-  
+  const [notifiedEvents, setNotifiedEvents] = useState(new Set());
+
   const modalRef = useRef(null);
   const navigate = useNavigate();
 
@@ -137,6 +135,43 @@ const Calendar = () => {
     }
   }, [eventsCache, selectedDate, monthKey]);
 
+  // polling delle notifiche browser ===================================================
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const nowMin = Math.floor(now.getTime() / 60000);
+      const allEvents = Object.values(eventsCache[monthKey] || {}).flat();
+
+      allEvents.forEach(event => {
+        if (!event.notificationPrefs?.browser || !event.time) return;
+        if (localStorage.getItem(`event-ack-${event._id}`)) return;
+
+        const [hour, minute] = event.time.split(':').map(Number);
+        const evtDateTime = new Date(`${event.date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+        const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
+        const notifyMin = Math.floor(notifyTime.getTime() / 60000);
+        const repeat = event.notificationPrefs.repeat || 1;
+
+        for (let i = 0; i < repeat; i++) {
+          const thisNotifyMin = notifyMin + i;
+          const uniqueId = `${event._id}-${thisNotifyMin}`;
+
+          if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
+            showNotification({
+              title: 'Promemoria evento',
+              body: `${event.text} alle ${event.time} (${event.date})`
+            }, () => {
+              localStorage.setItem(`event-ack-${event._id}`, 'true');
+            });
+            setNotifiedEvents(prev => new Set(prev).add(uniqueId));
+          }
+        }
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [eventsCache, monthKey, notifiedEvents]);
+
   //const refreshMonth = () => setMonthTrigger(t => t + 1);
 
   // gestisce la rimozione di un evento dalla cache (e quindi dell'icona se necessario) ============================
@@ -245,7 +280,6 @@ const Calendar = () => {
 
   return (
     <div className="container mt-1">
-      
       {/* Home Button */}
       <button className="btn btn-outline-primary my-3" onClick={()=>navigate('/home')}>
         Torna alla home
@@ -271,7 +305,7 @@ const Calendar = () => {
         ))}
       </div>
       <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
-      
+
       <CalendarModal
         modalRef={modalRef}
         selectedDate={selectedDate}
