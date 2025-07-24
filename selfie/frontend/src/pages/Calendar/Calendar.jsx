@@ -97,25 +97,24 @@ const Calendar = () => {
         });
         //sfruttiamo la rule per espandere anche gli eventi che durano piu' di un giorno
         const repetitions = rule.between(monthStart, monthEnd, true);
-        for (const rep of repetitions) {
-          const first = rep;
-          const firstStr = format(first, 'yyyy-MM-dd');
+        for (const occurrenceDate of repetitions) {
+          const occDateStr = format(occurrenceDate, 'yyyy-MM-dd');
           
-          if (evt.exclusions?.includes(firstStr)) continue; 
+          // l'array traccia le istanze da skippare nell'espansione
+          if (evt.exclusions?.includes(occDateStr)) continue; 
           
-          const end = addDays(first, evtDuration - 1);
-          if (current >= first && current <= end) {
+          const end = addDays(occurrenceDate, evtDuration - 1);
+          if (current >= occurrenceDate && current <= end) {
             enrichedEvents.push({
               ...evt,
-              date: firstStr,
-              _id: `${evt._id}_${firstStr}`, // id virtuale per eventi espasni
+              date: occDateStr, // id virtuale per eventi espasni
               isVirtual: true
             });
           }
         }
       } else {
         // caso di evento lungo ma senza ripetizioni
-        const end = addDays(evtStart, evtDuration -1 );
+        const end = addDays(evtStart, evtDuration - 1 );
         if (current >= evtStart && current <= end) {
           enrichedEvents.push(evt);
         }
@@ -175,20 +174,45 @@ const Calendar = () => {
   //const refreshMonth = () => setMonthTrigger(t => t + 1);
 
   // gestisce la rimozione di un evento dalla cache (e quindi dell'icona se necessario) ============================
-  const handleEventDeletion = (deletedId, date) => {
-    setEventsCache(c => {
-      const m = { ...c };
-      // filtra solo gli eventi che non devono essre cancellati 
-      const arr = (m[monthKey][date] || []).filter(e=>!deletedId.startsWith(e._id));
-      // aggiorna la map (in quel giorno) solo con gli eventi filtrati
-      m[monthKey] = { ...m[monthKey], [date]: arr };
-      return m;
-    });
-    if (selectedDate === date) {
-      // aggiorna la lista del modale
-      setSelectedEvents(evts => evts.filter(e=>e._id!==deletedId));
-    }
-  };
+  const handleEventDeletion = (deletedId) => {
+        setEventsCache(cache => {
+            const newCache = { ...cache };
+            for (const key in newCache) { 
+                const monthMap = newCache[key];
+                for (const date in monthMap) {
+                    monthMap[date] = monthMap[date].filter(e => e._id !== deletedId);
+                }
+                newCache[key] = monthMap;
+            }
+            return newCache;
+        });
+
+        setSelectedEvents(evts => evts.filter(e => e._id !== deletedId));
+  }; 
+
+  const handleEventExclusion = (eventId, excludedDate) => {
+        setEventsCache(cache => {
+            const newCache = { ...cache };
+            let eventUpdated = false;
+            for (const key in newCache) { 
+                if (eventUpdated) break;
+                const monthMap = newCache[key];
+                for (const date in monthMap) {
+                    const eventIndex = monthMap[date].findIndex(e => e._id === eventId);
+                    if (eventIndex > -1) {
+                        const eventToUpdate = monthMap[date][eventIndex];
+                        eventToUpdate.exclusions = [...(eventToUpdate.exclusions || []), excludedDate];
+                        eventUpdated = true;
+                        break;
+                    }
+                }
+            }
+            return newCache;
+        });
+
+        setSelectedEvents(evts => evts.filter(e => !(e._id === eventId && e.date === excludedDate)));
+    }; 
+
 
   // gestisce l'aggiunta di nuovi eventi (e quindi anche icone / lista modale ) =====================
   const handleEventAddition = (newEvt) => {
@@ -312,6 +336,7 @@ const Calendar = () => {
         selectedEvents={selectedEvents}
         onEventAdded={handleEventAddition}
         onEventDeleted={handleEventDeletion}
+        onEventExclusion={handleEventExclusion}
       />
     </div>
   );

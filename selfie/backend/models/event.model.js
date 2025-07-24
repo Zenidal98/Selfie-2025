@@ -10,7 +10,7 @@ const notificationPrefsSchema = new mongoose.Schema({
 
 const recurrenceSchema = new mongoose.Schema({
   frequency: { type: String, enum: ['DAILY', 'WEEKLY', 'MONTHLY'], default: null },
-  interval: { type: String, default: 1 },
+  interval: { type: Number, default: 1 },
   endDate: { type: String, default: null },
 }, { _id: false });
 
@@ -28,7 +28,12 @@ const eventSchema = new mongoose.Schema({
   noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null },
 
   recurrence: recurrenceSchema,
-  recurrenceId: { type: String, default: null },
+  recurrenceId: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Event',
+    default: null,
+    index: true 
+  }, //lookup veloce per gli eventi ripetuti
   exclusions: { type: [String], default: [] }, // per cancellare singole istanze
 
   // aggiunta preferenze notifica

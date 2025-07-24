@@ -10,6 +10,7 @@ const CalendarModal = ({
   selectedEvents,
   onEventAdded,
   onEventDeleted,
+  onEventExclusion,      
 }) => {
   const { virtualNow } = useTimeMachine();
 
@@ -35,7 +36,7 @@ const CalendarModal = ({
 
   const handleAdd = async () => {
     // check che la textbox non sia vuota
-    if (!newText.trim()) return;
+    if (!newText.trim() || !userId) return;
     
     try {
       const payload = {
@@ -55,12 +56,7 @@ const CalendarModal = ({
       };
 
       if (recurrence.frequency) {
-        payload.recurrence = {
-          frequency: recurrence.frequency,
-          interval: recurrence.interval,
-          endDate: recurrence.endDate || null
-        };
-        payload.recurrenceId = uuidv4();
+        payload.recurrence = recurrence;
       }
 
       const res = await axios.post('/api/events', payload);
@@ -84,21 +80,40 @@ const CalendarModal = ({
     }
   };
 
-  const handleDelete = async (eventId) => {
-    if (!window.confirm('Vuoi davvero eliminare questa attività?')) return;
-    setDeletingIds(ids => new Set(ids).add(eventId));
-    try {
-      await axios.delete(`/api/events/${eventId}`);
-      onEventDeleted(eventId, selectedDate);
-    } catch (err) {
-      console.error(err);
-      alert('Errore durante l\'eliminazione.');
-    } finally {
-      setDeletingIds(ids => {
-        const temp = new Set(ids);
-        temp.delete(eventId);
-        return temp;
-      });
+  const handleDelete = async (event) => {
+    const seriesId = event._id;
+
+    if (event.isVirtual) {
+      const choice = window.confirm("This is a recurring event. Press OK to delete the ENTIRE series, or Cancel to delete ONLY this occurence");
+      
+      if (choice) {
+        try {
+          await axios.delete(`/api/events/${seriesId}`);
+          onEventDeleted(seriesId);
+        } catch (err) {
+          console.error("Failed to delete series", err);
+          alert('Error deleting the event series.');
+        }
+      } else {
+        try {
+          await axios.patch(`/api/events/${event._id}/exclude`, {
+            dateToExclude: event.date
+          });
+          onEventExclusion(event._id, event.date);
+        } catch (err) {
+          console.error("Failed to exclude the single occurence", err);
+          alert('Error deleting the single occurence.');
+        }
+      }
+    } else {
+      if (!window.confirm('Sei sicuro di voler cancellare questo evento?')) return;
+      try {
+        await axios.delete(`/api/events/${event._id}`);
+        onEventDeleted(event._id);
+      } catch (err) {
+        console.error("Failed to delete error", err);
+        alert('Error deleting the event');
+      }
     }
   };
 
@@ -133,7 +148,7 @@ const CalendarModal = ({
                     <div className="d-flex justify-content-end align-items-center mt-2 flex-wrap gap-2">
                       <span className="badge rounded-pill bg-secondary mx-2">{event.time}</span>
                       {event.type === 'manual' && (
-                        <button className="btn btn-sm btn-outline-danger rounded-pill mx-2" onClick={() => handleDelete(event._id)} disabled={deletingIds.has(event._id)}>
+                        <button className="btn btn-sm btn-outline-danger rounded-pill mx-2" onClick={() => handleDelete(event)} disabled={deletingIds.has(event._id)}>
                           {deletingIds.has(event._id) ? '...' : 'x'}
                         </button>
                       )}

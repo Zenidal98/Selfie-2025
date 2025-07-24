@@ -1,14 +1,10 @@
-import { format, interval, parseISO } from "date-fns";
 import Event from "../models/event.model.js";
-import pkg from 'rrule';
-const { RRule } = pkg;
-import { v4 as uuidv4 } from 'uuid';
 
 export const getEvents = async (req, res) => {
   const { userId, start, end } = req.query;
 
   if (!userId || !start || !end) {
-    return res.status(400).json({ error: "Missing query arguments" });
+    return res.status(400).json({ error: "Missing query parameters"});
   }
 
   try {
@@ -16,13 +12,7 @@ export const getEvents = async (req, res) => {
       userId,
       
       $or: [
-        { date: { $gte: start, $lte: end } },
-        // eventi che spannano oltre la fine
-        {
-          spanningDays: {$gt: 1},
-          date: { $lte: end}
-        },
-        
+        { date: { $gte: start, $lte: end }, recurrence: { frequency: null } },               
         {
           'recurrence.frequency': {$ne: null},
           date: {$lte: end},
@@ -35,64 +25,27 @@ export const getEvents = async (req, res) => {
     }).lean();
 
     // lean restituisce un oggetto js anziche' un mongoose document (rende le cose MOLTO piu' veloci su query grandi)
-    res.json(events.map(e => ({
-      _id: e._id,
-      date: e.date,
-      time: e.time,
-      endTime: e.endTime,
-      type: e.type,
-      text: e.text,
-      recurrence: e.recurrence,
-      recurrenceId: e.recurrenceId,
-      notificationPrefs: e.notificationPrefs // <-- AGGIUNTO per supportare notifiche
-    })));
+    res.json(events);
   } catch (err) {
+    console.error('Failed to fetch the events', err);
     res.status(500).json({ error: 'Failed to fetch events' });
   }
 };
 
 export const createEvent = async (req, res) => {
-  let { userId, date, text, time, endTime, spanningDays, recurrence, notificationPrefs } = req.body;
-  if (!date || !text || !userId) return res.status(400).json({ error: 'Missing mandatory fields'});
-
-  // check della validita', default a 00:00 li piazza in cima alla lista del modale
-  time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00';
-  endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
-  spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1; // cast pignolo ma robusto
-
-  recurrence = recurrence && recurrence.frequency ? {
-    frequency: recurrence.frequency,
-    interval: Number(recurrence.interval) >= 1 ? Number(recurrence.interval) : 1,
-    endDate: recurrence.endDate || null
-  } : { 
-    frequency: null,
-    interval: 1,
-    endDate: null 
-  };
-
-  // Aggiunta tua per supportare notifiche
-  notificationPrefs = notificationPrefs ? {
-    browser: !!notificationPrefs.browser,
-    email: !!notificationPrefs.email,
-    advance: Number(notificationPrefs.advance) || 0,
-    repeat: Number(notificationPrefs.repeat) || 1
-  } : undefined;
-
   try {
-    const newEvent = new Event({ 
-      userId,
-      date,
-      time,
-      endTime,
-      spanningDays,
-      recurrence,
-      text,
-      type: 'manual',
-      noteId: null,
-      notificationPrefs // <-- AGGIUNTO
-    });
+    const { recurrence, ...eventData } = req.body;
+    const newEvent = new Event(eventData);
 
-    await newEvent.save();
+    if (recurrence && recurrence.frequency) {
+      newEvent.recurrence = recurrence;
+      await newEvent.save(); // prima volta per creare l'id
+      newEvent.recurrenceId = newEvent._id;
+      await newEvent.save(); 
+    } else {
+      await newEvent.save();
+    }
+
     res.status(201).json(newEvent);
   } catch (err) {
     console.error(err);
@@ -100,44 +53,6 @@ export const createEvent = async (req, res) => {
   }
 };
 
-// per ora non la sto usando, ma non si sa mai
-export const updateEvent = async (req, res) => {
-  const { id } = req.params;
-  const tempEv = {};
-  const { date, time, endTime, spanningDays, text, recurrence, notificationPrefs } = req.body;
-
-  if (date) tempEv.date = date;
-  tempEv.time = time && /^\d{2}:\d{2}$/.test(time) ? time : '00:00'; 
-  tempEv.endTime = endTime && /^\d{2}:\d{2}$/.test(endTime) ? endTime : '00:00';
-  tempEv.spanningDays = Number(spanningDays) >= 1 ? Number(spanningDays) : 1;
-  if (text) tempEv.text = text;
-
-  if (recurrence) {
-    tempEv.recurrence = {
-      frequency: ['DAILY','WEEKLY','MONTHLY'].includes(recurrence.frequency) ? recurrence.frequency : null,
-      interval: Number(recurrence.interval) >= 1 ? Number(recurrence.interval) : 1,
-      endDate: recurrence.endDate || null
-    }
-  }
-
-  // Tua parte per aggiornare le notifiche
-  if (notificationPrefs) {
-    tempEv.notificationPrefs = {
-      browser: !!notificationPrefs.browser,
-      email: !!notificationPrefs.email,
-      advance: Number(notificationPrefs.advance) || 0,
-      repeat: Number(notificationPrefs.repeat) || 1
-    };
-  }
-
-  try {
-    const updated = await Event.findByIdAndUpdate(id, tempEv, { new: true }).lean();
-    if(!updated) return res.status(404).json({ error: 'Event not found'});
-    res.json({ message: "Updated event successfully", event: updated });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update event'});
-  }
-};
 
 export const deleteEvent = async (req, res) => {
   const { id } = req.params;
@@ -145,28 +60,36 @@ export const deleteEvent = async (req, res) => {
   try {
     const deleted = await Event.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ error: 'Event not found'});
-    res.status(200).json({ message: "Event deleted succesfully"});
+    res.status(200).json({ message: "Event deleted successfully"});
   } catch (err) {
+    console.error('Failed to delete event', err);
     res.status(500).json({ error: "Failed to delete event"})
   }
 };
 
-export const deleteOccurrence = async (req,res) => {
-  const { recurrenceId, date } = req.params;
+export const excludeOccurrence = async (req,res) => {
+  const { id } = req.params;
+  const { dateToExclude } = req.body;
 
-  if (!recurrenceId || !date) return res.status(400).json({ error: 'Missing arguments'});
+  if (!dateToExclude) {
+    return res.status(400).json({ error: 'Missing exclusion date in request body' });
+  }
+  
   try {
-    const event = await Event.findOne({ recurrenceId });
-    if (!event) return res.status(404).json({ error: 'Series not found' });
-    
-    if (!event.exclusions.includes(date)) {
-      event.exclusions.push(date);
+    const event = await Event.findById(id);
+    if (!event) {
+      return res.status(404).json({ error: 'Event series not found' });
+    }
+
+    if (!event.exclusions.includes(dateToExclude)) {
+      event.exclusions.push(dateToExclude);
       await event.save();
     }
 
-    res.status(200).json({ message: `Excludes ${date} from recurrence` });
+    res.status(200).json({ message: `successfully excluded date ${dateToExclude}`, event});
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to exclude occurrence'})
+    console.error('Failed to exclude occurrence', error);
+    res.status(500).json({ error: 'Failed to exclude occurrence '});
   }
+
 };
