@@ -12,15 +12,17 @@ export const getEvents = async (req, res) => {
       userId,
       
       $or: [
-        { date: { $gte: start, $lte: end }, recurrence: { frequency: null } },               
-        {
-          'recurrence.frequency': {$ne: null},
-          date: {$lte: end},
+        // eventi non ricorrenti e NON attivita' (pena double fetching)
+        { date: { $gte: start, $lte: end }, recurrence: { frequency: null }, type: { $in: ['manual', 'note']} },          // eventi ricorrenti     
+        { 'recurrence.frequency': {$ne: null}, 
+          date: {$lte: end}, 
           $or: [
             { 'recurrence.endDate': null},
             { 'recurrence.endDate': {$gte: start} }
           ]
-        }
+        },
+        // attivita' in corso
+        { type: 'activity', isComplete: false, date: { $lte: end}}
       ]
     }).lean();
 
@@ -92,4 +94,19 @@ export const excludeOccurrence = async (req,res) => {
     res.status(500).json({ error: 'Failed to exclude occurrence '});
   }
 
+};
+
+export const toggleActivityCompletion = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event || event.type !== 'activity') {
+      return res.status(404).json({ error: 'Activity not found '});
+    }
+    event.isComplete = !event.isComplete;
+    await event.save();
+    res.status(200).json(event);
+  } catch (error) {
+    console.error('Failed to toggle activity:', error);
+    res.status(500).json({ error: 'Failed to toggle activity status'});
+  }
 };

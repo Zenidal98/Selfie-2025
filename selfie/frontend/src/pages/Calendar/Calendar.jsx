@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays} from 'date-fns';
+import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays} from 'date-fns';
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
 import CalendarModal from './calendarModal';
@@ -53,6 +53,7 @@ const Calendar = () => {
       const res = await axios.get(`/api/events?userId=${userId}&start=${start}&end=${end}`);
       const map = {};
       res.data.forEach(evt => {
+        const eventDate = evt.date; // per le attivita' la data di riferimento e' quella di inizio
         map[evt.date] = map[evt.date] || [];
         map[evt.date].push(evt);
       });
@@ -81,49 +82,44 @@ const Calendar = () => {
 
   // arrichisce gli eventi "grezzi" del fetch con le ricorrenze / eventi lunghi 
   const expandEvents = (rawEvents, dateStr) => {
-    const enrichedEvents = [];
-    const current = parseISO(dateStr);
+        const enrichedEvents = [];
+        const currentDay = parseISO(dateStr);
 
-    for (const evt of rawEvents){
-      const evtStart = parseISO(evt.date);
-      const evtDuration = evt.spanningDays || 1;
-
-      if (evt.recurrence?.frequency) {
-        const rule = new RRule({
-          freq : RRule[evt.recurrence.frequency],
-          interval : evt.recurrence.interval || 1,
-          dtstart: evtStart,
-          until: evt.recurrence.endDate ? parseISO(evt.recurrence.endDate) : undefined
-        });
-        //sfruttiamo la rule per espandere anche gli eventi che durano piu' di un giorno
-        const repetitions = rule.between(monthStart, monthEnd, true);
-        for (const occurrenceDate of repetitions) {
-          const occDateStr = format(occurrenceDate, 'yyyy-MM-dd');
-          
-          // l'array traccia le istanze da skippare nell'espansione
-          if (evt.exclusions?.includes(occDateStr)) continue; 
-          
-          const end = addDays(occurrenceDate, evtDuration - 1);
-          if (current >= occurrenceDate && current <= end) {
-            enrichedEvents.push({
-              ...evt,
-              date: occDateStr, // id virtuale per eventi espasni
-              isVirtual: true
-            });
-          }
+        for (const evt of rawEvents) {
+            if (evt.type === 'activity') {
+                if (evt.isComplete) continue;
+                const startDate = parseISO(evt.date);
+                if (currentDay < startDate) continue;
+                const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
+                const isDelayed = dueDate ? isAfter(currentDay, dueDate) : false;
+                enrichedEvents.push({ ...evt, isDelayed });
+            } else if (evt.recurrence?.frequency) {
+                const rule = new RRule({
+                    freq: RRule[evt.recurrence.frequency],
+                    interval: evt.recurrence.interval || 1,
+                    dtstart: parseISO(evt.date),
+                    until: evt.recurrence.endDate ? parseISO(evt.recurrence.endDate) : undefined
+                });
+                const occurrences = rule.between(monthStart, monthEnd, true);
+                for (const occurrenceDate of occurrences) {
+                    const occDateStr = format(occurrenceDate, 'yyyy-MM-dd');
+                    if (evt.exclusions?.includes(occDateStr)) continue;
+                    const startOfOccurrence = occurrenceDate;
+                    const endOfOccurrence = addDays(startOfOccurrence, (evt.spanningDays || 1) - 1);
+                    if (currentDay >= startOfOccurrence && currentDay <= endOfOccurrence) {
+                        enrichedEvents.push({ ...evt, date: occDateStr, isVirtual: true });
+                    }
+                }
+            } else {
+                const startOfEvent = parseISO(evt.date);
+                const endOfEvent = addDays(startOfEvent, (evt.spanningDays || 1) - 1);
+                if (currentDay >= startOfEvent && currentDay <= endOfEvent) {
+                    enrichedEvents.push(evt);
+                }
+            }
         }
-      } else {
-        // caso di evento lungo ma senza ripetizioni
-        const end = addDays(evtStart, evtDuration - 1 );
-        if (current >= evtStart && current <= end) {
-          enrichedEvents.push(evt);
-        }
-      }
-    }
-
-    return enrichedEvents;
-  };
-
+        return enrichedEvents;
+    };
   // synca il modale alla cache ===================================================
   useEffect(() => {
     if (selectedDate && selectedDate.startsWith(monthKey)) {
@@ -137,39 +133,74 @@ const Calendar = () => {
   // polling delle notifiche browser ===================================================
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
+      const now = virtualNow; // Using virtualNow for time machine compatibility
       const nowMin = Math.floor(now.getTime() / 60000);
-      const allEvents = Object.values(eventsCache[monthKey] || {}).flat();
+      const allEvents = Object.values(eventsCache).flat(2);
 
-      allEvents.forEach(event => {
-        if (!event.notificationPrefs?.browser || !event.time) return;
+      const eventsForNotification = allEvents.reduce((acc, event) => {
+        if(event.recurrence?.frequency) {
+          const rule = new RRule({
+            freq: RRule[event.recurrence.frequency], interval: event.recurrence.interval || 1, dtstart: parseISO(event.date),
+            until: event.recurrence.endDate ? parseISO(event.recurrence.endDate) : undefined
+          });
+          const today = format(now, 'yyyy-MM-dd');
+          const occurrences = rule.between(subDays(now, 1), addDays(now, 1));
+          occurrences.forEach(occ => {
+            if (format(occ, 'yyyy-MM-dd') === today && !event.exclusions?.includes(today)) {
+              acc.push({...event, date: today}); // Add occurrence with today's date
+            }
+          });
+        } else {
+          acc.push(event);
+        }
+        return acc;
+      }, []);
+
+      eventsForNotification.forEach(event => {
+        if (!event.notificationPrefs?.browser) return;
         if (localStorage.getItem(`event-ack-${event._id}`)) return;
 
-        const [hour, minute] = event.time.split(':').map(Number);
-        const evtDateTime = new Date(`${event.date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+        let eventDateStr, eventTimeStr;
+
+        if (event.type === 'activity') {
+          if (!event.dueDate || !event.dueTime) return;
+          eventDateStr = event.dueDate;
+          eventTimeStr = event.dueTime;
+        } else if (event.type === 'manual') {
+          if (!event.time) return;
+          eventDateStr = event.date;
+          eventTimeStr = event.time;
+        } else {
+          return;
+        }
+
+        const [hour, minute] = eventTimeStr.split(':').map(Number);
+        const evtDateTime = new Date(`${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+                
         const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
         const notifyMin = Math.floor(notifyTime.getTime() / 60000);
         const repeat = event.notificationPrefs.repeat || 1;
 
         for (let i = 0; i < repeat; i++) {
-          const thisNotifyMin = notifyMin + i;
+          const thisNotifyMin = notifyMin + i * (event.notificationPrefs.repeatInterval || 1);
           const uniqueId = `${event._id}-${thisNotifyMin}`;
 
           if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
             showNotification({
-              title: 'Promemoria evento',
-              body: `${event.text} alle ${event.time} (${event.date})`
-            }, () => {
-              localStorage.setItem(`event-ack-${event._id}`, 'true');
-            });
-            setNotifiedEvents(prev => new Set(prev).add(uniqueId));
+              title: event.type === 'activity' ? 'Activity Due' : 'Event Reminder',
+              body: `${event.text} at ${eventTimeStr}`
+              }, () => {
+                localStorage.setItem(`event-ack-${event._id}`, 'true');
+              });
+              setNotifiedEvents(prev => new Set(prev).add(uniqueId));
           }
         }
       });
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [eventsCache, monthKey, notifiedEvents]);
+  }, [eventsCache, notifiedEvents, virtualNow]);
+
 
   //const refreshMonth = () => setMonthTrigger(t => t + 1);
 
@@ -238,6 +269,24 @@ const Calendar = () => {
     }
   };
   
+  // gestisce il completamento di una attivita' e la rimuove
+  const handleActivityToggled = (updatedActivity) => {
+    setEventsCache(cache => {
+      const newCache = { ...cache };
+      for (const key in newCache) {
+        const monthMap = newCache[key];
+        for (const date in monthMap) {
+          // aggiorna self alla posizione corretta
+          newCache[key][date] = monthMap[date].map(e => e._id === updatedActivity._id ? updatedActivity : e);
+        }
+      }
+      return newCache;
+    });
+    // riflette sulla lista modale
+    setSelectedEvents(events => events.map(e => e._id === updatedActivity._id ? updatedActivity : e));
+  };
+
+
   // mostra il modale in quella specifica giornata ============================================
   const showModal = dateStr => {
     setSelectedDate(dateStr);
@@ -283,6 +332,7 @@ const Calendar = () => {
       const expandedToday = expandEvents(rawEvents, dateStr);
       // necessario per detrminare se c'è ALMENO UN evento di quel tipo in quel giorno
       const types = [...new Set(expandedToday.map(e=>e.type))];
+      const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
       
       cells.push(
         <div key={dateStr}
@@ -292,8 +342,10 @@ const Calendar = () => {
           {/* rendering condizionae delle icone */}
           {expandedToday.length>0 && (
             <div className="event-indicators">
-              {types.includes('note') && <i className="bi bi-stickies-fill note-icon"/>}
-              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon"/>}
+              {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
+              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" title="Event"/>}
+              {types.includes('activity') && !isAnyActivityDelayed && <i className="bi bi-check2-square activity-icon" title="Activity"/>}
+              {isAnyActivityDelayed && <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity!"/> }
             </div>
           )}
         </div>
@@ -337,6 +389,7 @@ const Calendar = () => {
         onEventAdded={handleEventAddition}
         onEventDeleted={handleEventDeletion}
         onEventExclusion={handleEventExclusion}
+        onActivityToggled={handleActivityToggled}
       />
     </div>
   );

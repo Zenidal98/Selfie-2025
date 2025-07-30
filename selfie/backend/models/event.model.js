@@ -24,7 +24,7 @@ const eventSchema = new mongoose.Schema({
   endTime: { type: String, default: null },
   spanningDays: { type: Number, default: null },
   // per inserire  l'attivita' di creazione nota
-  type: { type: String, enum: ['manual', 'note'], default: 'manual' },
+  type: { type: String, enum: ['manual', 'note', 'activity'], default: 'manual' },
   noteId: { type: mongoose.Schema.Types.ObjectId, ref:'Note', default: null },
 
   recurrence: recurrenceSchema,
@@ -37,8 +37,12 @@ const eventSchema = new mongoose.Schema({
   exclusions: { type: [String], default: [] }, // per cancellare singole istanze
 
   // aggiunta preferenze notifica
-  notificationPrefs: notificationPrefsSchema
+  notificationPrefs: notificationPrefsSchema,
 
+  //aggiunte per le Attivita'
+  dueDate: { type: String, default: null}, //YYYY-MM-DD 
+  dueTime: { type: String, default: null}, //HH:mm
+  isComplete: { type: Boolean, default: false},
 }, {
   timestamps: true
 });
