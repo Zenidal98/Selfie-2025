@@ -97,6 +97,7 @@ const Calendar = () => {
         enrichedEvents.push({ ...evt, isDelayed });
       } else if (evt.recurrence?.frequency) {
         const [year, month, day] = evt.date.split('-').map(Number);
+        // check per evitare conflitti causati dalla time zone
         const dtstart = new Date(Date.UTC(year, month - 1, day));
         let until = undefined;
         if (evt.recurrence.endDate){
@@ -110,7 +111,8 @@ const Calendar = () => {
           dtstart: dtstart,
           until: until
         });
-
+        
+        // garantisce di trovare gli eventi in caso di errori off-by-one
         const wideSearchStart = subDays(monthStart, 2);
         const wideSearchEnd = addDays(monthEnd, 2);
         const occurrencesUTC = rule.between(wideSearchStart, wideSearchEnd, true);
@@ -118,7 +120,7 @@ const Calendar = () => {
         for (const occUTC of occurrencesUTC) {
           const zonedOccurrence = toZonedTime(occUTC, timeZone);
           const occDateStr = format(occUTC, 'yyyy-MM-dd');
-              
+          // compensa la ricerca wide (evita i duplicati)    
           if (occDateStr === dateStr) {
             if (evt.exclusions?.includes(occDateStr)) continue;
               enrichedEvents.push({ ...evt, date: occDateStr, isVirtual: true });
