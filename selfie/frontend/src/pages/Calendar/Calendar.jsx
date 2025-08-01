@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays} from 'date-fns';
+import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays, parse} from 'date-fns';
+import { fromZonedTime, toZonedTime, format as formatTZ } from 'date-fns-tz'; 
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
 import CalendarModal from './calendarModal';
@@ -11,6 +12,7 @@ import { RRule } from 'rrule';
 import { showNotification } from '../../utils/notify';
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const timeZone = 'Europe/Rome';
 
 const Calendar = () => {
   const { virtualNow, isSynced, setIsSynced, lastManualChange } = useTimeMachine(); 
@@ -82,44 +84,56 @@ const Calendar = () => {
 
   // arrichisce gli eventi "grezzi" del fetch con le ricorrenze / eventi lunghi 
   const expandEvents = (rawEvents, dateStr) => {
-        const enrichedEvents = [];
-        const currentDay = parseISO(dateStr);
+    const enrichedEvents = [];
+    const currentDay = parseISO(dateStr);
 
-        for (const evt of rawEvents) {
-            if (evt.type === 'activity') {
-                if (evt.isComplete) continue;
-                const startDate = parseISO(evt.date);
-                if (currentDay < startDate) continue;
-                const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
-                const isDelayed = dueDate ? isAfter(currentDay, dueDate) : false;
-                enrichedEvents.push({ ...evt, isDelayed });
-            } else if (evt.recurrence?.frequency) {
-                const rule = new RRule({
-                    freq: RRule[evt.recurrence.frequency],
-                    interval: evt.recurrence.interval || 1,
-                    dtstart: parseISO(evt.date),
-                    until: evt.recurrence.endDate ? parseISO(evt.recurrence.endDate) : undefined
-                });
-                const occurrences = rule.between(monthStart, monthEnd, true);
-                for (const occurrenceDate of occurrences) {
-                    const occDateStr = format(occurrenceDate, 'yyyy-MM-dd');
-                    if (evt.exclusions?.includes(occDateStr)) continue;
-                    const startOfOccurrence = occurrenceDate;
-                    const endOfOccurrence = addDays(startOfOccurrence, (evt.spanningDays || 1) - 1);
-                    if (currentDay >= startOfOccurrence && currentDay <= endOfOccurrence) {
-                        enrichedEvents.push({ ...evt, date: occDateStr, isVirtual: true });
-                    }
-                }
-            } else {
-                const startOfEvent = parseISO(evt.date);
-                const endOfEvent = addDays(startOfEvent, (evt.spanningDays || 1) - 1);
-                if (currentDay >= startOfEvent && currentDay <= endOfEvent) {
-                    enrichedEvents.push(evt);
-                }
-            }
+    for (const evt of rawEvents) {
+      if (evt.type === 'activity') {
+        if (evt.isComplete) continue;
+        const startDate = parseISO(evt.date);
+        if (currentDay < startDate) continue;
+        const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
+        const isDelayed = dueDate ? isAfter(currentDay, dueDate) : false;
+        enrichedEvents.push({ ...evt, isDelayed });
+      } else if (evt.recurrence?.frequency) {
+        const [year, month, day] = evt.date.split('-').map(Number);
+        const dtstart = new Date(Date.UTC(year, month - 1, day));
+        let until = undefined;
+        if (evt.recurrence.endDate){
+          const [uYear, uMonth, uDay] = evt.recurrence.endDate.split('-').map(Number);
+          until = new Date(Date.UTC(uYear, uMonth - 1, uDay, 23, 59, 59 ));
         }
-        return enrichedEvents;
-    };
+
+        const rule = new RRule({
+          freq: RRule[evt.recurrence.frequency],
+          interval: evt.recurrence.interval || 1,
+          dtstart: dtstart,
+          until: until
+        });
+
+        const wideSearchStart = subDays(monthStart, 2);
+        const wideSearchEnd = addDays(monthEnd, 2);
+        const occurrencesUTC = rule.between(wideSearchStart, wideSearchEnd, true);
+
+        for (const occUTC of occurrencesUTC) {
+          const zonedOccurrence = toZonedTime(occUTC, timeZone);
+          const occDateStr = format(occUTC, 'yyyy-MM-dd');
+              
+          if (occDateStr === dateStr) {
+            if (evt.exclusions?.includes(occDateStr)) continue;
+              enrichedEvents.push({ ...evt, date: occDateStr, isVirtual: true });
+          }
+        }               
+      } else {
+        const startOfEvent = parseISO(evt.date);
+        const endOfEvent = addDays(startOfEvent, (evt.spanningDays || 1) - 1);
+        if (currentDay >= startOfEvent && currentDay <= endOfEvent) {
+          enrichedEvents.push(evt);
+        }
+      }
+    }
+    return enrichedEvents;
+  };
   // synca il modale alla cache ===================================================
   useEffect(() => {
     if (selectedDate && selectedDate.startsWith(monthKey)) {
