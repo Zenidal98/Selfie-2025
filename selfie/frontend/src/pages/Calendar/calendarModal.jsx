@@ -207,6 +207,10 @@ const CalendarModal = ({
                                     <label className="form-label">Ora Fine (per Eventi)</label>
                                     <input type="time" className="form-control" value={newEndTime} disabled={!!newDueDate} onChange={e => setNewEndTime(e.target.value)} />
                                 </div>
+                                <div className="mb-3 mt-3">
+                                    <label className="form-label">Giorni di duarata (per Eventi)</label>
+                                    <input type="number" className="form-control" min= "1" value={spanningDays} disabled={!!newDueDate} onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)} />
+                                </div>
                             </div>
                             <div className="accordion mt-3" id="advancedOptions">
                                 <div className="accordion-item">

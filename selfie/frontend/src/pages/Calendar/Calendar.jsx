@@ -118,13 +118,30 @@ const Calendar = () => {
         const occurrencesUTC = rule.between(wideSearchStart, wideSearchEnd, true);
 
         for (const occUTC of occurrencesUTC) {
-          const zonedOccurrence = toZonedTime(occUTC, timeZone);
-          const occDateStr = format(occUTC, 'yyyy-MM-dd');
-          // compensa la ricerca wide (evita i duplicati)    
-          if (occDateStr === dateStr) {
-            if (evt.exclusions?.includes(occDateStr)) continue;
-              enrichedEvents.push({ ...evt, date: occDateStr, isVirtual: true });
-          }
+          const startOfOccurrence = toZonedTime(occUTC, timeZone);
+
+                // --- THIS IS THE DEFINITIVE FIX ---
+
+                // Step 1: Generate an array of all date strings covered by this event's span.
+                const spanDays = [];
+                for (let i = 0; i < (evt.spanningDays || 1); i++) {
+                    spanDays.push(format(addDays(startOfOccurrence, i), 'yyyy-MM-dd'));
+                }
+
+                // Step 2: Check if the day we are currently rendering (`dateStr`) is in that array.
+                if (spanDays.includes(dateStr)) {
+                    const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
+
+                    if (evt.exclusions?.includes(startOccDateStr)) {
+                        // If the start date is excluded, the whole span is excluded.
+                        break; 
+                    }
+                    
+                    enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });
+                    
+                    // We found the event instance that covers today, so we're done with this event.
+                    break;
+                }
         }               
       } else {
         const startOfEvent = parseISO(evt.date);
