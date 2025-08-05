@@ -1,5 +1,5 @@
 import express from "express";
-import {  createEvent, getEvents, deleteEvent, excludeOccurrence, toggleActivityCompletion } from "../controllers/event.controller.js"
+import {  createEvent, getEvents, deleteEvent, excludeOccurrence, toggleActivityCompletion, exportIcal } from "../controllers/event.controller.js"
 
 const router = express.Router();
 
@@ -17,4 +17,8 @@ router.patch('/:id/exclude', excludeOccurrence);
 
 // PATCH 2 -> marca un'attivita' come completata 
 router.patch('/:id/toggle-complete', toggleActivityCompletion)
+
+// GET 2 -> ottieni il file .ics del calendario
+router.get('/export', exportIcal)
+
 export default router;

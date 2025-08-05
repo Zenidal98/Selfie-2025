@@ -1,4 +1,6 @@
 import Event from "../models/event.model.js";
+//import { RRule } from 'rrule';
+import ical from 'ical-generator';
 
 export const getEvents = async (req, res) => {
   const { userId, start, end } = req.query;
@@ -108,5 +110,55 @@ export const toggleActivityCompletion = async (req, res) => {
   } catch (error) {
     console.error('Failed to toggle activity:', error);
     res.status(500).json({ error: 'Failed to toggle activity status'});
+  }
+};
+
+export const exportIcal = async (req, res) => {
+  const { userId } = req.query;
+  if(!userId){
+    return res.status(400).json({ error: "Missing User Id"});
+  }
+
+  try {
+    const events = await Event.find({ userId }).lean();
+    const calendar = ical({ name: 'Selfie - Calendar'});
+
+    events.forEach(event => {
+      let start, end;
+      
+      if (event.type === "activity"){
+        start = new Date(`${event.dueDate}T${event.dueTime || '09:00'}:00`); //le date in ics vogliono anche i secondi
+        end = new Date(start.getTime() + 60 * 60 * 1000); // un'ora di durata come default, non semantica 
+      } else {
+        start = new Date(`${event.date}T${event.time || '00:00'}:00`);
+        end = event.endTime ? new Date(`${event.date}T{event.endTime}:00`) : new Date(start.getTime() + 60 * 60 * 1000); // manca il fix per gli span
+      }
+      
+      const calEvent = {
+        start, 
+        end,
+        summary: event.text,
+        description: `Type: ${event.type}`, // NDR: probabilmente lo tolgo
+        location: event.location || '',
+      };
+
+      if (event.recurrence?.frequency) {
+        calEvent.repeating = {
+          freq: event.recurrence.frequency,
+          interval: event.recurrence.interval,
+          until: event.recurrence.endDate ? new Date(event.recurrence.endDate) : undefined,
+          exclude: event.exclusions?.map(excludedDate => parseISO(excludedDate)),
+        }
+      }
+
+      calendar.createEvent(calEvent);
+    });
+
+    res.setHeader('Content-Type', 'text/calendar;charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="selfieCalendar.ics"');
+    res.send(calendar.toString());
+  } catch (error) {
+    console.error("Failed to export calendar", error);
+    res.status(500).json({ error: "Failed to export calendar"});
   }
 };

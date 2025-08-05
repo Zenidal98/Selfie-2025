@@ -119,29 +119,19 @@ const Calendar = () => {
 
         for (const occUTC of occurrencesUTC) {
           const startOfOccurrence = toZonedTime(occUTC, timeZone);
+          const spanDays = [];
+          for (let i = 0; i < (evt.spanningDays || 1); i++) {
+            spanDays.push(format(addDays(startOfOccurrence, i), 'yyyy-MM-dd'));
+          }
 
-                // --- THIS IS THE DEFINITIVE FIX ---
-
-                // Step 1: Generate an array of all date strings covered by this event's span.
-                const spanDays = [];
-                for (let i = 0; i < (evt.spanningDays || 1); i++) {
-                    spanDays.push(format(addDays(startOfOccurrence, i), 'yyyy-MM-dd'));
-                }
-
-                // Step 2: Check if the day we are currently rendering (`dateStr`) is in that array.
-                if (spanDays.includes(dateStr)) {
-                    const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
-
-                    if (evt.exclusions?.includes(startOccDateStr)) {
-                        // If the start date is excluded, the whole span is excluded.
-                        break; 
-                    }
-                    
-                    enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });
-                    
-                    // We found the event instance that covers today, so we're done with this event.
-                    break;
-                }
+          if (spanDays.includes(dateStr)) {
+            const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
+            if (evt.exclusions?.includes(startOccDateStr)) {
+              break; 
+            }
+          enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });          
+          break;
+          }
         }               
       } else {
         const startOfEvent = parseISO(evt.date);
@@ -153,6 +143,7 @@ const Calendar = () => {
     }
     return enrichedEvents;
   };
+
   // synca il modale alla cache ===================================================
   useEffect(() => {
     if (selectedDate && selectedDate.startsWith(monthKey)) {
@@ -163,77 +154,91 @@ const Calendar = () => {
     }
   }, [eventsCache, selectedDate, monthKey]);
 
-  // polling delle notifiche browser ===================================================
+  // polling delle notifiche browser
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = virtualNow; // Using virtualNow for time machine compatibility
-      const nowMin = Math.floor(now.getTime() / 60000);
-      const allEvents = Object.values(eventsCache).flat(2);
-
-      const eventsForNotification = allEvents.reduce((acc, event) => {
-        if(event.recurrence?.frequency) {
+    const now = virtualNow; // compatibilita' con time machine
+    const nowMin = Math.floor(now.getTime() / 60000);
+    const allEvents = Object.values(eventsCache).flat(2);
+    const today = format(now, 'yyyy-MM-dd');
+      
+    // crea la lista di eventi da notificare
+    const eventsForNotification = allEvents.reduce((acc, event) => {
+      if (!event || !event.date) return acc;
+        
+        if (event.type === 'activity') {
+          if (!event.isComplete && event.dueDate === today) {
+            acc.push(event);
+          }         
+        } else if (event.recurrence?.frequency) {
           const rule = new RRule({
-            freq: RRule[event.recurrence.frequency], interval: event.recurrence.interval || 1, dtstart: parseISO(event.date),
+            freq: RRule[event.recurrence.frequency],
+            interval: event.recurrence.interval || 1,
+            dtstart: parseISO(event.date),
             until: event.recurrence.endDate ? parseISO(event.recurrence.endDate) : undefined
           });
-          const today = format(now, 'yyyy-MM-dd');
-          const occurrences = rule.between(subDays(now, 1), addDays(now, 1));
-          occurrences.forEach(occ => {
-            if (format(occ, 'yyyy-MM-dd') === today && !event.exclusions?.includes(today)) {
-              acc.push({...event, date: today}); // Add occurrence with today's date
+          const occurrencesUTC = rule.between(subDays(now, 1), addDays(now, 1), true); // ricerca ampliata, per gestire o-b-1
+          for (const occUTC of occurrencesUTC) {
+            const occDateStr = format(toZonedTime(occUTC, timeZone), 'yyyy-MM-dd');
+            if (occDateStr === today && !event.exclusions?.includes(occDateStr)) {
+              acc.push({ ...event, date: today });
+              break;
             }
-          });
+          }
         } else {
-          acc.push(event);
-        }
-        return acc;
-      }, []);
-
-      eventsForNotification.forEach(event => {
-        if (!event.notificationPrefs?.browser) return;
-        if (localStorage.getItem(`event-ack-${event._id}`)) return;
-
-        let eventDateStr, eventTimeStr;
-
-        if (event.type === 'activity') {
-          if (!event.dueDate || !event.dueTime) return;
-          eventDateStr = event.dueDate;
-          eventTimeStr = event.dueTime;
-        } else if (event.type === 'manual') {
-          if (!event.time) return;
-          eventDateStr = event.date;
-          eventTimeStr = event.time;
-        } else {
-          return;
-        }
-
-        const [hour, minute] = eventTimeStr.split(':').map(Number);
-        const evtDateTime = new Date(`${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
-                
-        const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
-        const notifyMin = Math.floor(notifyTime.getTime() / 60000);
-        const repeat = event.notificationPrefs.repeat || 1;
-
-        for (let i = 0; i < repeat; i++) {
-          const thisNotifyMin = notifyMin + i * (event.notificationPrefs.repeatInterval || 1);
-          const uniqueId = `${event._id}-${thisNotifyMin}`;
-
-          if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
-            showNotification({
-              title: event.type === 'activity' ? 'Activity Due' : 'Event Reminder',
-              body: `${event.text} at ${eventTimeStr}`
-              }, () => {
-                localStorage.setItem(`event-ack-${event._id}`, 'true');
-              });
-              setNotifiedEvents(prev => new Set(prev).add(uniqueId));
+          if (event.date === today) {
+            acc.push(event);
           }
         }
-      });
-    }, 5000);
+      return acc;
+    }, []);
 
-    return () => clearInterval(interval);
-  }, [eventsCache, notifiedEvents, virtualNow]);
+    // processa la lista appena creata e notifica al momento opportuno 
+    eventsForNotification.forEach(event => {
+      if (!event.notificationPrefs?.browser) return;
+      if (localStorage.getItem(`event-ack-${event._id}`)) return;
 
+      let eventDateStr, eventTimeStr;
+
+      if (event.type === 'activity') {
+      if (!event.dueDate || !event.dueTime) return;
+        eventDateStr = event.dueDate;
+        eventTimeStr = event.dueTime;
+      } else if (event.type === 'manual') {
+        if (!event.time) return;
+        eventDateStr = event.date;
+        eventTimeStr = event.time;
+      } else {
+      return;
+      }
+
+      const [hour, minute] = eventTimeStr.split(':').map(Number);
+      const evtDateTime = new Date(`${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+            
+      const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
+      const notifyMin = Math.floor(notifyTime.getTime() / 60000);
+      const repeat = event.notificationPrefs.repeat || 1;
+
+      for (let i = 0; i < repeat; i++) {
+        
+        const thisNotifyMin = notifyMin + i;
+        const uniqueId = `${event._id}-${thisNotifyMin}`;
+
+        if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
+          showNotification({
+          title: event.type === 'activity' ? 'Activity Due' : 'Event Reminder',
+          body: `${event.text} at ${eventTimeStr} (${eventDateStr}) `
+          }, () => {
+            localStorage.setItem(`event-ack-${event._id}`, 'true');
+          });
+          setNotifiedEvents(prev => new Set(prev).add(uniqueId));
+        }
+      }
+    });
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [eventsCache, notifiedEvents, virtualNow]); 
 
   //const refreshMonth = () => setMonthTrigger(t => t + 1);
 

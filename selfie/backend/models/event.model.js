@@ -20,6 +20,7 @@ const eventSchema = new mongoose.Schema({
   text: { type: String, required: true },
   // per gestire i promemoria 'HH:mm'
   time: { type: String, default: '00:00'},
+  location: { type: String, default: null },
   // per creare range orari
   endTime: { type: String, default: null },
   spanningDays: { type: Number, default: null },

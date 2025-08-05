@@ -2,146 +2,159 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 const CalendarModal = ({
-    modalRef,
-    selectedDate,
-    selectedEvents,
-    onEventAdded,
-    onEventDeleted,
-    onEventExclusion,
-    onActivityToggled
+  modalRef,
+  selectedDate,
+  selectedEvents,
+  onEventAdded,
+  onEventDeleted,
+  onEventExclusion,
+  onActivityToggled
 }) => {
-    const [newText, setNewText] = useState('');
-    const [newTime, setNewTime] = useState('00:00');
-    const [newEndTime, setNewEndTime] = useState('00:00');
-    const [spanningDays, setSpanningDays] = useState(1);
-    const [recurrence, setRecurrence] = useState({ frequency: '', interval: 1, endDate: '' });
-    const [useBrowserNotif, setUseBrowserNotif] = useState(true);
-    const [useEmailNotif, setUseEmailNotif] = useState(false);
-    const [advanceNotice, setAdvanceNotice] = useState(0);
-    const [repeatCount, setRepeatCount] = useState(1);
-    const [newDueDate, setNewDueDate] = useState('');
-    const [newDueTime, setNewDueTime] = useState('09:00');
+  const [newText, setNewText] = useState('');
+  const [newTime, setNewTime] = useState('00:00');
+  const [newEndTime, setNewEndTime] = useState('00:00');
+  const [spanningDays, setSpanningDays] = useState(1);
+  const [recurrence, setRecurrence] = useState({ frequency: '', interval: 1, endDate: '' });
+  const [useBrowserNotif, setUseBrowserNotif] = useState(true);
+  const [useEmailNotif, setUseEmailNotif] = useState(false);
+  const [advanceNotice, setAdvanceNotice] = useState(0);
+  const [repeatCount, setRepeatCount] = useState(1);
+  const [newDueDate, setNewDueDate] = useState('');
+  const [newDueTime, setNewDueTime] = useState('09:00');
+  const [newLocation, setNewLocation] = useState(''); 
 
-    const storedUser = JSON.parse(localStorage.getItem('utente'));
-    const userId = storedUser?._id;
+  const storedUser = JSON.parse(localStorage.getItem('utente'));
+  const userId = storedUser?._id;
 
-    useEffect(() => {
-        if (selectedDate) {
-            setNewText('');
-            setNewTime('00:00');
-            setNewEndTime('00:00');
-            setSpanningDays(1);
-            setRecurrence({ frequency: '', interval: 1, endDate: '' });
-            setNewDueDate('');
-            setNewDueTime('09:00');
-            setUseBrowserNotif(true);
-            setUseEmailNotif(false);
-            setAdvanceNotice(0);
-            setRepeatCount(1);
-        }
-    }, [selectedDate]);
+  useEffect(() => {
+    if (selectedDate) {
+      setNewText('');
+      setNewTime('00:00');
+      setNewEndTime('00:00');
+      setSpanningDays(1);
+      setRecurrence({ frequency: '', interval: 1, endDate: '' });
+      setNewDueDate('');
+      setNewDueTime('09:00');
+      setUseBrowserNotif(true);
+      setUseEmailNotif(false);
+      setAdvanceNotice(0);
+      setRepeatCount(1);
+      setNewLocation('');
+    }
+  }, [selectedDate]);
 
-    const handleAdd = async () => {
-        if (!newText.trim() || !userId) return;
+  const handleAdd = async () => {
+    if (!newText.trim() || !userId) return;
 
-        let payload;
-        const notificationPayload = {
-            browser: useBrowserNotif,
-            email: useEmailNotif,
-            advance: advanceNotice,
-            repeat: repeatCount
-        };
+    let payload;
+    const notificationPayload = {
+      browser: useBrowserNotif,
+      email: useEmailNotif,
+      advance: advanceNotice,
+      repeat: repeatCount
+    };
 
-        if (newDueDate) {
-            payload = {
-                userId, type: 'activity', text: newText.trim(),
-                date: selectedDate, dueDate: newDueDate, dueTime: newDueTime,
-                notificationPrefs: notificationPayload,
-            };
-        } else {
-            payload = {
-                userId, type: 'manual', text: newText.trim(),
-                date: selectedDate, time: newTime, endTime: newEndTime,
-                spanningDays: spanningDays,
-                recurrence: recurrence.frequency ? recurrence : undefined,
-                notificationPrefs: notificationPayload,
-            };
-        }
+    if (newDueDate) {
+      payload = {
+        userId,
+        type: 'activity',
+        text: newText.trim(),
+        date: selectedDate,
+        dueDate: newDueDate,
+        dueTime: newDueTime,
+        notificationPrefs: notificationPayload,
+        loaction: newLocation.trim() || null,
+      };
+    } else {
+      payload = {
+        userId,
+        type: 'manual',
+        text: newText.trim(),
+        date: selectedDate,
+        time: newTime,
+        endTime: newEndTime,
+        spanningDays: spanningDays,
+        recurrence: recurrence.frequency ? recurrence : undefined,
+        notificationPrefs: notificationPayload,
+        loaction: newLocation.trim() || null,
+      };
+    }
 
+    try {
+      const res = await axios.post('/api/events', payload);
+      onEventAdded(res.data);
+      setNewText('');
+      setNewDueDate('');
+      setNewTime('00:00');
+      setNewLocation('');
+    } catch (err) {
+      console.error(err);
+      alert('Errore nella creazione dell\'elemento.');
+    }
+  };
+
+  const handleToggleComplete = async (activityId) => {
+    try {
+      const res = await axios.patch(`/api/events/${activityId}/toggle-complete`);
+      onActivityToggled(res.data);
+    } catch (err) {
+      console.error('Failed to toggle activity', err);
+      alert('Errore nell\'aggiornamento dell\'attività.');
+      }
+  };
+
+  const handleDelete = async (event) => {
+    const seriesId = event._id;
+    if (event.isVirtual) {
+      const choice = window.confirm("This is a recurring event. Press OK to delete the ENTIRE series, or Cancel to delete ONLY this occurrence.");
+      if (choice) {
         try {
-            const res = await axios.post('/api/events', payload);
-            onEventAdded(res.data);
-            setNewText('');
-            setNewDueDate('');
-            setNewTime('00:00');
+          await axios.delete(`/api/events/${seriesId}`);
+          onEventDeleted(seriesId);
         } catch (err) {
-            console.error(err);
-            alert('Errore nella creazione dell\'elemento.');
+          console.error("Failed to delete series", err);
+          alert('Error deleting the event series.');
         }
-    };
-
-    const handleToggleComplete = async (activityId) => {
+      } else {
         try {
-            const res = await axios.patch(`/api/events/${activityId}/toggle-complete`);
-            onActivityToggled(res.data);
+          await axios.patch(`/api/events/${seriesId}/exclude`, { dateToExclude: event.date });
+          onEventExclusion(seriesId, event.date);
         } catch (err) {
-            console.error('Failed to toggle activity', err);
-            alert('Errore nell\'aggiornamento dell\'attività.');
+          console.error("Failed to exclude the single occurrence", err);
+          alert('Error deleting the single occurrence.');
         }
-    };
-
-    const handleDelete = async (event) => {
-        const seriesId = event._id;
-        if (event.isVirtual) {
-            const choice = window.confirm("This is a recurring event. Press OK to delete the ENTIRE series, or Cancel to delete ONLY this occurrence.");
-            if (choice) {
-                try {
-                    await axios.delete(`/api/events/${seriesId}`);
-                    onEventDeleted(seriesId);
-                } catch (err) {
-                    console.error("Failed to delete series", err);
-                    alert('Error deleting the event series.');
-                }
-            } else {
-                try {
-                    await axios.patch(`/api/events/${seriesId}/exclude`, { dateToExclude: event.date });
-                    onEventExclusion(seriesId, event.date);
-                } catch (err) {
-                    console.error("Failed to exclude the single occurrence", err);
-                    alert('Error deleting the single occurrence.');
-                }
-            }
-        } else {
-            if (!window.confirm('Sei sicuro di voler cancellare questo elemento?')) return;
-            try {
-                await axios.delete(`/api/events/${event._id}`);
-                onEventDeleted(event._id);
-            } catch (err) {
-                console.error("Failed to delete item", err);
-                alert('Error deleting the item.');
-            }
-        }
-    };
+      }
+    } else {
+      if (!window.confirm('Sei sicuro di voler cancellare questo elemento?')) return;
+      try {
+        await axios.delete(`/api/events/${event._id}`);
+        onEventDeleted(event._id);
+      } catch (err) {
+        console.error("Failed to delete item", err);
+        alert('Error deleting the item.');
+      }
+    }
+  };
     
-    // rende la UI di attivita' e ricorrenza mutuamente esclusive
-    const handleDueDateChange = (e) => {
-        const newDate = e.target.value;
-        setNewDueDate(newDate);
-        if (newDate) {
-            setRecurrence({ frequency: '', interval: 1, endDate: '' });
-        }
-    };
+  // i seguenti due metodi rendono la UI di attivita' e ricorrenza mutuamente esclusive
+  const handleDueDateChange = (e) => {
+    const newDate = e.target.value;
+    setNewDueDate(newDate);
+    if (newDate) {
+      setRecurrence({ frequency: '', interval: 1, endDate: '' });
+    }
+  };
 
-    const handleRecurrenceChange = (e) => {
-        const newFrequency = e.target.value;
-        setRecurrence(r => ({ ...r, frequency: newFrequency }));
-        if (newFrequency) {
-            setNewDueDate('');
-            setNewDueTime('');
-        }
-    };
+  const handleRecurrenceChange = (e) => {
+    const newFrequency = e.target.value;
+    setRecurrence(r => ({ ...r, frequency: newFrequency }));
+    if (newFrequency) {
+      setNewDueDate('');
+      setNewDueTime('');
+    }
+  };
 
-    const sortedEvents = [...selectedEvents].sort((a, b) => (a.time || a.dueTime || '00:00').localeCompare(b.time || b.dueTime || '00:00'));
+  const sortedEvents = [...selectedEvents].sort((a, b) => (a.time || a.dueTime || '00:00').localeCompare(b.time || b.dueTime || '00:00'));
 
     return (
         <div className="modal fade" tabIndex="-1" ref={modalRef}>
