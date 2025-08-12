@@ -15,8 +15,18 @@ export const getEvents = async (req, res) => {
       
       $or: [
         // eventi non ricorrenti e NON attivita' (pena double fetching)
-        { date: { $gte: start, $lte: end }, recurrence: { frequency: null }, type: { $in: ['manual', 'note']} },          // eventi ricorrenti     
-        { 'recurrence.frequency': {$ne: null}, 
+        { 
+          type: { $in: ['manual', 'note']},
+          date: { $gte: start, $lte: end },
+          $or: [
+            {'recurrence.frequency': null },
+            {'recurrence.frequency': {$exists: false} }
+          ]
+        },          
+
+        // eventi ricorrenti     
+        { 
+          'recurrence.frequency': {$ne: null}, 
           date: {$lte: end}, 
           $or: [
             { 'recurrence.endDate': null},

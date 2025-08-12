@@ -63,7 +63,7 @@ const CalendarModal = ({
         dueDate: newDueDate,
         dueTime: newDueTime,
         notificationPrefs: notificationPayload,
-        loaction: newLocation.trim() || null,
+        location: newLocation.trim() || null,
       };
     } else {
       payload = {
@@ -76,7 +76,7 @@ const CalendarModal = ({
         spanningDays: spanningDays,
         recurrence: recurrence.frequency ? recurrence : undefined,
         notificationPrefs: notificationPayload,
-        loaction: newLocation.trim() || null,
+        location: newLocation.trim() || null,
       };
     }
 

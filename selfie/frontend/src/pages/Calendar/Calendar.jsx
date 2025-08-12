@@ -285,27 +285,24 @@ const Calendar = () => {
 
   // gestisce l'aggiunta di nuovi eventi (e quindi anche icone / lista modale ) =====================
   const handleEventAddition = (newEvt) => {
-    const key = format(monthStart, 'yyyy-MM');
-    setEventsCache(cache => {
-      // check che la cache e le mappe effettivamente esistano
-      const monthMap = cache[key] || {};
-      const dayList = monthMap[newEvt.date] || [];
-      // aggiunge l'evento alla map del mese
-      const updatedDayList = [...dayList, newEvt];
-      // aggiunge la map del mese alla cache
-      return {
-        ...cache,
-        [key]: {
-          ...monthMap,
-          [newEvt.date]: updatedDayList
-        }
-      };
-    });
-    // aggiunge l'evento alla lista del modale
-    if (selectedDate === newEvt.date) {
-      setSelectedEvents(es => [...es, newEvt]);
+    // evita il refresh per gli eventi che spannano negli altri mesi
+    if (newEvt.recurrence?.frequency || newEvt.type === 'activity') {
+        setEventsCache({});
+        setMonthTrigger(t => t + 1); // This forces a refetch
+    } else {
+        const key = format(monthStart, 'yyyy-MM');
+        setEventsCache(cache => {
+            const monthMap = cache[key] || {};
+            const dayList = monthMap[newEvt.date] || [];
+            const updatedDayList = [...dayList, newEvt];
+            return { ...cache, [key]: { ...monthMap, [newEvt.date]: updatedDayList } };
+        });
     }
-  };
+
+    if (selectedDate === newEvt.date) {
+        setSelectedEvents(es => [...es, newEvt]);
+    }
+};
   
   // gestisce il completamento di una attivita' e la rimuove
   const handleActivityToggled = (updatedActivity) => {
