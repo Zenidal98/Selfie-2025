@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import './LoginPage.css';
-import axios from "axios";
+import "./LoginPage.css";
 import { jwtDecode } from "jwt-decode";
+import api from "../../utils/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -15,19 +15,17 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await axios.post("http://localhost:5000/api/login", credentials);
+      // niente URL assoluto: usa l'istanza api con baseURL
+      const res = await api.post("/login", credentials);
       const token = res.data.token;
 
-      // decodifichiamo il token per ottenere i dati utente
       const user = jwtDecode(token);
 
-      // salva token e user nel session storage, in questo modo se si chiude la pagina si deve riaccedere, cosi come se si apre il 
-      sessionStorage.setItem("token", token);                     // link in una nuova pagina
+      // salvi in sessionStorage (coerente col tuo codice)
+      sessionStorage.setItem("token", token);
       sessionStorage.setItem("utente", JSON.stringify(user));
 
-      // 🔁 Vai alla home
       navigate("/home");
     } catch (err) {
       alert(err.response?.data?.message || "Errore durante il login");
@@ -46,10 +44,10 @@ const LoginPage = () => {
           <button className="btn btn-primary w-100" type="submit">Login</button>
         </form>
 
-      <p className="mt-3 text-muted">
-        Non sei registrato? <a href="/register">Registrati qui</a>
-      </p>
-     </div>
+        <p className="mt-3 text-muted">
+          Non sei registrato? <a href="/register">Registrati qui</a>
+        </p>
+      </div>
     </div>
   );
 };

@@ -1,24 +1,35 @@
 import express from "express";
-import {  createEvent, getEvents, deleteEvent, excludeOccurrence, toggleActivityCompletion, exportIcal } from "../controllers/event.controller.js"
+import {
+  createEvent,
+  getEvents,
+  deleteEvent,
+  excludeOccurrence,
+  toggleActivityCompletion,
+  exportIcal,
+} from "../controllers/event.controller.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET -> eventi dell'utente in tale periodo (periodo e id definiti nella query, vedi controller) ========================
-router.get('/', getEvents);
+// All events routes require a valid JWT; controllers will use req.user.id
+router.use(auth);
 
-// POST -> crea un nuovo evento (di tipo "manuale") ==============
-router.post('/', createEvent);
+// GET -> events for the logged-in user (period via query)
+router.get("/", getEvents);
 
-// DELETE -> cancella un evento preesistente (ed eventualmente la sua ricorrenza) =====================
-router.delete('/:id', deleteEvent);
+// POST -> create a new manual event for the logged-in user
+router.post("/", createEvent);
 
-// PATCH -> cancella un'istanza di un evento ricorrente (lo marca nella blacklist dell'evento base)
-router.patch('/:id/exclude', excludeOccurrence);
+// DELETE -> delete an existing event (and its recurrence, if any)
+router.delete("/:id", deleteEvent);
 
-// PATCH 2 -> marca un'attivita' come completata 
-router.patch('/:id/toggle-complete', toggleActivityCompletion)
+// PATCH -> exclude a single instance of a recurring event
+router.patch("/:id/exclude", excludeOccurrence);
 
-// GET 2 -> ottieni il file .ics del calendario
-router.get('/export', exportIcal)
+// PATCH -> toggle an activity's completion
+router.patch("/:id/toggle-complete", toggleActivityCompletion);
+
+// GET -> export the user's calendar as .ics
+router.get("/export", exportIcal);
 
 export default router;

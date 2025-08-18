@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";                 // [MOD] rimosso axios diretto
+// [MOD] uso l'istanza api che allega automaticamente il Bearer token
+import api from "../../utils/api";
 
 const CalendarModal = ({
   modalRef,
@@ -23,8 +25,9 @@ const CalendarModal = ({
   const [newDueTime, setNewDueTime] = useState('09:00');
   const [newLocation, setNewLocation] = useState(''); 
 
-  const storedUser = JSON.parse(localStorage.getItem('utente'));
-  const userId = storedUser?._id;
+  // const storedUser = JSON.parse(localStorage.getItem('utente'));
+  // const userId = storedUser?._id;
+  // [MOD] non passiamo più userId dal frontend: il backend lo prende da req.user.id (JWT)
 
   useEffect(() => {
     if (selectedDate) {
@@ -44,7 +47,7 @@ const CalendarModal = ({
   }, [selectedDate]);
 
   const handleAdd = async () => {
-    if (!newText.trim() || !userId) return;
+    if (!newText.trim() /*|| !userId*/ ) return; // [MOD] rimosso controllo su userId (non serve lato client)
 
     let payload;
     const notificationPayload = {
@@ -56,7 +59,7 @@ const CalendarModal = ({
 
     if (newDueDate) {
       payload = {
-        userId,
+        // userId,                                      // [MOD] NON inviare userId dal client
         type: 'activity',
         text: newText.trim(),
         date: selectedDate,
@@ -67,7 +70,7 @@ const CalendarModal = ({
       };
     } else {
       payload = {
-        userId,
+        // userId,                                      // [MOD] NON inviare userId dal client
         type: 'manual',
         text: newText.trim(),
         date: selectedDate,
@@ -81,7 +84,9 @@ const CalendarModal = ({
     }
 
     try {
-      const res = await axios.post('/api/events', payload);
+      // const res = await axios.post('/api/events', payload);
+      // [MOD] uso api.post (aggiunge Authorization) e rotta senza prefisso /api (è già nel baseURL)
+      const res = await api.post('/events', payload);
       onEventAdded(res.data);
       setNewText('');
       setNewDueDate('');
@@ -95,7 +100,9 @@ const CalendarModal = ({
 
   const handleToggleComplete = async (activityId) => {
     try {
-      const res = await axios.patch(`/api/events/${activityId}/toggle-complete`);
+      // const res = await axios.patch(`/api/events/${activityId}/toggle-complete`);
+      // [MOD] uso api.patch per includere il token
+      const res = await api.patch(`/events/${activityId}/toggle-complete`);
       onActivityToggled(res.data);
     } catch (err) {
       console.error('Failed to toggle activity', err);
@@ -109,7 +116,9 @@ const CalendarModal = ({
       const choice = window.confirm("This is a recurring event. Press OK to delete the ENTIRE series, or Cancel to delete ONLY this occurrence.");
       if (choice) {
         try {
-          await axios.delete(`/api/events/${seriesId}`);
+          // await axios.delete(`/api/events/${seriesId}`);
+          // [MOD] uso api.delete (token) e path coerente col baseURL
+          await api.delete(`/events/${seriesId}`);
           onEventDeleted(seriesId);
         } catch (err) {
           console.error("Failed to delete series", err);
@@ -117,7 +126,9 @@ const CalendarModal = ({
         }
       } else {
         try {
-          await axios.patch(`/api/events/${seriesId}/exclude`, { dateToExclude: event.date });
+          // await axios.patch(`/api/events/${seriesId}/exclude`, { dateToExclude: event.date });
+          // [MOD] idem sopra
+          await api.patch(`/events/${seriesId}/exclude`, { dateToExclude: event.date });
           onEventExclusion(seriesId, event.date);
         } catch (err) {
           console.error("Failed to exclude the single occurrence", err);
@@ -127,7 +138,9 @@ const CalendarModal = ({
     } else {
       if (!window.confirm('Sei sicuro di voler cancellare questo elemento?')) return;
       try {
-        await axios.delete(`/api/events/${event._id}`);
+        // await axios.delete(`/api/events/${event._id}`);
+        // [MOD] idem sopra
+        await api.delete(`/events/${event._id}`);
         onEventDeleted(event._id);
       } catch (err) {
         console.error("Failed to delete item", err);

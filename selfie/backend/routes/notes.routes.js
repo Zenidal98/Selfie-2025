@@ -1,18 +1,27 @@
 import express from "express";
-import { saveNotes, getUserNotes, updateNote, deleteNote } from "../controllers/notes.controller.js"
-const router = express.Router(); 
+import {
+  saveNotes,
+  getUserNotes,
+  updateNote,
+  deleteNote,
+} from "../controllers/notes.controller.js";
+import { auth } from "../middleware/auth.js";
 
-// POST -> nuova nota
-router.post('/save', saveNotes);
+const router = express.Router();
 
-// GET -> note dell'utente 
-router.get('/:userId', getUserNotes);
+// All notes routes require a valid JWT; controllers will use req.user.id
+router.use(auth);
 
-// PUT -> modifica nota 
-router.put('/:noteId', updateNote);
+// POST -> create a new note for the logged-in user
+router.post("/", saveNotes);
 
-// DELETE -> cancella nota =========================================
-router.delete('/:noteId', deleteNote);
+// GET -> get notes of the logged-in user
+router.get("/", getUserNotes);
+
+// PUT -> update a note owned by the logged-in user
+router.put("/:noteId", updateNote);
+
+// DELETE -> delete a note owned by the logged-in user
+router.delete("/:noteId", deleteNote);
 
 export default router;
- 

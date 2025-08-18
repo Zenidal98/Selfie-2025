@@ -5,11 +5,13 @@ import './calendar.css';
 import { useNavigate } from "react-router-dom";
 import CalendarModal from './calendarModal';
 import { Modal } from 'bootstrap';
-import axios from 'axios';
+// import axios from 'axios';                         // [MOD] rimosso axios diretto
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useTimeMachine } from '../../utils/TimeMachine'; 
 import { RRule } from 'rrule';  
 import { showNotification } from '../../utils/notify';
+// [MOD] uso un'istanza axios condivisa che aggiunge automaticamente l'Authorization
+import api from '../../utils/api';
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const timeZone = 'Europe/Rome';
@@ -49,10 +51,14 @@ const Calendar = () => {
   const fetchMonth = async (key, start, end) => {
     if (eventsCache[key]) return; // ce l'ho già:
     try {
-      const stored = JSON.parse(localStorage.getItem('utente')) || {};
-      const userId = stored._id;
-      if (!userId) return;
-      const res = await axios.get(`/api/events?userId=${userId}&start=${start}&end=${end}`);
+      // const stored = JSON.parse(localStorage.getItem('utente')) || {};    // [MOD] non serve più leggere userId dal front
+      // const userId = stored._id;                                          // [MOD] il backend lo inferisce dal JWT (req.user.id)
+      // if (!userId) return;                                                // [MOD] rimosso controllo su userId lato client
+
+      // const res = await axios.get(`/api/events?userId=${userId}&start=${start}&end=${end}`);
+      // [MOD] uso api.get con params e senza userId; il token è aggiunto dall'interceptor
+      const res = await api.get('/events', { params: { start, end } });
+
       const map = {};
       res.data.forEach(evt => {
         const eventDate = evt.date; // per le attivita' la data di riferimento e' quella di inizio
@@ -431,5 +437,3 @@ const Calendar = () => {
 };
 
 export default Calendar;
-
-
