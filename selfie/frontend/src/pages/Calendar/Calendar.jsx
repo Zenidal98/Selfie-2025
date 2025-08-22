@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays, parse} from 'date-fns';
+import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays, parse, startOfWeek, endOfWeek, getISOWeek} from 'date-fns';
 import { fromZonedTime, toZonedTime, format as formatTZ } from 'date-fns-tz'; 
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ import { RRule } from 'rrule';
 import { showNotification } from '../../utils/notify';
 // [MOD] uso un'istanza axios condivisa che aggiunge automaticamente l'Authorization
 import api from '../../utils/api';
+
 
 const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const timeZone = 'Europe/Rome';
@@ -29,11 +30,20 @@ const Calendar = () => {
   const modalRef = useRef(null);
   const navigate = useNavigate();
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  const monthStart = startOfMonth(currentDate); 
+const monthEnd = endOfMonth(currentDate);
   const monthKey = format(monthStart, 'yyyy-MM');
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayIndex = getDay(monthStart);
+
+  const todayStr = format(virtualNow, 'yyyy-MM-dd');
+  const [viewMode, setViewMode ] = useState('month'); // 'month' | 'week'
+ 
+  // utilities settimanali
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1});
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1});
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  const weekNumber = getISOWeek(currentDate);
 
   //controlla che virtualNow non sia già stato pickato altrove prima del render di calendar
   useEffect(() => {
@@ -266,27 +276,26 @@ const Calendar = () => {
   }; 
 
   const handleEventExclusion = (eventId, excludedDate) => {
-        setEventsCache(cache => {
-            const newCache = { ...cache };
-            let eventUpdated = false;
-            for (const key in newCache) { 
-                if (eventUpdated) break;
-                const monthMap = newCache[key];
-                for (const date in monthMap) {
-                    const eventIndex = monthMap[date].findIndex(e => e._id === eventId);
-                    if (eventIndex > -1) {
-                        const eventToUpdate = monthMap[date][eventIndex];
-                        eventToUpdate.exclusions = [...(eventToUpdate.exclusions || []), excludedDate];
-                        eventUpdated = true;
-                        break;
-                    }
-                }
+    setEventsCache(cache => {
+      const newCache = { ...cache };
+        let eventUpdated = false;
+        for (const key in newCache) { 
+          if (eventUpdated) break;
+          const monthMap = newCache[key];
+          for (const date in monthMap) {
+            const eventIndex = monthMap[date].findIndex(e => e._id === eventId);
+            if (eventIndex > -1) {
+              const eventToUpdate = monthMap[date][eventIndex];
+              eventToUpdate.exclusions = [...(eventToUpdate.exclusions || []), excludedDate];
+              eventUpdated = true;
+              break;
             }
-            return newCache;
-        });
-
-        setSelectedEvents(evts => evts.filter(e => !(e._id === eventId && e.date === excludedDate)));
-    }; 
+          }
+        }
+      return newCache;
+    });
+    setSelectedEvents(evts => evts.filter(e => !(e._id === eventId && e.date === excludedDate)));
+  }; 
 
 
   // gestisce l'aggiunta di nuovi eventi (e quindi anche icone / lista modale ) =====================
@@ -339,15 +348,21 @@ const Calendar = () => {
     new Modal(modalRef.current).show();
   };
 
-  // Funzioni per cambiare mese / anno. IMPORTANTE: il modale viene azzerato per evitare il flicker bug
-  const changeMonth = changeIndex => {
+  // Funzioni per cambiare mese-settimana / anno. 
+  const changePeriod = (changeIndex) => {
     setIsSynced(false); // per "staccarsi" liberamente dal mese di arrivo della tm
-    setCurrentDate(d => addMonths(d, changeIndex));
+    if (viewMode === 'month') {
+      setCurrentDate(d => addMonths(d, changeIndex));
+    } else {
+      setCurrentDate(d => addDays(d, changeIndex * 7));
+    }
     setSelectedDate(null);
     setSelectedEvents([]);
   };
 
-  const changeYear = changeIndex => {
+  
+
+  const changeYear = (changeIndex) => {
     setIsSynced(false);
     setCurrentDate(d => addYears(d, changeIndex));
     setSelectedDate(null);
@@ -377,7 +392,7 @@ const Calendar = () => {
       
       cells.push(
         <div key={dateStr}
-             className={`calendar-cell day ${dayClass}`}
+             className={`calendar-cell day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : '' }`}
              onClick={()=>showModal(dateStr)}>
           <div className="day-number">{dayNum}</div>
           {/* rendering condizionae delle icone */}
@@ -395,33 +410,67 @@ const Calendar = () => {
     return cells;
   };
 
+  const generateWeekView = () => {
+    const cm = eventsCache[monthKey] || {};
+    return weekDays.map(day => {
+      const dateStr = format(day,'yyyy-MM-dd');
+      const rawEvents = Object.values(cm).flat();
+      const expandedToday = expandEvents(rawEvents, dateStr);
+      const types = [...new Set(expandedToday.map(e=>e.type))];
+      const isAnyActivityDelayed = expandedToday.some(e => e.type==='activity' && e.isDelayed);
+      const dayClass = (getDay(day)===0 || getDay(day)===6) ? 'weekend':'weekday';
+      return (
+        <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : '' }`} onClick={()=>showModal(dateStr)}>
+          <div className="day-number">{format(day,'EEE dd MMM')}</div>
+          <div className="event-indicators">
+            {types.includes('note') && <i className="bi bi-stickies-fill note-icon"/>}
+            {types.includes('manual') && <i className="bi bi-plus-circle manual-icon"/>}
+            {types.includes('activity') && !isAnyActivityDelayed && <i className="bi bi-check2-square activity-icon"/>}
+            {isAnyActivityDelayed && <i className="bi bi-exclamation-triangle-fill delayed-activity-icon"/>}
+            </div>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="container mt-1">
-      {/* Home Button */}
-      <button className="btn btn-outline-primary my-3" onClick={()=>navigate('/home')}>
-        Torna alla home
-      </button>
+      
+      <div className="d-flex justify-content-center align-items-center my-3">
+        <button className="btn btn-outline-primary me-3" onClick={()=>navigate('/home')}>Torna alla home</button>
 
-      {/* gruppo di cambio mese/anno */}    
-      <div className="d-flex justify-content-center align-items-center mb-3">
         <div className="btn-group me-2">
           <button className="btn btn-outline-secondary" onClick={()=>changeYear(-1)}>&laquo;</button>
-          <button className="btn btn-outline-secondary" onClick={()=>changeMonth(-1)}>&lsaquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changePeriod(-1)}>&lsaquo;</button>
         </div>
-        <h2 className="mx-3 mb-2 px-5">{format(currentDate,'MMMM yyyy')}</h2>
+        <h2 className="mx-3 mb-2 px-5">
+          {viewMode==='month' ? format(currentDate,'MMMM yyyy') : `Week ${weekNumber}, ${format(currentDate,'yyyy')}`}
+        </h2>
         <div className="btn-group ms-2">
-          <button className="btn btn-outline-secondary" onClick={()=>changeMonth(1)}>&rsaquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changePeriod(1)}>&rsaquo;</button>
           <button className="btn btn-outline-secondary" onClick={()=>changeYear(1)}>&raquo;</button>
+        </div>
+        <div className="btn-group ms-3">
+          <button className={`btn btn-outline-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
+          <button className={`btn btn-outline-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
         </div>
       </div>
 
-      {/* griglia del calendario*/}
-      <div className="calendar-grid-header">
-        {daysOfWeek.map(d=>(
-          <div key={d} className="calendar-cell header">{d}</div>
-        ))}
-      </div>
-      <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
+      {viewMode === 'month' && (
+        <div className="calendar-grid-header">
+          {daysOfWeek.map(d => (
+            <div key={d} className="calendar-cell header">
+              {d}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {viewMode === 'month' ? (
+        <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
+      ) : (
+        <div className="week-view mb-5">{generateWeekView()}</div>
+      )} 
 
       <CalendarModal
         modalRef={modalRef}
@@ -434,6 +483,7 @@ const Calendar = () => {
       />
     </div>
   );
+
 };
 
 export default Calendar;

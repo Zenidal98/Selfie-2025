@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+//import { Collapse } from "bootstrap"; 
 // import axios from "axios";                 // [MOD] rimosso axios diretto
 // [MOD] uso l'istanza api che allega automaticamente il Bearer token
 import api from "../../utils/api";
@@ -24,7 +25,7 @@ const CalendarModal = ({
   const [newDueDate, setNewDueDate] = useState('');
   const [newDueTime, setNewDueTime] = useState('09:00');
   const [newLocation, setNewLocation] = useState(''); 
-
+  const [advancedOpen, setAdvancedOpen] = useState(false); // gestisce lo stato dell'accordion
   // const storedUser = JSON.parse(localStorage.getItem('utente'));
   // const userId = storedUser?._id;
   // [MOD] non passiamo più userId dal frontend: il backend lo prende da req.user.id (JWT)
@@ -186,7 +187,12 @@ const CalendarModal = ({
                                     <li key={event._id + event.date} className="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                         <div className="me-auto">
                                             <span className={`fw-bold ${event.isDelayed ? 'text-danger' : ''}`}>{event.text}</span><br />
-                                            {event.type === 'manual' && <small className="text-muted">Evento alle {event.time}</small>}
+                                            {event.type === 'manual' && ( 
+                                              <small className="text-muted">
+                                                Evento alle {event.time}
+                                                {event.endTime ? ` - Termina alle ${event.endTime}` : ''}
+                                                {event.spanningDays && event.spanningDays > 1 ? ` (del ${new Date(new Date(event.date).getTime() + (event.spanningDays - 1) * 24*60*60*1000).toISOString().slice(0,10)})` : ''}
+                                              </small>)}
                                             {event.type === 'activity' && <small className="text-muted">Scadenza: {event.dueDate} alle {event.dueTime}{event.isDelayed ? ' - IN RITARDO!' : ''}</small>}
                                             {event.type === 'note' && <small className="text-muted">Nota</small>}
                                         </div>
@@ -213,7 +219,7 @@ const CalendarModal = ({
                                 <input className="form-control" value={newText} onChange={e => setNewText(e.target.value)} />
                             </div>
                             <p className="text-muted small">Compila la data di scadenza per creare un'attività (To-Do), altrimenti verrà creato un normale evento.</p>
-                             <div className="row">
+                            <div className="row">
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label">Data di Scadenza (per Attività)</label>
                                     {/* il doppio !! assicura robustezza nel fatto che il campo sia boolean true, anziche' truthy */}
@@ -239,67 +245,128 @@ const CalendarModal = ({
                                 </div>
                             </div>
                             <div className="accordion mt-3" id="advancedOptions">
-                                <div className="accordion-item">
-                                    <h2 className="accordion-header">
-                                        <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
-                                            Opzioni Avanzate (Ricorrenza & Notifiche)
-                                        </button>
-                                    </h2>
-                                    <div id="collapseAdvanced" className="accordion-collapse collapse" data-bs-parent="#advancedOptions">
-                                        <div className="accordion-body">
-                                            <h6>Ricorrenza (per Eventi)</h6>
-                                            <select className="form-select mb-2" value={recurrence.frequency} disabled={!!newDueDate} onChange={handleRecurrenceChange}>
-                                                <option value="">Nessuna</option>
-                                                <option value="DAILY">Giornaliera</option>
-                                                <option value="WEEKLY">Settimanale</option>
-                                                <option value="MONTHLY">Mensile</option>
-                                            </select>
-                                            {recurrence.frequency && (
-                                                <div className="row">
-                                                    <div className="col-md-6 mb-2">
-                                                        <label className="form-label">Ripeti ogni</label>
-                                                        <input type="number" className="form-control" min="1" value={recurrence.interval} onChange={(e) => setRecurrence({ ...recurrence, interval: parseInt(e.target.value) || 1 })} />
-                                                    </div>
-                                                    <div className="col-md-6 mb-2">
-                                                        <label className="form-label">Fino a</label>
-                                                        <input type="date" className="form-control" value={recurrence.endDate} onChange={(e) => setRecurrence({ ...recurrence, endDate: e.target.value })} />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <hr />
-                                            <h6 className="mt-3">Notifiche</h6>
-                                            <div className="mb-3">
-                                                <label className="form-label">Meccanismo di notifica</label>
-                                                <div className="form-check">
-                                                    <input className="form-check-input" type="checkbox" id="notify-browser" checked={useBrowserNotif} onChange={(e) => setUseBrowserNotif(e.target.checked)} />
-                                                    <label className="form-check-label" htmlFor="notify-browser">Notifica browser</label>
-                                                </div>
-                                                <div className="form-check">
-                                                    <input className="form-check-input" type="checkbox" id="notify-email" checked={useEmailNotif} onChange={(e) => setUseEmailNotif(e.target.checked)} />
-                                                    <label className="form-check-label" htmlFor="notify-email">Notifica email</label>
-                                                </div>
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="form-label">Quando ricevere la notifica</label>
-                                                <select className="form-select" value={advanceNotice} onChange={(e) => setAdvanceNotice(parseInt(e.target.value))}>
-                                                    <option value={0}>Al momento dell’evento</option>
-                                                    <option value={5}>5 minuti prima</option>
-                                                    <option value={15}>15 minuti prima</option>
-                                                    <option value={60}>1 ora prima</option>
-                                                    <option value={1440}>1 giorno prima</option>
-                                                </select>
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="form-label">Ripetizione notifica</label>
-                                                <select className="form-select" value={repeatCount} onChange={(e) => setRepeatCount(parseInt(e.target.value))}>
-                                                    <option value={1}>Una volta sola</option>
-                                                    <option value={3}>Ripeti 3 volte</option>
-                                                    <option value={5}>Ogni minuto (max 5 volte)</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                              <div className="accordion-item">
+                                <h2 className="accordion-header" id="headingAdvanced">
+                                  <button
+                                    className={`accordion-button ${advancedOpen ? '' : 'collapsed'}`}
+                                    type="button"
+                                    onClick={() => setAdvancedOpen(!advancedOpen)}
+                                    aria-expanded={advancedOpen}
+                                    aria-controls="collapseAdvanced"
+                                  >
+                                    Opzioni Avanzate (Ricorrenza & Notifiche)
+                                  </button>
+                                </h2>
+                                <div
+                                  id="collapseAdvanced"
+                                  className={`accordion-collapse collapse ${advancedOpen ? 'show' : ''}`}
+                                  aria-labelledby="headingAdvanced"
+                                >
+                                <div className="accordion-body">
+                                  <h6>Ricorrenza (per Eventi)</h6>
+                                  <select
+                                    className="form-select mb-2"
+                                    value={recurrence.frequency}
+                                    disabled={!!newDueDate}
+                                    onChange={handleRecurrenceChange}
+                                  >
+                                    <option value="">Nessuna</option>
+                                    <option value="DAILY">Giornaliera</option>
+                                    <option value="WEEKLY">Settimanale</option>
+                                    <option value="MONTHLY">Mensile</option>
+                                  </select>
+
+                                  {recurrence.frequency && (
+                                    <div className="row">
+                                      <div className="col-md-6 mb-2">
+                                        <label className="form-label">Ripeti ogni</label>
+                                        <input
+                                          type="number"
+                                          className="form-control"
+                                          min="1"
+                                          value={recurrence.interval}
+                                          onChange={(e) =>
+                                            setRecurrence({
+                                              ...recurrence,
+                                              interval: parseInt(e.target.value) || 1
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                      <div className="col-md-6 mb-2">
+                                        <label className="form-label">Fino a</label>
+                                        <input
+                                          type="date"
+                                          className="form-control"
+                                          value={recurrence.endDate}
+                                          onChange={(e) =>
+                                            setRecurrence({ ...recurrence, endDate: e.target.value })
+                                          }
+                                        />
+                                      </div>
                                     </div>
+                                  )}
+
+                                  <hr />
+                                  <h6 className="mt-3">Notifiche</h6>
+                                  <div className="mb-3">
+                                    <label className="form-label">Meccanismo di notifica</label>
+                                    <div className="form-check">
+                                      <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="notify-browser"
+                                        checked={useBrowserNotif}
+                                        onChange={(e) => setUseBrowserNotif(e.target.checked)}
+                                      />
+                                      <label className="form-check-label" htmlFor="notify-browser">
+                                        Notifica browser
+                                      </label>
+                                    </div>
+                                    <div className="form-check">
+                                      <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="notify-email"
+                                        checked={useEmailNotif}
+                                        onChange={(e) => setUseEmailNotif(e.target.checked)}
+                                      />
+                                      <label className="form-check-label" htmlFor="notify-email">
+                                        Notifica email
+                                      </label>
+                                    </div>
+                                  </div>
+
+                                  <div className="mb-3">
+                                    <label className="form-label">Quando ricevere la notifica</label>
+                                    <select
+                                      className="form-select"
+                                      value={advanceNotice}
+                                      onChange={(e) => setAdvanceNotice(parseInt(e.target.value))}
+                                    >
+                                      <option value={0}>Al momento dell’evento</option>
+                                      <option value={5}>5 minuti prima</option>
+                                      <option value={15}>15 minuti prima</option>
+                                      <option value={60}>1 ora prima</option>
+                                      <option value={1440}>1 giorno prima</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="mb-3">
+                                    <label className="form-label">Ripetizione notifica</label>
+                                    <select
+                                      className="form-select"
+                                      value={repeatCount}
+                                      onChange={(e) => setRepeatCount(parseInt(e.target.value))}
+                                    >
+                                      <option value={1}>Una volta sola</option>
+                                      <option value={3}>Ripeti 3 volte</option>
+                                      <option value={5}>Ogni minuto (max 5 volte)</option>
+                                    </select>
+                                  </div>
                                 </div>
+                              </div>
+                            </div>
                             </div>
                             <div className="d-grid mt-4">
                                 <button className="btn btn-primary" type="button" onClick={handleAdd}>Aggiungi +</button>

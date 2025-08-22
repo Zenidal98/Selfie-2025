@@ -119,7 +119,7 @@ export const exportIcal = async (req, res) => {
 
   try {
     const events = await Event.find({ userId }).lean();
-    const calendar = ical({ name: "Selfie - Calendar" });
+    const calendar = ical({ name: "Selfie - Calendar", timezone: "Europe/Rome" });
 
     events.forEach((event) => {
       let start, end;
@@ -144,7 +144,7 @@ export const exportIcal = async (req, res) => {
 
       if (event.recurrence?.frequency) {
         calEvent.repeating = {
-          freq: event.recurrence.frequency,
+          freq: event.recurrence.frequency.toUpperCase(),
           interval: event.recurrence.interval,
           until: event.recurrence.endDate ? new Date(event.recurrence.endDate) : undefined,
           exclude: event.exclusions?.map((excludedDate) => parseISO(excludedDate)),

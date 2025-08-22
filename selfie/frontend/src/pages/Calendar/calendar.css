@@ -1,3 +1,4 @@
+/* === MONTH VIEW GRID === */
 .calendar-grid-header,
 .calendar-grid-body {
   display: grid;
@@ -12,15 +13,41 @@
   justify-content: flex-start;
   align-items: flex-start;
   position: relative;
+  transition: background-color 0.2s ease;
+}
+
+/* === WEEK VIEW STACK === */
+.week-view {
+  display: flex;
+  flex-direction: column; /* stack vertically */
+  gap: 8px;
+}
+
+.week-day {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  position: relative;
+  background-color: #fff; /* default like weekdays */
+  transition: background-color 0.2s ease;
+  border-radius: 4px; /* leggero arrotondamento */
+}
+
+.week-day:hover {
+  background-color: #e2e6ea;
 }
 
 /* colori diversi se weekend o no */
 .weekday {
-  background-color: #ffffff; 
+  background-color: #ffffff;
 }
 
 .weekend {
-  background-color: #ffe5e5; 
+  background-color: #ffe5e5;
 }
 
 .empty {
@@ -33,23 +60,28 @@
   text-align: center;
 }
 
-
+/* clickable day cells */
 .day {
   cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.day:hover {
-  background-color: #e2e6ea;
 }
 
 .day-number {
   font-weight: bold;
+  margin-bottom: 4px;
 }
+
+/* highlight today */
+.today-highlight {
+  border: 2px solid red !important;
+  background-color: #fff8e1 !important; /* giallino chiaro */
+}
+
+
 
 /* Responsive */
 @media (max-width: 768px) {
-  .calendar-cell {
+  .calendar-cell,
+  .week-day {
     min-height: 60px;
     font-size: 0.85rem;
   }
@@ -64,8 +96,7 @@ body {
   background-repeat: no-repeat;
 }
 
-
-/* robe varie per le icone */
+/* event icons */
 .event-indicators {
   position: absolute;
   bottom: 4px;
@@ -76,16 +107,25 @@ body {
 }
 
 .note-icon,
-.manual-icon {
+.manual-icon,
+.activity-icon,
+.delayed-activity-icon {
   font-size: 1.5rem;
 }
 
 .note-icon {
-  color: #0d6efd;    
+  color: #0d6efd;
 }
 
 .manual-icon {
-  color: #198754;    
+  color: #198754;
 }
 
+.activity-icon {
+  color: #20c997;
+}
+
+.delayed-activity-icon {
+  color: #dc3545;
+}
 
