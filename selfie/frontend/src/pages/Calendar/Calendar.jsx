@@ -104,13 +104,31 @@ const monthEnd = endOfMonth(currentDate);
     const currentDay = parseISO(dateStr);
 
     for (const evt of rawEvents) {
+      
       if (evt.type === 'activity') {
         if (evt.isComplete) continue;
-        const startDate = parseISO(evt.date);
-        if (currentDay < startDate) continue;
+
+        const startDate = parseISO(evt.date);           // activity start
         const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
-        const isDelayed = dueDate ? isAfter(currentDay, dueDate) : false;
-        enrichedEvents.push({ ...evt, isDelayed });
+        const today = virtualNow;                       // current virtual time
+
+        // skip before start or in the future
+        if (currentDay < startDate) continue;
+        if (currentDay > today) continue;
+
+        if (!dueDate) {
+          // if no due date, treat as always yellow until today
+          enrichedEvents.push({ ...evt, status: 'yellow' });
+          continue;
+        }
+
+        if (currentDay <= dueDate) {
+        // from start → due date inclusive
+          enrichedEvents.push({ ...evt, status: 'yellow' });
+        } else if (currentDay > dueDate && currentDay <= today) {
+          // after due date up until today
+          enrichedEvents.push({ ...evt, status: 'red' });
+        }
       } else if (evt.recurrence?.frequency) {
         const [year, month, day] = evt.date.split('-').map(Number);
         // check per evitare conflitti causati dalla time zone
@@ -388,7 +406,7 @@ const monthEnd = endOfMonth(currentDate);
       const expandedToday = expandEvents(rawEvents, dateStr);
       // necessario per detrminare se c'è ALMENO UN evento di quel tipo in quel giorno
       const types = [...new Set(expandedToday.map(e=>e.type))];
-      const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
+      //const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
       
       cells.push(
         <div key={dateStr}
@@ -400,8 +418,14 @@ const monthEnd = endOfMonth(currentDate);
             <div className="event-indicators">
               {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
               {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" title="Event"/>}
-              {types.includes('activity') && !isAnyActivityDelayed && <i className="bi bi-check2-square activity-icon" title="Activity"/>}
-              {isAnyActivityDelayed && <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity!"/> }
+              {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
+  <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due"/>
+)}
+
+              {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
+  <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity"/>
+)}
+
             </div>
           )}
         </div>
@@ -417,7 +441,7 @@ const monthEnd = endOfMonth(currentDate);
       const rawEvents = Object.values(cm).flat();
       const expandedToday = expandEvents(rawEvents, dateStr);
       const types = [...new Set(expandedToday.map(e=>e.type))];
-      const isAnyActivityDelayed = expandedToday.some(e => e.type==='activity' && e.isDelayed);
+      //const isAnyActivityDelayed = expandedToday.some(e => e.type==='activity' && e.isDelayed);
       const dayClass = (getDay(day)===0 || getDay(day)===6) ? 'weekend':'weekday';
       return (
         <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : '' }`} onClick={()=>showModal(dateStr)}>
@@ -425,9 +449,15 @@ const monthEnd = endOfMonth(currentDate);
           <div className="event-indicators">
             {types.includes('note') && <i className="bi bi-stickies-fill note-icon"/>}
             {types.includes('manual') && <i className="bi bi-plus-circle manual-icon"/>}
-            {types.includes('activity') && !isAnyActivityDelayed && <i className="bi bi-check2-square activity-icon"/>}
-            {isAnyActivityDelayed && <i className="bi bi-exclamation-triangle-fill delayed-activity-icon"/>}
-            </div>
+            {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
+  <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due"/>
+)}
+
+            {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
+  <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity"/>
+)}
+
+          </div>
         </div>
       );
     });
@@ -437,7 +467,7 @@ const monthEnd = endOfMonth(currentDate);
     <div className="container mt-1">
       
       <div className="d-flex justify-content-center align-items-center my-3">
-        <button className="btn btn-outline-primary me-3" onClick={()=>navigate('/home')}>Torna alla home</button>
+        <button className="btn btn-outline-primary mb-2 me-3" onClick={()=>navigate('/home')}>Torna alla home</button>
 
         <div className="btn-group me-2">
           <button className="btn btn-outline-secondary" onClick={()=>changeYear(-1)}>&laquo;</button>
@@ -454,6 +484,9 @@ const monthEnd = endOfMonth(currentDate);
           <button className={`btn btn-outline-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
           <button className={`btn btn-outline-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
         </div>
+        <button className='btn btn-dark ms-3 mb-2'>
+          EXPORT ICS 
+        </button>
       </div>
 
       {viewMode === 'month' && (
