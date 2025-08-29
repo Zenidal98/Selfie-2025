@@ -1,21 +1,26 @@
-//File che contiene l'algoritmo dietro alla funzione per calcolare i cicli personalizzati secondo lo schema 35 minuti (30+5)
-export const calcolaCicliStandard = (totaleMinuti) => {
-  const tempoCiclo = 35;
-  const studioBase = 30;
-  const pausaBase = 5;
+// Calcola cicli in base al tempo totale e a studio/pausa di default (30+5)
+export const calcolaCicliStandard = (
+  totaleMinuti,
+  studioBase = 30,
+  pausaBase = 5
+) => {
+  const tempoCiclo = studioBase + pausaBase;
 
   if (totaleMinuti < tempoCiclo) {
-    return { error: "Non ha senso lavorare meno di 35 minuti :(" };
+    return { error: `Non ha senso lavorare meno di ${tempoCiclo} minuti :(` };
   }
 
   const cicli = Math.floor(totaleMinuti / tempoCiclo);
   const resto = totaleMinuti % tempoCiclo;
 
+  // per compatibilità manteniamo la stessa struttura di ritorno
   return {
     cicli,
     studio: studioBase,
     pausa: pausaBase,
-    pausaFinale: pausaBase + resto,
+    pausaFinale: pausaBase + resto, // ultima pausa estesa
     resto,
+    totaleUsato: cicli * tempoCiclo + resto,
+    totaleInput: totaleMinuti,
   };
 };

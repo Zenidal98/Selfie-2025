@@ -1,65 +1,130 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./PomodoroPage.css";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import api from "../../utils/api"; // shared axios instance with JWT
 
-const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
+/**
+ * Props:
+ * - studyDuration (min)
+ * - breakDuration (min)
+ * - cycles (count)
+ * - eventId? (string) -> if provided, runtime state will be PATCHed to the event
+ */
+const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null }) => {
+  // Timer state
   const [secondsLeft, setSecondsLeft] = useState(studyDuration * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [isStudyTime, setIsStudyTime] = useState(true);
-  const [currentCycle, setCurrentCycle] = useState(1);
+  const [currentCycle, setCurrentCycle] = useState(1); // 1-based for UI
   const [isComplete, setIsComplete] = useState(false);
-  const intervalRef = useRef(null);
 
+  // intervals
+  const tickRef = useRef(null);
+  const autosaveRef = useRef(null);
+
+  // reset when plan changes
   useEffect(() => {
+    clearInterval(tickRef.current);
+    clearInterval(autosaveRef.current);
     setSecondsLeft(studyDuration * 60);
     setIsRunning(false);
     setIsStudyTime(true);
     setCurrentCycle(1);
     setIsComplete(false);
-    clearInterval(intervalRef.current);
   }, [studyDuration, breakDuration, cycles]);
 
-  const sendNotification = (msg) => {
-    if (window.Notification && Notification.permission === "granted") {
-      new Notification(msg);
-    } else {
-      alert(msg);
-    }
-  };
-
+  // notification permission
   useEffect(() => {
     if (window.Notification && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
   }, []);
 
-  const toggleTimer = () => {
-    if (isRunning) {
-      clearInterval(intervalRef.current);
+  const sendNotification = (msg) => {
+    if (window.Notification && Notification.permission === "granted") {
+      new Notification(msg);
     } else {
-      intervalRef.current = setInterval(() => {
-        setSecondsLeft((prev) => prev - 1);
-      }, 1000);
+      // Fallback so users still get feedback
+      // eslint-disable-next-line no-alert
+      alert(msg);
     }
-    setIsRunning(!isRunning);
   };
 
-  const resetTimer = () => {
-    clearInterval(intervalRef.current);
+  // ---- persistence helpers ----------------------------------------------------
+  const getDayISO = () => {
+    // Using local date (browser TZ) as in the calendar UI
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const patchState = async ({ reason = "tick" } = {}) => {
+    if (!eventId) return;
+    try {
+      await api.patch(`/events/${eventId}/pomodoro/state`, {
+        dayISO: getDayISO(),
+        phase: isStudyTime ? "study" : "break",
+        cycleIndex: Math.max(0, currentCycle - 1), // store 0-based
+        secondsLeft,
+        meta: { reason }, // ignored by backend but useful if you ever log it
+      });
+    } catch (e) {
+      // non-blocking
+      // console.warn("Failed to patch pomodoro state", e);
+    }
+  };
+
+  const startTick = () => {
+    // guard against duplicates
+    clearInterval(tickRef.current);
+    tickRef.current = setInterval(() => {
+      setSecondsLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    // autosave every 15s while running
+    clearInterval(autosaveRef.current);
+    autosaveRef.current = setInterval(() => {
+      patchState({ reason: "autosave" });
+    }, 15000);
+  };
+
+  const stopTick = async (reason = "pause") => {
+    clearInterval(tickRef.current);
+    clearInterval(autosaveRef.current);
+    await patchState({ reason });
+  };
+
+  // main toggle
+  const toggleTimer = async () => {
+    if (isRunning) {
+      setIsRunning(false);
+      await stopTick("pause");
+    } else {
+      setIsRunning(true);
+      startTick();
+    }
+  };
+
+  const resetTimer = async () => {
+    await stopTick("reset");
     setIsRunning(false);
-    setSecondsLeft(isStudyTime ? studyDuration * 60 : breakDuration * 60);
+    setSecondsLeft((isStudyTime ? studyDuration : breakDuration) * 60);
+    await patchState({ reason: "reset" });
   };
 
-  const nextTime = () => {
-    clearInterval(intervalRef.current);
+  // move to next phase/cycle (force)
+  const nextTime = async () => {
+    await stopTick("nextTime");
     setIsRunning(false);
 
     if (isStudyTime) {
+      // switch to break
       setIsStudyTime(false);
       setSecondsLeft(breakDuration * 60);
       sendNotification("⏸️ Pausa iniziata!");
     } else {
+      // switch to next study or complete
       if (currentCycle < cycles) {
         setIsStudyTime(true);
         setCurrentCycle((prev) => prev + 1);
@@ -67,60 +132,69 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
         sendNotification(`🧠 Inizio ciclo ${currentCycle + 1}`);
       } else {
         sendNotification("🎉 Tutti i cicli completati!");
-        handleSaveSession(); // ⬅️ Salvataggio sessione
         setIsComplete(true);
+        // finalize state with 0 seconds left
+        setSecondsLeft(0);
+        await patchState({ reason: "complete" });
       }
     }
   };
 
-  const restartCycle = () => {
-    clearInterval(intervalRef.current);
+  const restartCycle = async () => {
+    await stopTick("restartCycle");
     setIsRunning(false);
     setIsStudyTime(true);
     setSecondsLeft(studyDuration * 60);
-    sendNotification(` Ricominciato ciclo ${currentCycle}`);
+    sendNotification(`🔁 Ricominciato ciclo ${currentCycle}`);
+    await patchState({ reason: "restartCycle" });
   };
 
-  const finishCycle = () => {
-    clearInterval(intervalRef.current);
+  // finish current cycle early (advance to next study cycle, or complete)
+  const finishCycle = async () => {
+    await stopTick("finishCycle");
     setIsRunning(false);
 
     if (currentCycle < cycles) {
       setCurrentCycle((prev) => prev + 1);
       setIsStudyTime(true);
       setSecondsLeft(studyDuration * 60);
-      sendNotification(` Passato al ciclo ${currentCycle + 1}`);
+      sendNotification(`➡️ Passato al ciclo ${currentCycle + 1}`);
+      await patchState({ reason: "finishCycle-next" });
     } else {
-      sendNotification(" Tutti i cicli completati!");
-      handleSaveSession(); // ⬅️ Salvataggio
+      sendNotification("✅ Tutti i cicli completati!");
       setIsComplete(true);
+      setSecondsLeft(0);
+      await patchState({ reason: "finishCycle-complete" });
     }
   };
 
-  const handleSaveSession = async () => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const decoded = jwtDecode(token);
-      await axios.post("http://localhost:5000/api/pomodoro", {
-        userId: decoded.id,
-        studyDuration,
-        breakDuration,
-        cyclesCompleted: currentCycle,
-        totalStudyTime: currentCycle * studyDuration,
-        note: "Sessione salvata automaticamente"
-      });
-    } catch (error) {
-      console.error("Errore salvataggio pomodoro:", error.message);
-    }
-  };
-
+  // auto-advance when a phase ends
   useEffect(() => {
-    if (secondsLeft === 0 && isRunning) {
-      clearInterval(intervalRef.current);
+    if (!isRunning) return;
+    if (secondsLeft === 0) {
+      // stop ticking first to avoid double trigs
+      clearInterval(tickRef.current);
+      clearInterval(autosaveRef.current);
       setIsRunning(false);
-      nextTime();
+      // persist zero state then advance
+      (async () => {
+        await patchState({ reason: "phase-end" });
+        await nextTime();
+      })();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft]);
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearInterval(tickRef.current);
+      clearInterval(autosaveRef.current);
+      // best-effort save on unmount
+      patchState({ reason: "unmount" });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatTime = (sec) => {
     const m = Math.floor(sec / 60);
@@ -130,29 +204,36 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles }) => {
 
   return (
     <div className="pomodoro-timer mb-4 p-3 shadow rounded">
-      <h5>{isStudyTime ? " Studio" : " Pausa"} – Ciclo {currentCycle}/{cycles}</h5>
+      <h5>
+        {isStudyTime ? "🧠 Studio" : "⏸️ Pausa"} – Ciclo {currentCycle}/{cycles}
+      </h5>
 
-      {isRunning && (
-        isStudyTime ? <div className="study-animation"></div> : <div className="break-animation"></div>
-      )}
+      {isRunning && (isStudyTime ? <div className="study-animation"></div> : <div className="break-animation"></div>)}
 
       {isComplete && <div className="completion-animation my-3">🎉 Fine sessione!</div>}
 
       <h1 className="display-3 my-3">{formatTime(secondsLeft)}</h1>
 
       <div className="progress my-3" style={{ height: "15px" }}>
-        <div
-          className="progress-bar bg-success"
-          style={{ width: `${(currentCycle / cycles) * 100}%` }}
-        />
+        <div className="progress-bar bg-success" style={{ width: `${(currentCycle / cycles) * 100}%` }} />
       </div>
 
       <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
-        <button className="btn btn-success" onClick={toggleTimer}> {isRunning ? "Pausa" : "Start"} </button>
-        <button className="btn btn-secondary" onClick={resetTimer}> Reset </button>
-        <button className="btn btn-warning" onClick={nextTime}> Prossimo tempo </button>
-        <button className="btn btn-info" onClick={restartCycle}> Ricomincia ciclo </button>
-        <button className="btn btn-danger" onClick={finishCycle}>  Termina ciclo </button>
+        <button className="btn btn-success" onClick={toggleTimer}>
+          {isRunning ? "Pausa" : "Start"}
+        </button>
+        <button className="btn btn-secondary" onClick={resetTimer}>
+          Reset
+        </button>
+        <button className="btn btn-warning" onClick={nextTime}>
+          Prossimo tempo
+        </button>
+        <button className="btn btn-info" onClick={restartCycle}>
+          Ricomincia ciclo
+        </button>
+        <button className="btn btn-danger" onClick={finishCycle}>
+          Termina ciclo
+        </button>
       </div>
     </div>
   );
