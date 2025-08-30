@@ -108,26 +108,38 @@ const monthEnd = endOfMonth(currentDate);
       if (evt.type === 'activity') {
         if (evt.isComplete) continue;
 
-        const startDate = parseISO(evt.date);           // activity start
-        const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
-        const today = virtualNow;                       // current virtual time
+        const dueDate = evt.dueDate ? parseISO(evt.dueDate) : parseISO(evt.date);
+        const today = virtualNow;
 
-        // skip before start or in the future
-        if (currentDay < startDate) continue;
-        if (currentDay > today) continue;
-
-        if (!dueDate) {
-          // if no due date, treat as always yellow until today
-          enrichedEvents.push({ ...evt, status: 'yellow' });
-          continue;
+        // If due date is in the future
+        if (dueDate > today) {
+          if (format(currentDay, 'yyyy-MM-dd') === format(dueDate, 'yyyy-MM-dd')) {
+            enrichedEvents.push({ ...evt, status: 'yellow' });
         }
+        }
+        // If due date is today
+        else if (format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+          if (format(currentDay, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+            let status = 'yellow'; // default
+            if (evt.dueTime) {
+              const dueDateTime = parse(evt.dueTime, 'HH:mm', today);
 
-        if (currentDay <= dueDate) {
-        // from start → due date inclusive
-          enrichedEvents.push({ ...evt, status: 'yellow' });
-        } else if (currentDay > dueDate && currentDay <= today) {
-          // after due date up until today
-          enrichedEvents.push({ ...evt, status: 'red' });
+              if(isAfter(today, dueDateTime)){
+                status = 'red';
+              }
+            } 
+            enrichedEvents.push({ ...evt, status });
+        }
+        }
+        // If due date is in the past
+        else if (dueDate < today) {
+          const dueStr = format(dueDate, 'yyyy-MM-dd');
+          const todayStr = format(today, 'yyyy-MM-dd');
+          const currentStr = format(currentDay, 'yyyy-MM-dd');
+
+          if (currentStr === dueStr || currentStr === todayStr) {
+            enrichedEvents.push({ ...evt, status: 'red' });
+          }
         }
       } else if (evt.recurrence?.frequency) {
         const [year, month, day] = evt.date.split('-').map(Number);
@@ -431,6 +443,11 @@ const monthEnd = endOfMonth(currentDate);
         </div>
       );
     });
+
+    // blanks fino a 42 totale (render coesivo dei mesi)
+    while (cells.length < 42) {
+      cells.push(<div key={`empty-end-${cells.length}`} className="calendar-cell empty" />);
+    }
     return cells;
   };
 
@@ -462,6 +479,73 @@ const monthEnd = endOfMonth(currentDate);
       );
     });
   };
+
+  const generateActivitiesPanel = () => {
+    const cm = eventsCache[monthKey] || {};
+    const rawEvents = Object.values(cm).flat();
+
+    // pick days depending on mode
+    const days = viewMode === 'month' ? monthDays : weekDays;
+
+    // collect activities for the whole period
+    const collected = [];
+    days.forEach(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const expanded = expandEvents(rawEvents, dateStr);
+      expanded
+        .filter(e => e.type === 'activity')
+        .forEach(e => {
+          // avoid duplicates
+          if (!collected.find(c => c._id === e._id)) {
+            collected.push(e);
+          }
+        });
+    });
+
+    return (
+      <div className="activities-panel">
+        <h4>Activities this {viewMode === 'month' ? 'month' : 'week'}</h4>
+
+        {collected.length === 0 ? (
+          <div className="text-muted">No activities</div>
+        ) : (
+          <div className="activities-list">
+            {collected.map(act => {
+              const status = act.status || 'yellow';
+                return (
+                  <div
+                    key={act._id}
+                    className={`activity-card ${status === 'yellow' ? 'due-bg' : 'delayed-bg'}`}
+                  >
+                  <div className="activity-text">{act.text}</div>
+                    {act.dueDate && (
+                      <div className="activity-meta">
+                        <span className="label">Due:</span>{' '}
+                        {format(parseISO(act.dueDate), 'PP')}
+                        {act.dueTime ? ` • ${act.dueTime}` : ''}
+                      </div>
+                    )}
+                    {!act.dueDate && act.date && (
+                      <div className="activity-meta">
+                        <span className="label">Start:</span>{' '}
+                        {format(parseISO(act.date), 'PP')}
+                        {act.dueTime ? ` • ${act.dueTime}` : ''}
+                      </div>
+                    )}
+                    {act.location && (
+                      <div className="activity-meta">
+                        <span className="label">Location:</span> {act.location}
+                      </div>
+                    )}
+                  </div>
+                );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   return (
     <div className="container mt-1">
@@ -503,7 +587,9 @@ const monthEnd = endOfMonth(currentDate);
         <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
       ) : (
         <div className="week-view mb-5">{generateWeekView()}</div>
-      )} 
+      )}
+
+      {generateActivitiesPanel()}
 
       <CalendarModal
         modalRef={modalRef}

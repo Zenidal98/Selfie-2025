@@ -129,3 +129,70 @@ body {
   color: #dc3545;
 }
 
+/* === Activities panel below calendar === */
+.activities-panel {
+  margin-top: 1rem;
+  background-color: #ffffff; /* default weekday background */
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.activities-panel h4 {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+  background-color: #f8f9fa; /* same as .header */
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.activities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* activity cards inside the panel */
+.activity-card {
+  padding: 12px;
+  border-radius: 6px;
+  color: #212529;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.activity-card .activity-text {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.activity-card .activity-meta {
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.activity-card .label {
+  font-weight: 500;
+}
+
+/* background colors coherent with calendar icons */
+.due-bg {
+  background-color: #fff8e1; /* soft yellow, like "due" icon */
+  border-left: 4px solid gold;
+}
+
+.delayed-bg {
+  background-color: #ffe5e5; /* soft red, like delayed icon */
+  border-left: 4px solid #dc3545;
+}
+
+/* responsive adjustments */
+@media (max-width: 768px) {
+  .activity-card {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+}
+
+

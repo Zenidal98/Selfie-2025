@@ -30,6 +30,7 @@ const CalendarModal = ({
   const [newDueTime, setNewDueTime] = useState("09:00");
   const [newLocation, setNewLocation] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [itemType, setItemType] = useState("event");  // "activity" oppure "event"
 
   // Pomodoro fields
   const [isPomodoro, setIsPomodoro] = useState(false);
@@ -54,6 +55,7 @@ const CalendarModal = ({
       setAdvanceNotice(0);
       setRepeatCount(1);
       setNewLocation("");
+      setItemType("event");
 
       // reset pomodoro
       setIsPomodoro(false);
@@ -95,13 +97,13 @@ const CalendarModal = ({
 
     let payload;
 
-    if (newDueDate) {
+    if (itemType === "activity") {
       // Create ACTIVITY (To-Do)
       payload = {
         type: "activity",
         text: newText.trim(),
         date: selectedDate,
-        dueDate: newDueDate,
+        dueDate: selectedDate,
         dueTime: newDueTime,
         notificationPrefs: notificationPayload,
         location: newLocation.trim() || null
@@ -238,7 +240,9 @@ const CalendarModal = ({
                               .slice(0, 10)
                             })`
                             : ""}
+                          {event.location && ` - ${event.location}`}
                         </small>
+                        
                       )}
                       {event.type === "activity" && (
                         <small className="text-muted">
@@ -321,6 +325,27 @@ const CalendarModal = ({
             {/* Create new element */}
             <div className="mt-4">
               <h5>Nuovo Elemento</h5>
+              
+              {/* Toggle between activity and event */}
+              <div className="mb-3">
+                <label className="form-label me-3">Tipo</label>
+                <div className="btn-group">
+                  <button
+                    type="button"
+                    className={`btn ${itemType === "activity" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => setItemType("activity")}
+                  >
+                    Attività
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${itemType === "event" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => setItemType("event")}
+                  >
+                    Evento
+                  </button>
+                </div>
+              </div>
 
               <div className="mb-3">
                 <label className="form-label">Descrizione</label>
@@ -330,46 +355,66 @@ const CalendarModal = ({
                   onChange={(e) => setNewText(e.target.value)}
                 />
               </div>
-
+              <div className="mb-3">
+                <label className="form-label">Luogo</label>
+                <input
+                  className="form-control"
+                  value={newLocation}
+                  onChange={(e) => setNewLocation(e.target.value)}
+                />
+              </div>
+              {/**
               <p className="text-muted small">
                 Compila la data di scadenza per creare un'attività (To-Do), altrimenti verrà creato un normale
                 evento. Per un Pomodoro, usa l'interruttore qui sotto.
               </p>
-
+              **/}
               {/* Base date/time for events */}
-              <div className="row">
-                <div className="col-md-6">
-                  <label className="form-label">Ora Inizio (per Eventi)</label>
-                  <input
-                    type="time"
-                    className="form-control"
-                    value={newTime}
-                    disabled={!!newDueDate}
-                    onChange={(e) => setNewTime(e.target.value)}
-                  />
+              {itemType === "event" && (
+                <div className="row">
+                  <div className="col-md-4 mb-3">
+                    <label className="form-label">Ora Inizio</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={newTime}
+                      onChange={(e) => setNewTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4 mb-3">
+                    <label className="form-label">Ora Fine</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={newEndTime}
+                      onChange={(e) => setNewEndTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4 mb-3">
+                    <label className="form-label">Giorni di durata</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      min="1"
+                      value={spanningDays}
+                      onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)}
+                    />
+                  </div>
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label">Ora Fine (per Eventi)</label>
+              )}
+
+              {itemType === "activity" && (              
+                <div className="col-md-6 mb-3"><label className="form-label">Ora di Scadenza (per Attività)
+                  </label>
                   <input
-                    type="time"
-                    className="form-control"
-                    value={newEndTime}
-                    disabled={!!newDueDate}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                  />
+                      type="time"
+                      className="form-control"
+                      value={newDueTime}
+                      disabled={!!recurrence.frequency || isPomodoro}
+                      onChange={(e) => setNewDueTime(e.target.value)}
+                  />  
                 </div>
-                <div className="mb-3 mt-3">
-                  <label className="form-label">Giorni di duarata (per Eventi)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    min="1"
-                    value={spanningDays}
-                    disabled={!!newDueDate}
-                    onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)}
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Pomodoro switch + plan */}
               <div className="form-check form-switch my-3">
@@ -472,30 +517,7 @@ const CalendarModal = ({
                 </div>
               )}
 
-              {/* Activity (To-Do) block */}
-              <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Data di Scadenza (per Attività)</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={newDueDate}
-                    disabled={!!recurrence.frequency || isPomodoro}
-                    onChange={handleDueDateChange}
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Ora di Scadenza (per Attività)</label>
-                  <input
-                    type="time"
-                    className="form-control"
-                    value={newDueTime}
-                    disabled={!!recurrence.frequency || isPomodoro}
-                    onChange={(e) => setNewDueTime(e.target.value)}
-                  />
-                </div>
-              </div>
-
+              {/* Activity (To-Do) block, [MOVED] */}
               {/* Advanced options */}
               <div className="accordion mt-3" id="advancedOptions">
                 <div className="accordion-item">
