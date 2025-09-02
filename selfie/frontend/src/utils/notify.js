@@ -9,11 +9,13 @@ export const requestNotificationPermission = async () => {
   return false;
 };
 
-export const showNotification = ({ title, body }) => {
+export const showNotification = async ({ title, body }) => {
+  await requestNotificationPermission();
   if (Notification.permission === "granted") {
+    console.log("Showing notification:", title, body);
     new Notification(title, {
       body,
-      icon: "/icons/bell.png", // metti un'icona se vuoi, o rimuovi la proprietà
+      // icon: "/icons/bell.png", // metti un'icona se vuoi, o rimuovi la proprietà
     });
   }
 };

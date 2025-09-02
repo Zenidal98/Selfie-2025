@@ -1,165 +1,49 @@
-// File per calcolare i vari tempi nei cicli personalizzati
-import React, { useState, useEffect } from "react";
+//File per calcolare i vari tempi nei cicli personalizzati
+import React, { useState } from "react";
 import { calcolaCicliStandard } from "./PomodoroUtils";
 
-/**
- * Props:
- * - onSettingsChange({ studyMinutes, breakMinutes, cycles })
- * - initial (optional): { studyMinutes, breakMinutes, cycles } to precompilare i valori fissi
- */
-const PomodoroSettings = ({ onSettingsChange, initial }) => {
-  // Modalità: calcolo da tempo totale (default) oppure valori fissi
-  const [mode, setMode] = useState("total"); // 'total' | 'fixed'
-
-  // --- TOTAL mode inputs ---
+const PomodoroSettings = ({ onSettingsChange }) => {
   const [totalHours, setTotalHours] = useState("");
   const [totalMinutes, setTotalMinutes] = useState("");
   const [outputPreview, setOutputPreview] = useState(null);
-
-  // --- FIXED mode inputs ---
-  const [studyFixed, setStudyFixed] = useState(initial?.studyMinutes ?? 30);
-  const [breakFixed, setBreakFixed] = useState(initial?.breakMinutes ?? 5);
-  const [cyclesFixed, setCyclesFixed] = useState(initial?.cycles ?? 5);
-
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (initial) {
-      setStudyFixed(initial.studyMinutes ?? 30);
-      setBreakFixed(initial.breakMinutes ?? 5);
-      setCyclesFixed(initial.cycles ?? 5);
-    }
-  }, [initial]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
-    setOutputPreview(null);
 
-    if (mode === "total") {
-      const total =
-        (parseInt(totalHours || 0, 10) * 60) + (parseInt(totalMinutes || 0, 10) || 0);
+    const total = parseInt(totalHours || 0) * 60 + parseInt(totalMinutes || 0);
 
-      const result = calcolaCicliStandard(total);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setOutputPreview(result);
-      onSettingsChange({
-        studyMinutes: result.studio,
-        breakMinutes: result.pausa,
-        cycles: result.cicli,
-      });
-    } else {
-      // fixed mode validation minima
-      if (
-        !Number.isFinite(+studyFixed) || +studyFixed <= 0 ||
-        !Number.isFinite(+breakFixed) || +breakFixed <= 0 ||
-        !Number.isFinite(+cyclesFixed) || +cyclesFixed <= 0
-      ) {
-        setError("Inserisci valori validi per studio/pausa/cicli (> 0).");
-        return;
-      }
-      onSettingsChange({
-        studyMinutes: Math.floor(+studyFixed),
-        breakMinutes: Math.floor(+breakFixed),
-        cycles: Math.floor(+cyclesFixed),
-      });
+    const result = calcolaCicliStandard(total);
+
+    if (result.error) {
+      setError(result.error);
+      setOutputPreview(null);
+      return;
     }
+
+    setError("");
+    setOutputPreview(result);
+
+    onSettingsChange({
+      studyMinutes: result.studio,
+      breakMinutes: result.pausa,
+      cycles: result.cicli
+    });
   };
 
   return (
-    <div className="card mt-4 p-3 shadow" style={{ maxWidth: "560px", margin: "0 auto" }}>
-      <h5 className="mb-3 text-center">Impostazioni Pomodoro</h5>
-
-      {/* Toggle modalità */}
-      <div className="d-flex justify-content-center gap-2 mb-3">
-        <button
-          type="button"
-          className={`btn btn-sm ${mode === "total" ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => setMode("total")}
-        >
-          Calcola da tempo totale
-        </button>
-        <button
-          type="button"
-          className={`btn btn-sm ${mode === "fixed" ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => setMode("fixed")}
-        >
-          Imposta valori fissi
-        </button>
-      </div>
+    <div className="card mt-4 p-3 shadow" style={{ maxWidth: "500px", margin: "0 auto" }}>
+      <h5 className="mb-3 text-center">Se vuoi fare invece dei cicli personalizzati inserisci ore e minuti disponibili qui</h5>
 
       <form onSubmit={handleSubmit}>
-        {mode === "total" ? (
-          <>
-            <p className="text-muted small text-center mb-2">
-              Inserisci ore e minuti disponibili. Useremo lo schema 30’ studio + 5’ pausa (ultima pausa estesa).
-            </p>
-            <div className="row mb-3">
-              <div className="col">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Ore"
-                  value={totalHours}
-                  onChange={(e) => setTotalHours(e.target.value)}
-                  min={0}
-                />
-              </div>
-              <div className="col">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Minuti"
-                  value={totalMinutes}
-                  onChange={(e) => setTotalMinutes(e.target.value)}
-                  min={0}
-                />
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-muted small text-center mb-2">
-              Imposta manualmente durata di studio/pausa e numero di cicli.
-            </p>
-            <div className="row g-2 mb-3">
-              <div className="col-4">
-                <label className="form-label">Studio (min)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  min={1}
-                  value={studyFixed}
-                  onChange={(e) => setStudyFixed(e.target.value)}
-                />
-              </div>
-              <div className="col-4">
-                <label className="form-label">Pausa (min)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  min={1}
-                  value={breakFixed}
-                  onChange={(e) => setBreakFixed(e.target.value)}
-                />
-              </div>
-              <div className="col-4">
-                <label className="form-label">Cicli</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  min={1}
-                  value={cyclesFixed}
-                  onChange={(e) => setCyclesFixed(e.target.value)}
-                />
-              </div>
-            </div>
-          </>
-        )}
-
+        <div className="row mb-3">
+          <div className="col">
+            <input type="number" className="form-control" placeholder="Ore" value={totalHours} onChange={(e) => setTotalHours(e.target.value)} min={0}/>
+          </div>
+          <div className="col">
+            <input type="number" className="form-control" placeholder="Minuti" value={totalMinutes} onChange={(e) => setTotalMinutes(e.target.value)} min={0}/>
+          </div>
+        </div>
         <button className="btn btn-primary w-100">Applica impostazioni</button>
       </form>
 
@@ -169,7 +53,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         </div>
       )}
 
-      {mode === "total" && outputPreview && !error && (
+      {outputPreview && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Output:</strong><br />
           {outputPreview.cicli} cicli da {outputPreview.studio} min studio + {outputPreview.pausa} min pausa<br />

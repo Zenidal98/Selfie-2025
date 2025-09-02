@@ -6,8 +6,6 @@ import {
   excludeOccurrence,
   toggleActivityCompletion,
   exportIcal,
-  getEventById,
-  patchPomodoroState,
 } from "../controllers/event.controller.js";
 import { auth } from "../middleware/auth.js";
 
@@ -33,8 +31,5 @@ router.patch("/:id/toggle-complete", toggleActivityCompletion);
 
 // GET -> export the user's calendar as .ics
 router.get("/export", exportIcal);
-
-router.get("/:id", auth, getEventById);
-router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
 
 export default router;
