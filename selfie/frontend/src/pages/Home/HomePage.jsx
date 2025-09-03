@@ -20,22 +20,9 @@ const HomePage = () => {
     const fetchReport = async () => {
       try {
         const token = sessionStorage.getItem("token");
-        if (!token) {
-          console.error("Nessun token trovato in sessionStorage");
-          return;
-        }
-
+        if (!token) return;
         const decoded = jwtDecode(token);
-
-        const res = await axios.get(
-          `http://localhost:5000/api/pomodoro/last/${decoded.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // ✅ attach token here
-            },
-          }
-        );
-
+        const res = await axios.get(`http://localhost:5000/api/pomodoro/last/${decoded.id}`);
         setReport(res.data.data);
       } catch (err) {
         console.error("Errore caricamento pomodoro:", err.message);

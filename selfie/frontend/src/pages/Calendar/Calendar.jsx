@@ -1,39 +1,49 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval, addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays, parse } from 'date-fns';
-import { fromZonedTime, toZonedTime, format as formatTZ } from 'date-fns-tz';
+import { startOfMonth, endOfMonth, getDay, getDate, format, eachDayOfInterval,addMonths, subMonths, addYears, subYears, parseISO, addDays, isAfter, subDays, parse, startOfWeek, endOfWeek, getISOWeek} from 'date-fns';
+import { fromZonedTime, toZonedTime, format as formatTZ } from 'date-fns-tz'; 
 import './calendar.css';
 import { useNavigate } from "react-router-dom";
 import CalendarModal from './calendarModal';
 import { Modal } from 'bootstrap';
 // import axios from 'axios';                         // [MOD] rimosso axios diretto
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import { useTimeMachine } from '../../utils/TimeMachine';
-import { RRule } from 'rrule';
+import { useTimeMachine } from '../../utils/TimeMachine'; 
+import { RRule } from 'rrule';  
 import { showNotification } from '../../utils/notify';
 // [MOD] uso un'istanza axios condivisa che aggiunge automaticamente l'Authorization
 import api from '../../utils/api';
 
-const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const timeZone = 'Europe/Rome';
 
 const Calendar = () => {
-  const { virtualNow, isSynced, setIsSynced, lastManualChange } = useTimeMachine();
+  const { virtualNow, isSynced, setIsSynced, lastManualChange } = useTimeMachine(); 
 
-  const [currentDate, setCurrentDate] = useState(virtualNow);
+  const [currentDate,  setCurrentDate]  = useState(virtualNow);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [monthTrigger, setMonthTrigger] = useState(0);
-  const [eventsCache, setEventsCache] = useState({});
+  const [eventsCache, setEventsCache]   = useState({});   
   const [notifiedEvents, setNotifiedEvents] = useState(new Set());
 
   const modalRef = useRef(null);
   const navigate = useNavigate();
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  const monthStart = startOfMonth(currentDate); 
+const monthEnd = endOfMonth(currentDate);
   const monthKey = format(monthStart, 'yyyy-MM');
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayIndex = getDay(monthStart);
+
+  const todayStr = format(virtualNow, 'yyyy-MM-dd');
+  const [viewMode, setViewMode ] = useState('month'); // 'month' | 'week'
+ 
+  // utilities settimanali
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1});
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1});
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  const weekNumber = getISOWeek(currentDate);
 
   //controlla che virtualNow non sia già stato pickato altrove prima del render di calendar
   useEffect(() => {
@@ -74,17 +84,17 @@ const Calendar = () => {
   // carica in cache i mesi prima/dopo ================================================
   useEffect(() => {
     const start = format(monthStart, 'yyyy-MM-dd');
-    const end = format(monthEnd, 'yyyy-MM-dd');
+    const end   = format(monthEnd,   'yyyy-MM-dd');
     fetchMonth(monthKey, start, end);
     // prefetch prev
-    const prevKey = format(subMonths(monthStart, 1), 'yyyy-MM');
-    const prevStart = format(subMonths(monthStart, 1), 'yyyy-MM-dd');
-    const prevEnd = format(endOfMonth(subMonths(monthStart, 1)), 'yyyy-MM-dd');
+    const prevKey = format(subMonths(monthStart,1), 'yyyy-MM');
+    const prevStart = format(subMonths(monthStart,1), 'yyyy-MM-dd');
+    const prevEnd   = format(endOfMonth(subMonths(monthStart,1)), 'yyyy-MM-dd');
     fetchMonth(prevKey, prevStart, prevEnd);
     // prefetch next
-    const nextKey = format(addMonths(monthStart, 1), 'yyyy-MM');
-    const nextStart = format(addMonths(monthStart, 1), 'yyyy-MM-dd');
-    const nextEnd = format(endOfMonth(addMonths(monthStart, 1)), 'yyyy-MM-dd');
+    const nextKey = format(addMonths(monthStart,1), 'yyyy-MM');
+    const nextStart = format(addMonths(monthStart,1), 'yyyy-MM-dd');
+    const nextEnd   = format(endOfMonth(addMonths(monthStart,1)), 'yyyy-MM-dd');
     fetchMonth(nextKey, nextStart, nextEnd);
   }, [monthKey, monthTrigger]);
 
@@ -94,21 +104,51 @@ const Calendar = () => {
     const currentDay = parseISO(dateStr);
 
     for (const evt of rawEvents) {
+      
       if (evt.type === 'activity') {
         if (evt.isComplete) continue;
-        const startDate = parseISO(evt.date);
-        if (currentDay < startDate) continue;
-        const dueDate = evt.dueDate ? parseISO(evt.dueDate) : null;
-        const isDelayed = dueDate ? isAfter(currentDay, dueDate) : false;
-        enrichedEvents.push({ ...evt, isDelayed });
+
+        const dueDate = evt.dueDate ? parseISO(evt.dueDate) : parseISO(evt.date);
+        const today = virtualNow;
+
+        // If due date is in the future
+        if (dueDate > today) {
+          if (format(currentDay, 'yyyy-MM-dd') === format(dueDate, 'yyyy-MM-dd')) {
+            enrichedEvents.push({ ...evt, status: 'yellow' });
+        }
+        }
+        // If due date is today
+        else if (format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+          if (format(currentDay, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+            let status = 'yellow'; // default
+            if (evt.dueTime) {
+              const dueDateTime = parse(evt.dueTime, 'HH:mm', today);
+
+              if(isAfter(today, dueDateTime)){
+                status = 'red';
+              }
+            } 
+            enrichedEvents.push({ ...evt, status });
+        }
+        }
+        // If due date is in the past
+        else if (dueDate < today) {
+          const dueStr = format(dueDate, 'yyyy-MM-dd');
+          const todayStr = format(today, 'yyyy-MM-dd');
+          const currentStr = format(currentDay, 'yyyy-MM-dd');
+
+          if (currentStr === dueStr || currentStr === todayStr) {
+            enrichedEvents.push({ ...evt, status: 'red' });
+          }
+        }
       } else if (evt.recurrence?.frequency) {
         const [year, month, day] = evt.date.split('-').map(Number);
         // check per evitare conflitti causati dalla time zone
         const dtstart = new Date(Date.UTC(year, month - 1, day));
         let until = undefined;
-        if (evt.recurrence.endDate) {
+        if (evt.recurrence.endDate){
           const [uYear, uMonth, uDay] = evt.recurrence.endDate.split('-').map(Number);
-          until = new Date(Date.UTC(uYear, uMonth - 1, uDay, 23, 59, 59));
+          until = new Date(Date.UTC(uYear, uMonth - 1, uDay, 23, 59, 59 ));
         }
 
         const rule = new RRule({
@@ -117,7 +157,7 @@ const Calendar = () => {
           dtstart: dtstart,
           until: until
         });
-
+        
         // garantisce di trovare gli eventi in caso di errori off-by-one
         const wideSearchStart = subDays(monthStart, 2);
         const wideSearchEnd = addDays(monthEnd, 2);
@@ -133,12 +173,12 @@ const Calendar = () => {
           if (spanDays.includes(dateStr)) {
             const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
             if (evt.exclusions?.includes(startOccDateStr)) {
-              break;
+              break; 
             }
-            enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });
-            break;
+          enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });          
+          break;
           }
-        }
+        }               
       } else {
         const startOfEvent = parseISO(evt.date);
         const endOfEvent = addDays(startOfEvent, (evt.spanningDays || 1) - 1);
@@ -163,178 +203,152 @@ const Calendar = () => {
   // polling delle notifiche browser
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = virtualNow; // compatibilita' con time machine
-      const nowMin = Math.floor(now.getTime() / 60000);
-      const allEvents = Object.values(eventsCache).flat(2);
-      const today = format(now, 'yyyy-MM-dd');
-      console.log('Polling notifications at', allEvents, 'for', allEvents.length, 'events');
-      // crea la lista di eventi da notificare
-      // helper: flatten [{ "2025-08-18": [evt, ...] }, { "2025-08-04": [evt, ...] }, ...]
-      const flattenedEvents = (allEvents || [])
-        .flatMap(bucket =>
-          Object.entries(bucket || {}).flatMap(([bucketDate, list]) =>
-            (Array.isArray(list) ? list : []).map(ev => ({
-              ...ev,
-              // keep the bucket's date in case ev.date is undefined
-              __bucketDate: bucketDate
-            }))
-          )
-        );
-
-      const eventsForNotification = flattenedEvents.reduce((acc, event) => {
-        if (!event) return acc;
-
-        // prefer event.date, fallback to the date key from the bucket
-        const eventDate = event.date ?? event.__bucketDate;
-        if (!eventDate) return acc;
-
-        if (event.type === "activity") {
-          // activities: due today and not complete
+    const now = virtualNow; // compatibilita' con time machine
+    const nowMin = Math.floor(now.getTime() / 60000);
+    const allEvents = Object.values(eventsCache).flat(2);
+    const today = format(now, 'yyyy-MM-dd');
+      
+    // crea la lista di eventi da notificare
+    const eventsForNotification = allEvents.reduce((acc, event) => {
+      if (!event || !event.date) return acc;
+        
+        if (event.type === 'activity') {
           if (!event.isComplete && event.dueDate === today) {
             acc.push(event);
-          }
+          }         
         } else if (event.recurrence?.frequency) {
-          // recurring events via RRule
           const rule = new RRule({
             freq: RRule[event.recurrence.frequency],
             interval: event.recurrence.interval || 1,
-            dtstart: parseISO(eventDate),
-            until: event.recurrence.endDate
-              ? parseISO(event.recurrence.endDate)
-              : undefined,
+            dtstart: parseISO(event.date),
+            until: event.recurrence.endDate ? parseISO(event.recurrence.endDate) : undefined
           });
-
-          // widened search window to avoid off-by-one
-          const occurrencesUTC = rule.between(subDays(now, 1), addDays(now, 1), true);
+          const occurrencesUTC = rule.between(subDays(now, 1), addDays(now, 1), true); // ricerca ampliata, per gestire o-b-1
           for (const occUTC of occurrencesUTC) {
-            const occDateStr = format(toZonedTime(occUTC, timeZone), "yyyy-MM-dd");
+            const occDateStr = format(toZonedTime(occUTC, timeZone), 'yyyy-MM-dd');
             if (occDateStr === today && !event.exclusions?.includes(occDateStr)) {
-              acc.push({ ...event, date: today }); // normalize date to today
+              acc.push({ ...event, date: today });
               break;
             }
           }
         } else {
-          // one-off events: match today's date (from event or bucket)
-          if (eventDate === today) {
+          if (event.date === today) {
             acc.push(event);
           }
         }
+      return acc;
+    }, []);
 
-        return acc;
-      }, []);
-      console.log('Events for notification:', eventsForNotification);
-      // processa la lista appena creata e notifica al momento opportuno 
-      eventsForNotification.forEach(event => {
-        if (!event.notificationPrefs?.browser) return;
-        if (localStorage.getItem(`event-ack-${event._id}`)) return;
+    // processa la lista appena creata e notifica al momento opportuno 
+    eventsForNotification.forEach(event => {
+      if (!event.notificationPrefs?.browser) return;
+      if (localStorage.getItem(`event-ack-${event._id}`)) return;
 
-        let eventDateStr, eventTimeStr;
+      let eventDateStr, eventTimeStr;
 
-        if (event.type === 'activity') {
-          if (!event.dueDate || !event.dueTime) return;
-          eventDateStr = event.dueDate;
-          eventTimeStr = event.dueTime;
-        } else if (event.type === 'manual') {
-          if (!event.time) return;
-          eventDateStr = event.date;
-          eventTimeStr = event.time;
-        } else {
-          return;
+      if (event.type === 'activity') {
+      if (!event.dueDate || !event.dueTime) return;
+        eventDateStr = event.dueDate;
+        eventTimeStr = event.dueTime;
+      } else if (event.type === 'manual') {
+        if (!event.time) return;
+        eventDateStr = event.date;
+        eventTimeStr = event.time;
+      } else {
+      return;
+      }
+
+      const [hour, minute] = eventTimeStr.split(':').map(Number);
+      const evtDateTime = new Date(`${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+            
+      const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
+      const notifyMin = Math.floor(notifyTime.getTime() / 60000);
+      const repeat = event.notificationPrefs.repeat || 1;
+
+      for (let i = 0; i < repeat; i++) {
+        
+        const thisNotifyMin = notifyMin + i;
+        const uniqueId = `${event._id}-${thisNotifyMin}`;
+
+        if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
+          showNotification({
+          title: event.type === 'activity' ? 'Activity Due' : 'Event Reminder',
+          body: `${event.text} at ${eventTimeStr} (${eventDateStr}) `
+          }, () => {
+            localStorage.setItem(`event-ack-${event._id}`, 'true');
+          });
+          setNotifiedEvents(prev => new Set(prev).add(uniqueId));
         }
+      }
+    });
+  }, 5000);
 
-        const [hour, minute] = eventTimeStr.split(':').map(Number);
-        const evtDateTime = new Date(`${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
-
-        const notifyTime = new Date(evtDateTime.getTime() - (event.notificationPrefs.advance || 0) * 60000);
-        const notifyMin = Math.floor(notifyTime.getTime() / 60000);
-        const repeat = event.notificationPrefs.repeat || 1;
-
-        for (let i = 0; i < repeat; i++) {
-
-          const thisNotifyMin = notifyMin + i;
-          const uniqueId = `${event._id}-${thisNotifyMin}`;
-
-          if (!notifiedEvents.has(uniqueId) && nowMin === thisNotifyMin) {
-            console.log('Notifying event:', event.text, 'at', eventTimeStr, 'on', eventDateStr);
-            showNotification({
-              title: event.type === 'activity' ? 'Activity Due' : 'Event Reminder',
-              body: `${event.text} at ${eventTimeStr} (${eventDateStr}) `
-            }, () => {
-              localStorage.setItem(`event-ack-${event._id}`, 'true');
-            });
-            setNotifiedEvents(prev => new Set(prev).add(uniqueId));
-          }
-        }
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [eventsCache, notifiedEvents, virtualNow]);
+  return () => clearInterval(interval);
+}, [eventsCache, notifiedEvents, virtualNow]); 
 
   //const refreshMonth = () => setMonthTrigger(t => t + 1);
 
   // gestisce la rimozione di un evento dalla cache (e quindi dell'icona se necessario) ============================
   const handleEventDeletion = (deletedId) => {
-    setEventsCache(cache => {
-      const newCache = { ...cache };
-      for (const key in newCache) {
-        const monthMap = newCache[key];
-        for (const date in monthMap) {
-          monthMap[date] = monthMap[date].filter(e => e._id !== deletedId);
-        }
-        newCache[key] = monthMap;
-      }
-      return newCache;
-    });
+        setEventsCache(cache => {
+            const newCache = { ...cache };
+            for (const key in newCache) { 
+                const monthMap = newCache[key];
+                for (const date in monthMap) {
+                    monthMap[date] = monthMap[date].filter(e => e._id !== deletedId);
+                }
+                newCache[key] = monthMap;
+            }
+            return newCache;
+        });
 
-    setSelectedEvents(evts => evts.filter(e => e._id !== deletedId));
-  };
+        setSelectedEvents(evts => evts.filter(e => e._id !== deletedId));
+  }; 
 
   const handleEventExclusion = (eventId, excludedDate) => {
     setEventsCache(cache => {
       const newCache = { ...cache };
-      let eventUpdated = false;
-      for (const key in newCache) {
-        if (eventUpdated) break;
-        const monthMap = newCache[key];
-        for (const date in monthMap) {
-          const eventIndex = monthMap[date].findIndex(e => e._id === eventId);
-          if (eventIndex > -1) {
-            const eventToUpdate = monthMap[date][eventIndex];
-            eventToUpdate.exclusions = [...(eventToUpdate.exclusions || []), excludedDate];
-            eventUpdated = true;
-            break;
+        let eventUpdated = false;
+        for (const key in newCache) { 
+          if (eventUpdated) break;
+          const monthMap = newCache[key];
+          for (const date in monthMap) {
+            const eventIndex = monthMap[date].findIndex(e => e._id === eventId);
+            if (eventIndex > -1) {
+              const eventToUpdate = monthMap[date][eventIndex];
+              eventToUpdate.exclusions = [...(eventToUpdate.exclusions || []), excludedDate];
+              eventUpdated = true;
+              break;
+            }
           }
         }
-      }
       return newCache;
     });
-
     setSelectedEvents(evts => evts.filter(e => !(e._id === eventId && e.date === excludedDate)));
-  };
+  }; 
 
 
   // gestisce l'aggiunta di nuovi eventi (e quindi anche icone / lista modale ) =====================
   const handleEventAddition = (newEvt) => {
     // evita il refresh per gli eventi che spannano negli altri mesi
     if (newEvt.recurrence?.frequency || newEvt.type === 'activity') {
-      setEventsCache({});
-      setMonthTrigger(t => t + 1); // This forces a refetch
+        setEventsCache({});
+        setMonthTrigger(t => t + 1); // This forces a refetch
     } else {
-      const key = format(monthStart, 'yyyy-MM');
-      setEventsCache(cache => {
-        const monthMap = cache[key] || {};
-        const dayList = monthMap[newEvt.date] || [];
-        const updatedDayList = [...dayList, newEvt];
-        return { ...cache, [key]: { ...monthMap, [newEvt.date]: updatedDayList } };
-      });
+        const key = format(monthStart, 'yyyy-MM');
+        setEventsCache(cache => {
+            const monthMap = cache[key] || {};
+            const dayList = monthMap[newEvt.date] || [];
+            const updatedDayList = [...dayList, newEvt];
+            return { ...cache, [key]: { ...monthMap, [newEvt.date]: updatedDayList } };
+        });
     }
 
     if (selectedDate === newEvt.date) {
-      setSelectedEvents(es => [...es, newEvt]);
+        setSelectedEvents(es => [...es, newEvt]);
     }
-  };
-
+};
+  
   // gestisce il completamento di una attivita' e la rimuove
   const handleActivityToggled = (updatedActivity) => {
     setEventsCache(cache => {
@@ -364,15 +378,21 @@ const Calendar = () => {
     new Modal(modalRef.current).show();
   };
 
-  // Funzioni per cambiare mese / anno. IMPORTANTE: il modale viene azzerato per evitare il flicker bug
-  const changeMonth = changeIndex => {
+  // Funzioni per cambiare mese-settimana / anno. 
+  const changePeriod = (changeIndex) => {
     setIsSynced(false); // per "staccarsi" liberamente dal mese di arrivo della tm
-    setCurrentDate(d => addMonths(d, changeIndex));
+    if (viewMode === 'month') {
+      setCurrentDate(d => addMonths(d, changeIndex));
+    } else {
+      setCurrentDate(d => addDays(d, changeIndex * 7));
+    }
     setSelectedDate(null);
     setSelectedEvents([]);
   };
 
-  const changeYear = changeIndex => {
+  
+
+  const changeYear = (changeIndex) => {
     setIsSynced(false);
     setCurrentDate(d => addYears(d, changeIndex));
     setSelectedDate(null);
@@ -385,68 +405,191 @@ const Calendar = () => {
     const cm = eventsCache[monthKey] || {};
     // genera l'offset del mese di calendario (le celle grigie inattive della prima settimana)
     for (let i = 0; i < firstDayIndex; i++) {
-      cells.push(<div key={`e${i}`} className="calendar-cell empty" />);
+      cells.push(<div key={`e${i}`} className="calendar-cell empty"/>);
     }
     monthDays.forEach(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
+      const dateStr = format(day,'yyyy-MM-dd');
       const dayNum = getDate(day);
       const dow = getDay(day);
       // distinzione per fare i giorni del weekend di aspetto diverso
-      const dayClass = (dow === 0 || dow === 6) ? 'weekend' : 'weekday';
+      const dayClass = (dow===0 || dow===6) ? 'weekend':'weekday';
 
       const rawEvents = Object.values(cm).flat();
       const expandedToday = expandEvents(rawEvents, dateStr);
       // necessario per detrminare se c'è ALMENO UN evento di quel tipo in quel giorno
-      const types = [...new Set(expandedToday.map(e => e.type))];
-      const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
-
+      const types = [...new Set(expandedToday.map(e=>e.type))];
+      //const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
+      
       cells.push(
         <div key={dateStr}
-          className={`calendar-cell day ${dayClass}`}
-          onClick={() => showModal(dateStr)}>
+             className={`calendar-cell day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : '' }`}
+             onClick={()=>showModal(dateStr)}>
           <div className="day-number">{dayNum}</div>
           {/* rendering condizionae delle icone */}
-          {expandedToday.length > 0 && (
+          {expandedToday.length>0 && (
             <div className="event-indicators">
-              {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note" />}
-              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" title="Event" />}
-              {types.includes('activity') && !isAnyActivityDelayed && <i className="bi bi-check2-square activity-icon" title="Activity" />}
-              {isAnyActivityDelayed && <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity!" />}
+              {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
+              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" title="Event"/>}
+              {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
+  <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due"/>
+)}
+
+              {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
+  <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity"/>
+)}
+
             </div>
           )}
         </div>
       );
     });
+
+    // blanks fino a 42 totale (render coesivo dei mesi)
+    while (cells.length < 42) {
+      cells.push(<div key={`empty-end-${cells.length}`} className="calendar-cell empty" />);
+    }
     return cells;
   };
 
+  const generateWeekView = () => {
+    const cm = eventsCache[monthKey] || {};
+    return weekDays.map(day => {
+      const dateStr = format(day,'yyyy-MM-dd');
+      const rawEvents = Object.values(cm).flat();
+      const expandedToday = expandEvents(rawEvents, dateStr);
+      const types = [...new Set(expandedToday.map(e=>e.type))];
+      //const isAnyActivityDelayed = expandedToday.some(e => e.type==='activity' && e.isDelayed);
+      const dayClass = (getDay(day)===0 || getDay(day)===6) ? 'weekend':'weekday';
+      return (
+        <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : '' }`} onClick={()=>showModal(dateStr)}>
+          <div className="day-number">{format(day,'EEE dd MMM')}</div>
+          <div className="event-indicators">
+            {types.includes('note') && <i className="bi bi-stickies-fill note-icon"/>}
+            {types.includes('manual') && <i className="bi bi-plus-circle manual-icon"/>}
+            {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
+  <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due"/>
+)}
+
+            {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
+  <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity"/>
+)}
+
+          </div>
+        </div>
+      );
+    });
+  };
+
+  const generateActivitiesPanel = () => {
+    const cm = eventsCache[monthKey] || {};
+    const rawEvents = Object.values(cm).flat();
+
+    // pick days depending on mode
+    const days = viewMode === 'month' ? monthDays : weekDays;
+
+    // collect activities for the whole period
+    const collected = [];
+    days.forEach(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const expanded = expandEvents(rawEvents, dateStr);
+      expanded
+        .filter(e => e.type === 'activity')
+        .forEach(e => {
+          // avoid duplicates
+          if (!collected.find(c => c._id === e._id)) {
+            collected.push(e);
+          }
+        });
+    });
+
+    return (
+      <div className="activities-panel">
+        <h4>Activities this {viewMode === 'month' ? 'month' : 'week'}</h4>
+
+        {collected.length === 0 ? (
+          <div className="text-muted">No activities</div>
+        ) : (
+          <div className="activities-list">
+            {collected.map(act => {
+              const status = act.status || 'yellow';
+                return (
+                  <div
+                    key={act._id}
+                    className={`activity-card ${status === 'yellow' ? 'due-bg' : 'delayed-bg'}`}
+                  >
+                  <div className="activity-text">{act.text}</div>
+                    {act.dueDate && (
+                      <div className="activity-meta">
+                        <span className="label">Due:</span>{' '}
+                        {format(parseISO(act.dueDate), 'PP')}
+                        {act.dueTime ? ` • ${act.dueTime}` : ''}
+                      </div>
+                    )}
+                    {!act.dueDate && act.date && (
+                      <div className="activity-meta">
+                        <span className="label">Start:</span>{' '}
+                        {format(parseISO(act.date), 'PP')}
+                        {act.dueTime ? ` • ${act.dueTime}` : ''}
+                      </div>
+                    )}
+                    {act.location && (
+                      <div className="activity-meta">
+                        <span className="label">Location:</span> {act.location}
+                      </div>
+                    )}
+                  </div>
+                );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
   return (
     <div className="container mt-1">
-      {/* Home Button */}
-      <button className="btn btn-outline-primary my-3" onClick={() => navigate('/home')}>
-        Torna alla home
-      </button>
+      
+      <div className="d-flex justify-content-center align-items-center my-3">
+        <button className="btn btn-outline-primary mb-2 me-3" onClick={()=>navigate('/home')}>Torna alla home</button>
 
-      {/* gruppo di cambio mese/anno */}
-      <div className="d-flex justify-content-center align-items-center mb-3">
         <div className="btn-group me-2">
-          <button className="btn btn-outline-secondary" onClick={() => changeYear(-1)}>&laquo;</button>
-          <button className="btn btn-outline-secondary" onClick={() => changeMonth(-1)}>&lsaquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changeYear(-1)}>&laquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changePeriod(-1)}>&lsaquo;</button>
         </div>
-        <h2 className="mx-3 mb-2 px-5">{format(currentDate, 'MMMM yyyy')}</h2>
+        <h2 className="mx-3 mb-2 px-5">
+          {viewMode==='month' ? format(currentDate,'MMMM yyyy') : `Week ${weekNumber}, ${format(currentDate,'yyyy')}`}
+        </h2>
         <div className="btn-group ms-2">
-          <button className="btn btn-outline-secondary" onClick={() => changeMonth(1)}>&rsaquo;</button>
-          <button className="btn btn-outline-secondary" onClick={() => changeYear(1)}>&raquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changePeriod(1)}>&rsaquo;</button>
+          <button className="btn btn-outline-secondary" onClick={()=>changeYear(1)}>&raquo;</button>
         </div>
+        <div className="btn-group ms-3">
+          <button className={`btn btn-outline-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
+          <button className={`btn btn-outline-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
+        </div>
+        <button className='btn btn-dark ms-3 mb-2'>
+          EXPORT ICS 
+        </button>
       </div>
 
-      {/* griglia del calendario*/}
-      <div className="calendar-grid-header">
-        {daysOfWeek.map(d => (
-          <div key={d} className="calendar-cell header">{d}</div>
-        ))}
-      </div>
-      <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
+      {viewMode === 'month' && (
+        <div className="calendar-grid-header">
+          {daysOfWeek.map(d => (
+            <div key={d} className="calendar-cell header">
+              {d}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {viewMode === 'month' ? (
+        <div className="calendar-grid-body mb-5">{generateCalendar()}</div>
+      ) : (
+        <div className="week-view mb-5">{generateWeekView()}</div>
+      )}
+
+      {generateActivitiesPanel()}
 
       <CalendarModal
         modalRef={modalRef}
@@ -459,6 +602,7 @@ const Calendar = () => {
       />
     </div>
   );
+
 };
 
 export default Calendar;
