@@ -4,6 +4,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./HomePage.css";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import api from "../../utils/api.js"
+import { format } from "date-fns";
 
 const sections = [
   { id: "note", label: "Note", path: "/notes" },
@@ -15,6 +17,11 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
   const utente = JSON.parse(sessionStorage.getItem("utente"));
+  
+  const [calendarReport, setCalendarReport] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
+
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -35,6 +42,28 @@ const HomePage = () => {
     sessionStorage.clear();
     navigate("/login");
   };
+
+  const fetchCalendarReport = async () => {
+    setCalendarLoading(true);
+    try{
+      const res = await api.get("/events/report");
+      setCalendarReport(res.data.activities || []);
+    } catch (error) {
+      console.error("Errore caricamento attivita':", error.message);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCalendarReport();
+
+    const handleVisibilityChange = () => { //refetch sul page focus
+      if (!document.hidden) fetchCalendarReport();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return (
     <div className="home-page">
@@ -68,7 +97,37 @@ const HomePage = () => {
               )}
 
               {sec.id === "calendario" && (
-                <p className="text-white">Consulta i tuoi eventi e appuntamenti.</p>
+                <div className="calendar-report text-dark text-center">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <p className="text-center flex-grow-1 mb-0 text-white">Consulta i tuoi eventi e appuntamenti.</p>
+                    {/**
+                    <button
+                      className="btn btn-sm btn-outline-light"
+                      onClick={fetchCalendarReport}
+                      disabled={calendarLoading}
+                    >
+                      {calendarLoading ? "Aggiornamento..." : "Aggiorna"}
+                    </button>
+                    **/} 
+                  </div>
+
+                  {calendarReport.length > 0 ? (
+                    <>
+                      <strong>Prossime attività:</strong>
+                      <ul className="list-unstyled mt-2">
+                        {calendarReport.map((act, i) => (
+                          <li key={i}>
+                            {format(new Date(act.dueDate), "EEE dd MMM")}{" "}
+                            {act.dueTime ? act.dueTime : ""} -- {act.text}{" -- "}
+                            {act.location ? act.location : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="text-center">Nessuna attività imminente</p>
+                  )}
+                </div>
               )}
             </div>
           </div>

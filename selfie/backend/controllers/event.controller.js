@@ -295,6 +295,8 @@ export const patchPomodoroState = async (req, res) => {
 };
 
 export const getCalendarReport = async (req, res) => {
+  console.log("user in getCalendarReport:", req.user); // debug
+
   const userId =req.user.id;
 
   try {

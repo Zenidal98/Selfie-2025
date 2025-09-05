@@ -35,10 +35,10 @@ router.patch("/:id/toggle-complete", toggleActivityCompletion);
 // GET -> export the user's calendar as .ics
 router.get("/export", exportIcal);
 
-router.get("/:id", auth, getEventById);
-router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
-
 // GET -> get the homepage report for the calendar activities
 router.get("/report", getCalendarReport);
+
+router.get("/:id", auth, getEventById);
+router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
 
 export default router;
