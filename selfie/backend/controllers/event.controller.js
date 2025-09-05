@@ -187,7 +187,7 @@ export const toggleActivityCompletion = async (req, res) => {
 };
 
 export const exportIcal = async (req, res) => {
-  const { userId } = req.query; // se vuoi esportare “per utente” da un pannello admin
+  const userId  = req.user.id; 
   if (!userId) {
     return res.status(400).json({ error: "Missing User Id" });
   }
@@ -291,5 +291,26 @@ export const patchPomodoroState = async (req, res) => {
   } catch (e) {
     console.error("Failed to patch pomodoro state", e);
     res.status(500).json({ error: "Failed to update state" });
+  }
+};
+
+export const getCalendarReport = async (req, res) => {
+  const userId =req.user.id;
+
+  try {
+    const activities = await Event.find({
+      userId,
+      type: "activity",
+      isComplete: false,
+      dueDate: { $ne: null },
+    })
+      .sort({ dueDate: 1, dueTime: 1})
+      .limit(3)
+      .lean ();
+
+    res.json({ activities });
+  } catch (error) {
+    console.error(" Error fetching calendar report:", error);
+    res.status(500).json({ error: "Failed to fetch calendar report" });
   }
 };

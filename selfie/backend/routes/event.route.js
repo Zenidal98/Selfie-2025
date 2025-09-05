@@ -8,6 +8,7 @@ import {
   exportIcal,
   getEventById,
   patchPomodoroState,
+  getCalendarReport,
 } from "../controllers/event.controller.js";
 import { auth } from "../middleware/auth.js";
 
@@ -36,5 +37,8 @@ router.get("/export", exportIcal);
 
 router.get("/:id", auth, getEventById);
 router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
+
+// GET -> get the homepage report for the calendar activities
+router.get("/report", getCalendarReport);
 
 export default router;

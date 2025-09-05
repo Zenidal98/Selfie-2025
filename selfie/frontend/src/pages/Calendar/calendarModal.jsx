@@ -378,7 +378,14 @@ const CalendarModal = ({
                       type="time"
                       className="form-control"
                       value={newTime}
-                      onChange={(e) => setNewTime(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setNewTime(value);
+                        // [FIX] forza l'ordine corretto degli orari (se stesso giorno)
+                        if (spanningDays === 1 && newEndTime && value > newEndTime) {
+                          setNewEndTime(value);
+                        }
+                      }}
                     />
                   </div>
                   <div className="col-md-4 mb-3">
@@ -387,7 +394,15 @@ const CalendarModal = ({
                       type="time"
                       className="form-control"
                       value={newEndTime}
-                      onChange={(e) => setNewEndTime(e.target.value)}
+                      onChange={(e) => {
+                        // [FIX] segue sopra
+                        const value = e.target.value;
+                        if (spanningDays === 1 && value < newTime) {
+                          setNewEndTime(newTime);
+                        } else {
+                          setNewEndTime(value);
+                        }
+                      }}
                     />
                   </div>
                   <div className="col-md-4 mb-3">
@@ -397,7 +412,15 @@ const CalendarModal = ({
                       className="form-control"
                       min="1"
                       value={spanningDays}
-                      onChange={(e) => setSpanningDays(parseInt(e.target.value) || 1)}
+                      onChange={(e) => {
+                        // se lo user torna a singola giornata, rivalida
+                        const value = parseInt(e.target.value) || 1;
+                        setSpanningDays(value);
+                        
+                        if (value === 1 && newEndTime < newTime){
+                          setNewEndTime(newTime);
+                        }
+                      }}
                     />
                   </div>
                 </div>

@@ -399,6 +399,26 @@ const monthEnd = endOfMonth(currentDate);
     setSelectedEvents([]);
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await api.get("/events/export", {
+        responseType: "blob", //cosi' axios non lo parsa come JSON
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "selfieCalendar.ics");
+      document.body.appendChild(link);
+      link.click();
+      //reset
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Failed to donwload ICS", error);
+    }
+  };
+
   // Genera le celle del calendario (in accordo con la map di quel mese) =======================
   const generateCalendar = () => {
     const cells = [];
@@ -568,7 +588,7 @@ const monthEnd = endOfMonth(currentDate);
           <button className={`btn btn-outline-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
           <button className={`btn btn-outline-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
         </div>
-        <button className='btn btn-dark ms-3 mb-2'>
+        <button className='btn btn-dark ms-3 mb-2' onClick={handleExport}>
           EXPORT ICS 
         </button>
       </div>
