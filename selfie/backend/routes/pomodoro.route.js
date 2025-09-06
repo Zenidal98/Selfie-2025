@@ -14,6 +14,6 @@ router.use(auth);
 router.post("/", createPomodoroSession);
 
 // GET -> fetch the last Pomodoro session of the logged-in user
-router.get("/last", getLastPomodoroByUser);
+router.get("/last/:userId", getLastPomodoroByUser);
 
 export default router;

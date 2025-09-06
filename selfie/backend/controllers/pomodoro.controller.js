@@ -1,5 +1,5 @@
 import Pomodoro from "../models/pomodoro.model.js";
-
+import mongoose from "mongoose";
 // crea nuova sessione pomodoro ad analizzare
 export const createPomodoroSession = async (req, res) => {
   try {
@@ -35,12 +35,10 @@ export const getLastPomodoroByUser = async (req, res) => {
     }
     res.status(200).json({ success: true, data: last });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Errore nel recupero",
-        error: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Errore nel recupero",
+      error: err.message,
+    });
   }
 };
