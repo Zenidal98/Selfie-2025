@@ -20,7 +20,8 @@ const HomePage = () => {
   
   const [calendarReport, setCalendarReport] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
-
+  const [notesReport, setNotesReport] = useState(null);
+  const [notesLoading, setNotesLoading] = useState(false);
 
 
   useEffect(() => {
@@ -55,11 +56,28 @@ const HomePage = () => {
     }
   };
 
+  const fetchNotesReport = async () => {
+    setNotesLoading(true);
+    try {
+      const res = await api.get("notes/recent");
+      setNotesReport(res.data);
+    } catch (error) {
+      console.error("Failed to fetch notes report", error);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     fetchCalendarReport();
+    fetchNotesReport();
 
     const handleVisibilityChange = () => { //refetch sul page focus
-      if (!document.hidden) fetchCalendarReport();
+      if (!document.hidden) {
+        fetchCalendarReport();
+        fetchNotesReport();
+      }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -92,8 +110,51 @@ const HomePage = () => {
                 </div>
               )}
 
+             
               {sec.id === "note" && (
-                <p className="text-white">Puoi scrivere e rivedere le tue note.</p>
+                <div className="text-white text-center">
+                  <div className="mb-2">
+                    <p className="text-center mb-0">
+                      Ultima nota creata o modificata.
+                    </p>
+                  </div>
+
+                  {notesReport ? (
+                    <div className="note-preview text-center text-dark">
+                      <strong>{notesReport.title}</strong>
+                      <div className="small text-muted">
+                        Creato:{" "}
+                        {format(
+                          new Date(notesReport.createdAt),
+                          "dd MMM yyyy HH:mm"
+                        )}{" "}
+                        — Modificato:{" "}
+                        {format(
+                          new Date(notesReport.lastEdited),
+                          "dd MMM yyyy HH:mm"
+                        )}
+                      </div>
+
+                      {notesReport.tags.length > 0 && (
+                        <div className="small fst-italic">
+                          (
+                          {notesReport.tags
+                            .map((tag) => `#${tag}`)
+                            .join(", ")}
+                          )
+                        </div>
+                      )}
+
+                      <p className="mt-1">
+                        {notesReport.markdown.length > 100
+                          ? notesReport.markdown.slice(0, 100) + "…"
+                          : notesReport.markdown}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-center">Nessuna nota recente</p>
+                  )}
+                </div>
               )}
 
               {sec.id === "calendario" && (

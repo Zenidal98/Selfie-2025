@@ -6,6 +6,7 @@ import axios from "axios";
 import NotesList from "./NotesList";
 import './Notes.css'
 import { useTimeMachine } from '../../utils/TimeMachine';
+import api from "../../utils/api.js";
 
 const NoteEditor = () => {
   const { virtualNow } = useTimeMachine // stesso discorso che calendar
@@ -32,19 +33,19 @@ const NoteEditor = () => {
 
   // Fetch note dell'utente ==========================================================
 
-  const fetchNotes = useCallback(() => {
-    axios
-      .get(`http://localhost:5000/api/notes/${userId}`)
+  const fetchNotes = () => {
+    api
+      .get("/notes")
       .then(res => {
         setNotes(res.data);
         setFiltered(res.data);
       })
       .catch(console.error);
-  }, [userId]);
+  };
 
   useEffect(() => {
     fetchNotes();
-  }, [userId, fetchNotes]);
+  }, []);
 
   // aggiorna la data di modifica ====================================================
   
@@ -167,8 +168,8 @@ const NoteEditor = () => {
     };
     
     const request = noteId      // se gia' c'e' la nota, diventa un update 
-    ? axios.put(`/api/notes/${noteId}`, noteData)
-    : axios.post(`/api/notes/save`, noteData);
+    ? api.put("/notes/${noteId}", noteData)
+    : api.post("notes", noteData);
 
     request
       .then(() => {
@@ -195,9 +196,11 @@ const NoteEditor = () => {
   
   const deleteNote = id => {
     if (window.confirm("Vuoi veramente cancellare questa nota?")) {
-      axios.delete(`/api/notes/${id}`)
-        .then(alert("Nota cancellata con successo!!"))
-        .then(fetchNotes())
+      api.delete(`/notes/${id}`)
+        .then(() => {
+          alert("Nota cancellata con successo!!");
+          fetchNotes();
+        })
         .catch(err => console.error(err));
       resetEditor();
     }

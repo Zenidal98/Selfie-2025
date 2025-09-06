@@ -56,10 +56,10 @@ export const saveNotes = async (req, res) => {
 // Tutte le note dello user di riferimento ==============================================================================
 
 export const getUserNotes = async (req, res) => {
-  const { userId } = req.params;
+  
 
   try {
-    const notes = await Note.find({ userId }).sort({ lastEdited: -1 });
+    const notes = await Note.find({ userId: req.user.id }).sort({ lastEdited: -1 });
     res.status(200).json(notes);
   } catch (err) {
     console.error(err);
@@ -119,5 +119,23 @@ export const deleteNote = async (req, res) => {
   } catch (err) {
     console.error("deleteNote error:", err);
     res.status(500).json({ error: "Failed note deletion" });
+  }
+};
+
+// Nota piu' recente per la hp report
+export const getMostRecentNote = async (req, res) => {
+  try {
+    const note = await Note.findOne({ userId: req.user.id })
+    .sort({ lastEdited: -1})
+    .select("title markdown tags createdAt lastEdited"); 
+
+    if (!note) {
+      return res.status(200).json(null);
+    }
+
+    res.json(note);
+  } catch (error) {
+    console.error("getMostRecentNote error: ", error);
+    res.status(500).json({ error: "Server error fetching recent note" });
   }
 };
