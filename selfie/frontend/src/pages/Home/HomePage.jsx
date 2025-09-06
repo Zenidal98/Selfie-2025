@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./HomePage.css";
-import axios from "axios";
+import api from "../../utils/api";
 import { jwtDecode } from "jwt-decode";
 import api from "../../utils/api.js"
 import { format } from "date-fns";
@@ -30,7 +30,14 @@ const HomePage = () => {
         const token = sessionStorage.getItem("token");
         if (!token) return;
         const decoded = jwtDecode(token);
-        const res = await axios.get(`http://localhost:5000/api/pomodoro/last/${decoded.id}`);
+        const res = await api.get(
+          `/pomodoro/last/${decoded.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setReport(res.data.data);
       } catch (err) {
         console.error("Errore caricamento pomodoro:", err.message);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./PomodoroPage.css";
 import api from "../../utils/api"; // shared axios instance with JWT
+import { jwtDecode } from "jwt-decode";
 
 /**
  * Props:
@@ -97,6 +98,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
 
   // main toggle
   const toggleTimer = async () => {
+    if (isComplete) return;
     if (isRunning) {
       setIsRunning(false);
       await stopTick("pause");
@@ -107,6 +109,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   };
 
   const resetTimer = async () => {
+    if (isComplete) return;
     await stopTick("reset");
     setIsRunning(false);
     setSecondsLeft((isStudyTime ? studyDuration : breakDuration) * 60);
@@ -115,6 +118,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
 
   // move to next phase/cycle (force)
   const nextTime = async () => {
+    if (isComplete) return;
     await stopTick("nextTime");
     setIsRunning(false);
 
@@ -141,16 +145,19 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   };
 
   const restartCycle = async () => {
+    if (isComplete) return;
     await stopTick("restartCycle");
     setIsRunning(false);
     setIsStudyTime(true);
     setSecondsLeft(studyDuration * 60);
     sendNotification(`🔁 Ricominciato ciclo ${currentCycle}`);
+    handleSaveSession()
     await patchState({ reason: "restartCycle" });
   };
 
   // finish current cycle early (advance to next study cycle, or complete)
   const finishCycle = async () => {
+    if (isComplete) return;
     await stopTick("finishCycle");
     setIsRunning(false);
 
@@ -163,6 +170,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     } else {
       sendNotification("✅ Tutti i cicli completati!");
       setIsComplete(true);
+      handleSaveSession()
       setSecondsLeft(0);
       await patchState({ reason: "finishCycle-complete" });
     }
@@ -196,6 +204,36 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleSaveSession = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        console.error("Nessun token trovato in sessionStorage");
+        return;
+      }
+      const decoded = jwtDecode(token);
+
+      await api.post(
+        "/pomodoro",
+        {
+          userId: decoded.id,
+          studyDuration,
+          breakDuration,
+          cyclesCompleted: currentCycle,
+          totalStudyTime: currentCycle * studyDuration,
+          note: "Sessione salvata automaticamente",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Errore salvataggio pomodoro:", error.message);
+    }
+  };
+
   const formatTime = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -219,19 +257,19 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
       </div>
 
       <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
-        <button className="btn btn-success" onClick={toggleTimer}>
+        <button className="btn btn-success" onClick={toggleTimer} disabled={isComplete}>
           {isRunning ? "Pausa" : "Start"}
         </button>
-        <button className="btn btn-secondary" onClick={resetTimer}>
+        <button className="btn btn-secondary" onClick={resetTimer} disabled={isComplete}>
           Reset
         </button>
-        <button className="btn btn-warning" onClick={nextTime}>
+        <button className="btn btn-warning" onClick={nextTime} disabled={isComplete}>
           Prossimo tempo
         </button>
-        <button className="btn btn-info" onClick={restartCycle}>
+        <button className="btn btn-info" onClick={restartCycle} disabled={isComplete}>
           Ricomincia ciclo
         </button>
-        <button className="btn btn-danger" onClick={finishCycle}>
+        <button className="btn btn-danger" onClick={finishCycle} disabled={isComplete}>
           Termina ciclo
         </button>
       </div>
