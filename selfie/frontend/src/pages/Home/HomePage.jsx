@@ -4,7 +4,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./HomePage.css";
 import api from "../../utils/api";
 import { jwtDecode } from "jwt-decode";
-import api from "../../utils/api.js"
 import { format } from "date-fns";
 
 const sections = [
