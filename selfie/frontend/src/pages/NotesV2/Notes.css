@@ -1,98 +1,176 @@
-/* Sfondo generale della pagina */
+/* === Reset / Globals === */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* === Wrapper === */
 .notes-wrapper {
-    height: 100vh;
-    background-image: url('../../img/notes.jpg');
-    background-size: cover;
-    background-position: center;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  /* Contenitore centrale compatto */
-  .notes-content {
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    width: 100%;
-    max-width: 1100px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  
-  /* Titolo e input */
-  .notes-content h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .notes-content input[type="text"] {
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Toolbar markdown compatta */
-  .btn-group {
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Area principale divisa */
+  min-height: 100vh;
+  background-image: url("../../img/notes.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+
+.notes-content {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notes-content h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.notes-content input[type="text"] {
+  margin-bottom: 0.5rem;
+}
+
+
+.btn-group {
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.notes-main {
+  display: flex;
+  flex-direction: column; /* stacked su mobile, tba swap button */
+  gap: 1rem;
+  overflow: hidden;
+}
+
+/* Desktop: side-by-side */
+@media (min-width: 992px) {
   .notes-main {
-    flex: 1;
-    display: flex;
-    gap: 1rem;
-    overflow: hidden;
+    flex-direction: row;
   }
-  
-  /* Editor e Preview: metà schermo, compatti */
-  .notes-main textarea,
+  .notes-main textarea {
+    width: 50%;    
+  }
+
   .notes-main .preview-box {
-    flex: 1;
-    resize: none;
-    height: 100%;
-    min-height: 200px;
-    max-height: 100%;
-    overflow-y: auto;
+    width: 50%;     }
+}
+
+.notes-main textarea {
+  height: 300px;        
+  flex: 0 0 auto;       
+  overflow-y: auto;
+  resize: none;
+}
+
+.notes-main .preview-box {
+  height: 300px;        
+  flex: 0 0 auto;       
+  overflow-y: auto;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: black;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+
+.notes-buttons {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Notes footer , lista + filtri */
+.notes-footer {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  overflow-y: auto;
+  max-height: 25%;
+  width: 100%;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* griflia delle card, numero colonne scala sulla largheza schermo*/
+.notes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  .notes-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  /* Preview box su sfondo chiaro */
-  .preview-box {
-    background-color: rgba(255, 255, 255, 0.85);
-    color: black;
-    border-radius: 8px;
+}
+
+@media (min-width: 992px) {
+  .notes-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  /* Pulsanti salvataggio */
-  .notes-buttons {
-    margin-top: 0.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
-  
-  /* Tag + date + note list */
-  .notes-footer {
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-    overflow-y: auto;
-    max-height: 25%;
-  }
-  
-  /* Riduci margini badge */
-  .badge {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.6rem;
-  }
-  
-  /* Lista note */
-  .notes-list {
-    margin-top: 0.5rem;
-    overflow-y: auto;
-    max-height: 100%;
-  }
-  
+}
+
+/* cards delle note */
+.note-card {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.note-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.note-card .card-title,
+.note-card .card-text,
+.note-card .badge {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 100%;
+}
+
+.note-card .card-text.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === Delete button on card === */
+.note-card .btn {
+  z-index: 5; /* keeps button above card content */
+}
+

@@ -24,6 +24,11 @@ const NoteEditor = () => {
 
   const [notes, setNotes] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  
+  /** sostituito, revisione in corso
+  // limita il refecth quando carica la preview dell'ultima nota modificata
+  const hasLoadedLastNote = useRef(false);
+  **/
 
   // Fetch utente ====================================================================
   
@@ -53,6 +58,45 @@ const NoteEditor = () => {
     setLastEdited(new Date());
   }, [title, markdown, tags]);
  
+  // carica l'ultima nota modifica automaticamente
+  useEffect(() => {
+  const loadLastNote = async () => {
+    try {
+      const res = await api.get("/notes/recent");
+      if (res.data) {
+        loadNote(res.data);
+      }
+    } catch (err) {
+      console.error("Errore caricamento l'ultima nota modificata", err);
+    }
+  };
+
+  loadLastNote();
+  }, []);
+
+  /** sostituito, revisione in corso
+  // quando apri la pagina autoload dell'ultima nota modificata
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && !hasLoadedLastNote.current) {
+        try {
+          const res = await api.get("/notes/recent");
+          if (res.data) {
+            loadNote(res.data);
+            hasLoadedLastNote.current = true; // evita il refetch se e' gia' caricata
+          }
+        } catch (error) {
+          console.error("Errore caricamento l'ultima nota modificata", error);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return(() => { //unmount del listener
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    });
+  }, []);
+  **/
+
   // Carica una nota preesitente nell'editor =========================================
 
   const loadNote = note => {
@@ -127,7 +171,7 @@ const NoteEditor = () => {
     setTags(tags.filter((t) => t !== tag));
   };
   
-  // Limita la lunghezza dei tag (altrimenti si sfonna tutto) ====================
+  // Limita la lunghezza dei tag  ====================
 
   const truncateTag = (str, max = 15) =>
     str.length > max ? str.slice(0, max - 1) + "..." : str;
@@ -145,8 +189,10 @@ const NoteEditor = () => {
 
   // resetta l'editor, per creare una nota nuova ====================================
   
-  const resetEditor = () => {
-    setNoteId(null);
+  const resetEditor = (newNote = true) => {
+    if (newNote) {
+      setNoteId(null); // resetta noteId SOLO se chiamato dal bottone (cosi le note preesitenti fanno solo update)
+    }
     setTitle("");
     setMarkdown("");
     setTags([]);
@@ -157,7 +203,9 @@ const NoteEditor = () => {
 
   // salvataggio delle note ======================================================
   
-  const saveNote = () => {
+  const saveNote = async () => {
+    console.log("saving noteid:", noteId); //db
+    try{
     const noteData = {
       userId,
       title,
@@ -167,19 +215,22 @@ const NoteEditor = () => {
       lastEdited: new Date(),      // obv aggiorna la data
     };
     
-    const request = noteId      // se gia' c'e' la nota, diventa un update 
-    ? api.put("/notes/${noteId}", noteData)
-    : api.post("notes", noteData);
+    let response;
 
-    request
-      .then(() => {
-        alert("Nota salvata con successo!")
-        fetchNotes();        
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Errore nel salvataggio");
-      });
+    if (noteId) { // assicurasi che id esiste per modificare note preesitenti
+      response = await api.put(`/notes/${noteId}`, noteData);
+    } else {      
+      response = await api.post("/notes", noteData);
+      setNoteId(response.data.note._id);
+    }
+
+
+    alert("Nota salvata con successo!");
+    await fetchNotes();
+    } catch (error) {
+      alert("error nel salvataggio");
+    }
+
   };
   
   
@@ -240,7 +291,7 @@ const NoteEditor = () => {
             <input
               type="text"
               className="form-control"
-              placeholder="Aggiungi un tag!"
+              placeholder="Aggiungi un tag! (Premi INVIO per confermare)"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTag()}
@@ -283,7 +334,7 @@ const NoteEditor = () => {
         {/* Pulsanti */}
         <div className="notes-buttons">
           <button className="btn btn-success" onClick={saveNote}>Salva</button>
-          <button className="btn btn-outline-light" onClick={resetEditor}>Nuova</button>
+          <button className="btn btn-outline-light" onClick={() => resetEditor(true)}>Nuova</button>
           <button className="btn btn-outline-info" onClick={goHome}>Home</button>
         </div>
 
