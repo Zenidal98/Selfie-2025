@@ -570,27 +570,20 @@ const monthEnd = endOfMonth(currentDate);
   return (
     <div className="container mt-1">
       
-      <div className="d-flex justify-content-center align-items-center my-3">
-        <button className="btn btn-outline-primary mb-2 me-3" onClick={()=>navigate('/home')}>Torna alla home</button>
-
-        <div className="btn-group me-2">
+      <div className="d-flex justify-content-center align-items-center my-3 period-nav">
+        
+        <div className="btn-group period-btn-left">
           <button className="btn btn-outline-secondary" onClick={()=>changeYear(-1)}>&laquo;</button>
           <button className="btn btn-outline-secondary" onClick={()=>changePeriod(-1)}>&lsaquo;</button>
         </div>
-        <h2 className="mx-3 mb-2 px-5">
+        <h2 className="mx-3 mb-2 px-5 period-label text-truncate">
           {viewMode==='month' ? format(currentDate,'MMMM yyyy') : `Week ${weekNumber}, ${format(currentDate,'yyyy')}`}
         </h2>
-        <div className="btn-group ms-2">
+        <div className="btn-group period-btn-right">
           <button className="btn btn-outline-secondary" onClick={()=>changePeriod(1)}>&rsaquo;</button>
           <button className="btn btn-outline-secondary" onClick={()=>changeYear(1)}>&raquo;</button>
         </div>
-        <div className="btn-group ms-3">
-          <button className={`btn btn-outline-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
-          <button className={`btn btn-outline-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
-        </div>
-        <button className='btn btn-dark ms-3 mb-2' onClick={handleExport}>
-          EXPORT ICS 
-        </button>
+        
       </div>
 
       {viewMode === 'month' && (
@@ -608,6 +601,20 @@ const monthEnd = endOfMonth(currentDate);
       ) : (
         <div className="week-view mb-5">{generateWeekView()}</div>
       )}
+      
+      <div className="d-flex flex-wrap justify-content-end align-items-center button-row gap-2">
+         
+        <button className="btn btn-primary flex-shrink-1 mb-2" onClick={()=>navigate('/home')}>Torna alla home</button>
+        <div className="btn-group flex-shrink-1">
+          <button className={`btn btn-secondary ${viewMode==='month'?'active':''}`} onClick={()=>setViewMode('month')}>Month</button>
+          <button className={`btn btn-secondary ${viewMode==='week'?'active':''}`} onClick={()=>setViewMode('week')}>Week</button>
+        </div>
+        <button className='btn btn-dark flex-shrink-1 mb-2' onClick={handleExport}>
+          EXPORT ICS 
+        </button>
+
+
+      </div>
 
       {generateActivitiesPanel()}
 

@@ -4,18 +4,33 @@ import { formatDistanceToNow } from "date-fns";
 function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
   const [searchText, setSearchText] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [sortOption, setSortOption] = useState("lastEdited"); // ordina per data di modifica oppure lunghezza del testo ("textLength")
 
   // Update filtered list when filters change
   useEffect(() => {
-    const filteredList = notes.filter((n) => {
+    let filteredList = notes.filter((n) => {
       const matchesTitle = n.title
         .toLowerCase()
         .includes(searchText.toLowerCase());
       const matchesTag = !tagFilter || n.tags.includes(tagFilter);
       return matchesTitle && matchesTag;
     });
+
+    // ordina la lista
+    filteredList = filteredList.sort((a, b) => {
+      if (sortOption === "lastEdited") {
+        return new Date(b.lastEdited) - new Date(a.lastEdited);
+      } else if (sortOption === "textLengthAsc") {
+        return a.markdown.length - b.markdown.length;
+      } else if (sortOption === "textLengthDesc") {
+        return b.markdown.length - a.markdown.length;
+      } else {
+        return 0;
+      }
+    });
+
     setFiltered(filteredList);
-  }, [notes, searchText, tagFilter, setFiltered]);
+  }, [notes, searchText, tagFilter, setFiltered, sortOption]);
 
   // Unique tag list
   const uniqueTagsList = Array.from(new Set(notes.flatMap((n) => n.tags)));
@@ -30,6 +45,19 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
+
+        <select
+          className="form-select w-auto"
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+        >
+          <option value="lastEdited">Ordina per ultima modifica</option>
+          <option value="textLengthAsc">Ordina per lunghezza testo ↑</option>
+          <option value="textLengthDesc">Ordina per lunghezza testo ↓</option>
+        </select>
+
+
+
         <select
           className="form-select w-auto"
           style={{ maxHeight: "200px", overflowY: "auto" }}

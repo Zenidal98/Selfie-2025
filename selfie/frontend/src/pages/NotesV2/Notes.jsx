@@ -232,7 +232,18 @@ const NoteEditor = () => {
     }
 
   };
-  
+ 
+  // crea una copia della nota nell'editor
+  const cloneNote = () => {
+    if (!noteId) return;
+
+    setNoteId(null); // assicura sia una nota nuova e non una modifica della precedente
+    setTitle(`COPIA DI ${title}`);
+    setMarkdown(markdown);
+    setTags([...tags]);
+    setCreatedAt(new Date());
+    setLastEdited(new Date());
+  };
   
 
   // redirect alla homepage =========================================================
@@ -335,6 +346,7 @@ const NoteEditor = () => {
         <div className="notes-buttons">
           <button className="btn btn-success" onClick={saveNote}>Salva</button>
           <button className="btn btn-outline-light" onClick={() => resetEditor(true)}>Nuova</button>
+          <button className="btn btn-outline-warning" onClick={cloneNote}>Crea una copia</button>
           <button className="btn btn-outline-info" onClick={goHome}>Home</button>
         </div>
 
