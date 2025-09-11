@@ -1,6 +1,8 @@
 import Event from "../models/event.model.js";
 import ical from "ical-generator";
+import { addDays } from "date-fns";
 import { parseISO } from "date-fns";
+//import { RRule } from "rrule";
 
 export const getEvents = async (req, res) => {
   const { start, end } = req.query;
@@ -212,6 +214,11 @@ export const exportIcal = async (req, res) => {
           : new Date(start.getTime() + 60 * 60 * 1000);
       }
 
+
+      if (event.spanningDays && event.spanningDays > 1) {
+          end = addDays(end, event.spanningDays - 1);
+      }
+
       const calEvent = {
         start,
         end,
@@ -227,10 +234,14 @@ export const exportIcal = async (req, res) => {
           until: event.recurrence.endDate
             ? new Date(event.recurrence.endDate)
             : undefined,
-          exclude: event.exclusions?.map((excludedDate) =>
-            parseISO(excludedDate)
-          ),
         };
+        
+        if (event.exclusions?.length) {
+          calEvent.exdate = event.exclusions.map((d) =>
+            new Date(`${d}T${event.time || "00:00"}:00`)
+          );
+        }
+        
       }
 
       calendar.createEvent(calEvent);
@@ -308,7 +319,7 @@ export const getCalendarReport = async (req, res) => {
     })
       .sort({ dueDate: 1, dueTime: 1})
       .limit(3)
-      .lean ();
+      .lean();
 
     res.json({ activities });
   } catch (error) {

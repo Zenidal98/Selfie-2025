@@ -71,17 +71,29 @@ const CalendarModal = ({
   const handleDueDateChange = (e) => {
     const newDate = e.target.value;
     setNewDueDate(newDate);
+    
     if (newDate) {
+      setItemType("activity");
       setRecurrence({ frequency: "", interval: 1, endDate: "" });
     }
   };
 
   const handleRecurrenceChange = (e) => {
     const newFrequency = e.target.value;
-    setRecurrence((r) => ({ ...r, frequency: newFrequency }));
+    
     if (newFrequency) {
       setNewDueDate("");
       setNewDueTime("");
+      setItemType("event");
+
+      setRecurrence((r) => ({
+        ...r,
+        frequency: newFrequency,
+        interval: r.interval || 1,
+        endDate: r.endDate || "",
+      }));
+    } else {
+      setRecurrence({ frequency: "", interval: 1, endDate: "" });
     }
   };
 
@@ -333,14 +345,21 @@ const CalendarModal = ({
                   <button
                     type="button"
                     className={`btn ${itemType === "activity" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => setItemType("activity")}
+                    onClick={() => {
+                      setItemType("activity");
+                      setRecurrence({ frequency: "", interval: 1, endDate: "" });
+                    }}
                   >
                     Attività
                   </button>
                   <button
                     type="button"
                     className={`btn ${itemType === "event" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => setItemType("event")}
+                    onClick={() => {
+                      setItemType("event");
+                      setNewDueDate("");
+                      setNewDueTime("");
+                    }}
                   >
                     Evento
                   </button>
@@ -434,7 +453,13 @@ const CalendarModal = ({
                       className="form-control"
                       value={newDueTime}
                       disabled={!!recurrence.frequency || isPomodoro}
-                      onChange={(e) => setNewDueTime(e.target.value)}
+                      onChange={(e) => {
+                        setNewDueTime(e.target.value);
+                        if (e.target.value) {
+                          setItemType("activity");
+                          setRecurrence({ frequency: "", interval: 1, endDate: "" });
+                        }
+                      }}
                   />  
                 </div>
               )}
