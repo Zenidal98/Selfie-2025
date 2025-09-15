@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 // [MOD] preview piano Pomodoro (adegua il path se diverso)
 import { calcolaCicliStandard } from "../Pomodoro/PomodoroUtils";
+import { useTimeMachine } from "../../utils/TimeMachine"; // 👈 TM
 
 const CalendarModal = ({
   modalRef,
@@ -15,6 +16,14 @@ const CalendarModal = ({
   onActivityToggled
 }) => {
   const navigate = useNavigate();
+  const { virtualNow } = useTimeMachine(); // 👈 virtual time
+
+  // small helper to format HH:mm from a Date using TM time
+  const hhmm = (d) => {
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  };
 
   // Base event/activity fields
   const [newText, setNewText] = useState("");
@@ -30,7 +39,7 @@ const CalendarModal = ({
   const [newDueTime, setNewDueTime] = useState("09:00");
   const [newLocation, setNewLocation] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [itemType, setItemType] = useState("event");  // "activity" oppure "event"
+  const [itemType, setItemType] = useState("event");  // "activity" | "event"
 
   // Pomodoro fields
   const [isPomodoro, setIsPomodoro] = useState(false);
@@ -40,16 +49,18 @@ const CalendarModal = ({
   const [pomoBreak, setPomoBreak] = useState(5);
   const [pomoCycles, setPomoCycles] = useState(5);
 
-  // Reset form when date changes
+  // Reset form when date changes — defaults come from Time Machine ⏱️
   useEffect(() => {
     if (selectedDate) {
+      const tmNowHHmm = hhmm(virtualNow);
+
       setNewText("");
-      setNewTime("00:00");
-      setNewEndTime("00:00");
+      setNewTime(tmNowHHmm);
+      setNewEndTime(tmNowHHmm);
       setSpanningDays(1);
       setRecurrence({ frequency: "", interval: 1, endDate: "" });
       setNewDueDate("");
-      setNewDueTime("09:00");
+      setNewDueTime(tmNowHHmm);
       setUseBrowserNotif(true);
       setUseEmailNotif(false);
       setAdvanceNotice(0);
@@ -66,6 +77,16 @@ const CalendarModal = ({
       setPomoCycles(5);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      const tmNowHHmm = hhmm(virtualNow);
+
+      setNewTime(tmNowHHmm);
+      setNewEndTime(tmNowHHmm);
+      setNewDueTime(tmNowHHmm);
+    }
+  }, [virtualNow]);
 
   // Mutually exclusive UI: picking a due date disables recurrence; picking recurrence clears due date/time
   const handleDueDateChange = (e) => {
@@ -152,7 +173,7 @@ const CalendarModal = ({
       onEventAdded(res.data);
       setNewText("");
       setNewDueDate("");
-      setNewTime("00:00");
+      setNewTime(hhmm(virtualNow));
       setNewLocation("");
       setIsPomodoro(false);
     } catch (err) {
@@ -254,7 +275,7 @@ const CalendarModal = ({
                             : ""}
                           {event.location && ` - ${event.location}`}
                         </small>
-                        
+
                       )}
                       {event.type === "activity" && (
                         <small className="text-muted">
@@ -337,7 +358,7 @@ const CalendarModal = ({
             {/* Create new element */}
             <div className="mt-4">
               <h5>Nuovo Elemento</h5>
-              
+
               {/* Toggle between activity and event */}
               <div className="mb-3">
                 <label className="form-label me-3">Tipo</label>
@@ -435,8 +456,8 @@ const CalendarModal = ({
                         // se lo user torna a singola giornata, rivalida
                         const value = parseInt(e.target.value) || 1;
                         setSpanningDays(value);
-                        
-                        if (value === 1 && newEndTime < newTime){
+
+                        if (value === 1 && newEndTime < newTime) {
                           setNewEndTime(newTime);
                         }
                       }}
@@ -445,9 +466,9 @@ const CalendarModal = ({
                 </div>
               )}
 
-              {itemType === "activity" && (              
-                <div className="col-md-6 mb-3"><label className="form-label">Ora di Scadenza (per Attività)
-                  </label>
+              {itemType === "activity" && (
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Ora di Scadenza (per Attività)</label>
                   <input
                       type="time"
                       className="form-control"
@@ -461,6 +482,7 @@ const CalendarModal = ({
                         }
                       }}
                   />  
+
                 </div>
               )}
 

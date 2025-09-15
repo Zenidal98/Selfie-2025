@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { marked } from "marked";
-import DOMPurify from 'dompurify';
-import axios from "axios";
+import DOMPurify from "dompurify";
 import NotesList from "./NotesList";
-import './Notes.css'
-import { useTimeMachine } from '../../utils/TimeMachine';
+import "./Notes.css";
+import { useTimeMachine } from "../../utils/TimeMachine";
 import api from "../../utils/api.js";
 
 const NoteEditor = () => {
-  const { virtualNow } = useTimeMachine // stesso discorso che calendar
+  const { virtualNow } = useTimeMachine();
+
   const [noteId, setNoteId] = useState(null);
   const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
-  const [tags, setTags] = useState ([]);
-  const [tagInput, setTagInput] = useState ("");
-  const [createdAt, setCreatedAt] = useState(new Date());           
-  const [lastEdited, setLastEdited] = useState(new Date());
-  const [showEditor, setShowEditor] = useState(true); // toggle, per dispositivi mobile
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [createdAt, setCreatedAt] = useState(new Date(virtualNow));     // ✅ TM on init
+  const [lastEdited, setLastEdited] = useState(new Date(virtualNow));   // ✅ TM on init
+  const [showEditor, setShowEditor] = useState(true); // for mobile
   const textareaRef = useRef();
 
   // Lista dell note (mtterla qui permette aggiornamenti in tempo reale)==============
@@ -31,7 +31,7 @@ const NoteEditor = () => {
   **/
 
   // Fetch utente ====================================================================
-  
+
   const storedUser = JSON.parse(localStorage.getItem("utente")) || {};
   const userId = storedUser?._id;
   // const username = storedUser.username;
@@ -53,9 +53,9 @@ const NoteEditor = () => {
   }, []);
 
   // aggiorna la data di modifica ====================================================
-  
+
   useEffect(() => {
-    setLastEdited(new Date());
+    setLastEdited(new Date(virtualNow));
   }, [title, markdown, tags]);
  
   // carica l'ultima nota modifica automaticamente
@@ -108,17 +108,17 @@ const NoteEditor = () => {
     setLastEdited(new Date(note.lastEdited));
     setShowEditor(true);
   };
-  
+
   // HTML Sanitizing (pulisce il markdown per prevenire attacchi XSS) ================
-  
+
   const renderMarkdown = (markdownText) => {
     const rawHtml = marked.parse(markdownText);
     const safeHtml = DOMPurify.sanitize(rawHtml);
     return { __html: safeHtml };
   };
-  
+
   // aggiunge la formattazione al testo ==============================================
-  
+
   const applyMarkdown = (type) => {
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
@@ -157,7 +157,7 @@ const NoteEditor = () => {
       textarea.setSelectionRange(start + newText.length, start + newText.length);
     }, 0);
   };
-  
+
   // gestione dei tag ============================================================
   const addTag = () => {
     const trimmed = tagInput.trim();
@@ -173,9 +173,10 @@ const NoteEditor = () => {
   
   // Limita la lunghezza dei tag  ====================
 
+
   const truncateTag = (str, max = 15) =>
     str.length > max ? str.slice(0, max - 1) + "..." : str;
-  
+
 
   // data ========================================================================
   const formatDate = (date) =>
@@ -193,27 +194,29 @@ const NoteEditor = () => {
     if (newNote) {
       setNoteId(null); // resetta noteId SOLO se chiamato dal bottone (cosi le note preesitenti fanno solo update)
     }
+
     setTitle("");
     setMarkdown("");
     setTags([]);
     setTagInput("");
-    setCreatedAt(new Date());
-    setLastEdited(new Date());
+    setCreatedAt(new Date(virtualNow));
+    setLastEdited(new Date(virtualNow));
   };
 
   // salvataggio delle note ======================================================
   
   const saveNote = async () => {
-    console.log("saving noteid:", noteId); //db
+    //console.log("saving noteid:", noteId); //db
     try{
-    const noteData = {
-      userId,
-      title,
-      markdown,
-      tags,
-      createdAt,
-      lastEdited: new Date(),      // obv aggiorna la data
-    };
+
+      const noteData = {
+        userId,
+        title,
+        markdown,
+        tags,
+        createdAt,
+        lastEdited: new Date(virtualNow),
+      };
     
     let response;
 
@@ -253,9 +256,9 @@ const NoteEditor = () => {
   const goHome = () => {
     navigate("/home");
   };
-  
+
   // Cancella una nota (chiede conferma) e refresha la lista =========================
-  
+
   const deleteNote = id => {
     if (window.confirm("Vuoi veramente cancellare questa nota?")) {
       api.delete(`/notes/${id}`)
@@ -267,7 +270,7 @@ const NoteEditor = () => {
       resetEditor();
     }
   };
-  
+
 
   //#################################################################################
   return (

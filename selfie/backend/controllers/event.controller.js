@@ -4,6 +4,7 @@ import { addDays } from "date-fns";
 import { parseISO } from "date-fns";
 //import { RRule } from "rrule";
 
+import { getNow, applyOffset } from "../utils/timemachine.util.js";
 export const getEvents = async (req, res) => {
   const { start, end } = req.query;
   const userId = req.user.id; // dal JWT
@@ -112,6 +113,8 @@ export const createEvent = async (req, res) => {
     const newEvent = new Event({
       ...eventData,
       userId: req.user.id,
+      createdAt: getNow(),
+      updatedAt: getNow(),
     });
 
     if (recurrence && recurrence.frequency) {
@@ -189,7 +192,7 @@ export const toggleActivityCompletion = async (req, res) => {
 };
 
 export const exportIcal = async (req, res) => {
-  const userId  = req.user.id; 
+  const userId = req.user.id;
   if (!userId) {
     return res.status(400).json({ error: "Missing User Id" });
   }
@@ -205,13 +208,17 @@ export const exportIcal = async (req, res) => {
       let start, end;
 
       if (event.type === "activity") {
-        start = new Date(`${event.dueDate}T${event.dueTime || "09:00"}:00`);
-        end = new Date(start.getTime() + 60 * 60 * 1000);
+        start = applyOffset(
+          new Date(`${event.dueDate}T${event.dueTime || "09:00"}:00`)
+        );
+        end = applyOffset(new Date(start.getTime() + 60 * 60 * 1000));
       } else {
-        start = new Date(`${event.date}T${event.time || "00:00"}:00`);
+        start = applyOffset(
+          new Date(`${event.date}T${event.time || "00:00"}:00`)
+        );
         end = event.endTime
-          ? new Date(`${event.date}T${event.endTime}:00`)
-          : new Date(start.getTime() + 60 * 60 * 1000);
+          ? applyOffset(new Date(`${event.date}T${event.endTime}:00`))
+          : applyOffset(new Date(start.getTime() + 60 * 60 * 1000));
       }
 
 
@@ -232,7 +239,7 @@ export const exportIcal = async (req, res) => {
           freq: event.recurrence.frequency.toUpperCase(),
           interval: event.recurrence.interval,
           until: event.recurrence.endDate
-            ? new Date(event.recurrence.endDate)
+            ? applyOffset(new Date(event.recurrence.endDate))
             : undefined,
         };
         
@@ -294,7 +301,7 @@ export const patchPomodoroState = async (req, res) => {
       secondsLeft: Number.isFinite(secondsLeft)
         ? secondsLeft
         : ev.pomodoro.state?.secondsLeft ?? 0,
-      lastRunAt: new Date(),
+      lastRunAt: getNow(),
     };
 
     await ev.save();
@@ -308,7 +315,7 @@ export const patchPomodoroState = async (req, res) => {
 export const getCalendarReport = async (req, res) => {
   //console.log("user in getCalendarReport:", req.user); // debug
 
-  const userId =req.user.id;
+  const userId = req.user.id;
 
   try {
     const activities = await Event.find({
@@ -317,7 +324,7 @@ export const getCalendarReport = async (req, res) => {
       isComplete: false,
       dueDate: { $ne: null },
     })
-      .sort({ dueDate: 1, dueTime: 1})
+      .sort({ dueDate: 1, dueTime: 1 })
       .limit(3)
       .lean();
 

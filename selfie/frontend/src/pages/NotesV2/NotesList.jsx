@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistance, formatDistanceToNow } from "date-fns";
+import { useTimeMachine } from "../../utils/TimeMachine";
+
 
 function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
   const [searchText, setSearchText] = useState("");
   const [tagFilter, setTagFilter] = useState("");
   const [sortOption, setSortOption] = useState("lastEdited"); // ordina per data di modifica oppure lunghezza del testo ("textLength")
+
+  const { virtualNow } = useTimeMachine();
+
+  // Modifica la lista quando i filtri vengono cambiati =========================================================================
 
   // Update filtered list when filters change
   useEffect(() => {
@@ -35,6 +41,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
   // Unique tag list
   const uniqueTagsList = Array.from(new Set(notes.flatMap((n) => n.tags)));
 
+
   return (
     <>
       <div className="d-flex flex-column flex-md-row align-items-start mb-4 gap-3">
@@ -60,6 +67,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
 
         <select
           className="form-select w-auto"
+
           style={{ maxHeight: "200px", overflowY: "auto" }}
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
@@ -75,6 +83,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
 
       <div className="notes-grid">
         {filtered.length === 0 && (
+
           <div className="text-center text-muted w-100">
             Nessuna nota trovata.
           </div>
@@ -121,6 +130,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
             >
               <strong>X</strong>
             </button>
+
           </div>
         ))}
       </div>
