@@ -1,6 +1,6 @@
 import Note from "../models/notes.model.js";
 import Event from "../models/event.model.js";
-
+import { getNow } from "../utils/timemachine.util.js";
 import { format } from "date-fns";
 // Crea una nuova nota nel db ========================================================================================
 
@@ -15,7 +15,7 @@ export const saveNotes = async (req, res) => {
   }
 
   try {
-    const created = createdAt ? new Date(createdAt) : new Date();
+    const created = createdAt ? new Date(createdAt) : getNow();
     const edited = lastEdited ? new Date(lastEdited) : created;
 
     const newNote = new Note({
@@ -56,10 +56,10 @@ export const saveNotes = async (req, res) => {
 // Tutte le note dello user di riferimento ==============================================================================
 
 export const getUserNotes = async (req, res) => {
-  
-
   try {
-    const notes = await Note.find({ userId: req.user.id }).sort({ lastEdited: -1 });
+    const notes = await Note.find({ userId: req.user.id }).sort({
+      lastEdited: -1,
+    });
     res.status(200).json(notes);
   } catch (err) {
     console.error(err);
@@ -80,7 +80,7 @@ export const updateNote = async (req, res) => {
         title,
         markdown,
         tags,
-        lastEdited: lastEdited ? new Date(lastEdited) : new Date(),
+        lastEdited: lastEdited ? new Date(lastEdited) : getNow(),
       },
       { new: true }
     );
@@ -126,8 +126,8 @@ export const deleteNote = async (req, res) => {
 export const getMostRecentNote = async (req, res) => {
   try {
     const note = await Note.findOne({ userId: req.user.id })
-    .sort({ lastEdited: -1})
-    .select("title markdown tags createdAt lastEdited"); 
+      .sort({ lastEdited: -1 })
+      .select("title markdown tags createdAt lastEdited");
 
     if (!note) {
       return res.status(200).json(null);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "./PomodoroPage.css";
 import api from "../../utils/api"; // shared axios instance with JWT
 import { jwtDecode } from "jwt-decode";
+import { useTimeMachine } from "../../utils/TimeMachine";
 
 /**
  * Props:
@@ -11,6 +12,9 @@ import { jwtDecode } from "jwt-decode";
  * - eventId? (string) -> if provided, runtime state will be PATCHed to the event
  */
 const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null }) => {
+  // Time Machine
+  const { virtualNow } = useTimeMachine();
+
   // Timer state
   const [secondsLeft, setSecondsLeft] = useState(studyDuration * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -52,8 +56,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
 
   // ---- persistence helpers ----------------------------------------------------
   const getDayISO = () => {
-    // Using local date (browser TZ) as in the calendar UI
-    const d = new Date();
+    const d = virtualNow instanceof Date ? virtualNow : new Date();
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
@@ -70,9 +73,8 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         secondsLeft,
         meta: { reason }, // ignored by backend but useful if you ever log it
       });
-    } catch (e) {
+    } catch {
       // non-blocking
-      // console.warn("Failed to patch pomodoro state", e);
     }
   };
 
@@ -151,7 +153,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     setIsStudyTime(true);
     setSecondsLeft(studyDuration * 60);
     sendNotification(`🔁 Ricominciato ciclo ${currentCycle}`);
-    handleSaveSession()
+    handleSaveSession();
     await patchState({ reason: "restartCycle" });
   };
 
@@ -170,7 +172,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     } else {
       sendNotification("✅ Tutti i cicli completati!");
       setIsComplete(true);
-      handleSaveSession()
+      handleSaveSession();
       setSecondsLeft(0);
       await patchState({ reason: "finishCycle-complete" });
     }

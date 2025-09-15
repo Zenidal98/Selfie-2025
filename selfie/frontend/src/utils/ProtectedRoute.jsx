@@ -1,12 +1,12 @@
 // file che servirà per proteggere le varie parti da chi non ha fatto l'accesso in login
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; 
-
+import { jwtDecode } from "jwt-decode";
+import { useTimeMachine } from "./TimeMachine";
 
 const ProtectedRoute = ({ children }) => {
-  
   const token = sessionStorage.getItem("token");
+  const { virtualNow } = useTimeMachine();
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -14,10 +14,10 @@ const ProtectedRoute = ({ children }) => {
 
   try {
     const decoded = jwtDecode(token);
-    const now = Date.now() / 1000;
+    const now = virtualNow.getTime() / 1000;
 
     if (decoded.exp < now) {
-      sessionStorage.clear();            //pulisce sessionstorage da tutto ossia username ecc
+      sessionStorage.clear();
       return <Navigate to="/login" replace />;
     }
 

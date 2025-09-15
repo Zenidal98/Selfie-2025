@@ -1,5 +1,6 @@
 import Pomodoro from "../models/pomodoro.model.js";
 import mongoose from "mongoose";
+import { getNow } from "../utils/timemachine.util.js";
 // crea nuova sessione pomodoro ad analizzare
 export const createPomodoroSession = async (req, res) => {
   try {
@@ -8,6 +9,8 @@ export const createPomodoroSession = async (req, res) => {
     const session = new Pomodoro({
       ...req.body,
       userId: new mongoose.Types.ObjectId(authUserId), // enforce ownership
+      createdAt: getNow(),
+      updatedAt: getNow(),
     });
 
     const saved = await session.save();

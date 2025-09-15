@@ -5,6 +5,7 @@ import "./HomePage.css";
 import api from "../../utils/api";
 import { jwtDecode } from "jwt-decode";
 import { format } from "date-fns";
+import { useTimeMachine } from "../../utils/TimeMachine"; // 👈 TM
 
 const sections = [
   { id: "note", label: "Note", path: "/notes" },
@@ -16,12 +17,13 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
   const utente = JSON.parse(sessionStorage.getItem("utente"));
-  
+
   const [calendarReport, setCalendarReport] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [notesReport, setNotesReport] = useState(null);
   const [notesLoading, setNotesLoading] = useState(false);
 
+  const { lastManualChange } = useTimeMachine();
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -52,7 +54,7 @@ const HomePage = () => {
 
   const fetchCalendarReport = async () => {
     setCalendarLoading(true);
-    try{
+    try {
       const res = await api.get("/events/report");
       setCalendarReport(res.data.activities || []);
     } catch (error) {
@@ -89,6 +91,13 @@ const HomePage = () => {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
+  useEffect(() => {
+    if (lastManualChange !== null) {
+      fetchCalendarReport();
+      fetchNotesReport();
+    }
+  }, [lastManualChange]);
+
   return (
     <div className="home-page">
       <header className="home-header">
@@ -116,7 +125,7 @@ const HomePage = () => {
                 </div>
               )}
 
-             
+
               {sec.id === "note" && (
                 <div className="text-white text-center">
                   <div className="mb-2">
@@ -130,15 +139,9 @@ const HomePage = () => {
                       <strong>{notesReport.title}</strong>
                       <div className="small text-muted">
                         Creato:{" "}
-                        {format(
-                          new Date(notesReport.createdAt),
-                          "dd MMM yyyy HH:mm"
-                        )}{" "}
+                        {format(new Date(notesReport.createdAt), "dd MMM yyyy HH:mm")}{" "}
                         — Modificato:{" "}
-                        {format(
-                          new Date(notesReport.lastEdited),
-                          "dd MMM yyyy HH:mm"
-                        )}
+                        {format(new Date(notesReport.lastEdited), "dd MMM yyyy HH:mm")}
                       </div>
 
                       {notesReport.tags.length > 0 && (
@@ -175,7 +178,7 @@ const HomePage = () => {
                     >
                       {calendarLoading ? "Aggiornamento..." : "Aggiorna"}
                     </button>
-                    **/} 
+                    **/}
                   </div>
 
                   {calendarReport.length > 0 ? (
