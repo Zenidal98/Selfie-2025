@@ -12,7 +12,6 @@ import { RRule } from 'rrule';
 import { showNotification } from '../../utils/notify';
 // [MOD] uso un'istanza axios condivisa che aggiunge automaticamente l'Authorization
 import api from '../../utils/api';
-import sendEmailReminder from '../../utils/notifyEmail';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const timeZone = 'Europe/Rome';
 
@@ -188,7 +187,7 @@ const Calendar = () => {
     }
   }, [eventsCache, selectedDate, monthKey, virtualNow]);
 
-  // 🔔 Browser & Email notifications — driven by Time Machine
+  // 🔔 Browser notifications — driven by Time Machine
   useEffect(() => {
 
 
@@ -303,18 +302,6 @@ const Calendar = () => {
                 },
                 () => localStorage.setItem(ackKey, 'true')
               );
-              setNotifiedEvents(prev => new Set(prev).add(uniqueId));
-            }
-          }
-
-          // Email channel
-          if (event.notificationPrefs?.email) {
-            const uniqueId = `email-${baseKey}`;
-            const ackKey = `event-ack-email-${baseKey}`;
-            if (!notifiedEvents.has(uniqueId) && !localStorage.getItem(ackKey)) {
-              sendEmailReminder({ event, eventDateStr, eventTimeStr, thisNotifyMin })
-                .then(() => localStorage.setItem(ackKey, 'true'))
-                .catch(() => {/* already logged inside helper */ });
               setNotifiedEvents(prev => new Set(prev).add(uniqueId));
             }
           }
@@ -482,7 +469,7 @@ const Calendar = () => {
           {expandedToday.length > 0 && (
             <div className="event-indicators">
               {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note" />}
-              {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" title="Event" />}
+              {types.includes('manual') && (expandedToday.some(e => e.isPomodoro) ? <span className="manual-icon" title="Pomodoro">🍅</span>: <i className="bi bi-plus-circle manual-icon" title="Event" />)}
               {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
                 <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
               )}

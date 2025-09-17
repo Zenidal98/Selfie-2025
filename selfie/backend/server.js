@@ -10,7 +10,6 @@ import noteRoutes from "./routes/notes.routes.js";
 import pomodoroRoutes from "./routes/pomodoro.route.js";
 import eventRoutes from "./routes/event.route.js";
 import timeMachineRoutes from "./routes/timemachine.route.js";
-import notifyEmailRoutes from "./routes/notifyEmail.routes.js";
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -39,7 +38,6 @@ app.use("/api/pomodoro", pomodoroRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/time-machine", timeMachineRoutes);
-app.use("/api/notify-email", notifyEmailRoutes);
 app.listen(PORT, async () => {
   await connectDB();
   console.log("Server attivato sulla porta " + PORT);

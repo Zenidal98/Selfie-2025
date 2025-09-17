@@ -6,7 +6,6 @@ import { useTimeMachine } from "./TimeMachine";
 
 const ProtectedRoute = ({ children }) => {
   const token = sessionStorage.getItem("token");
-  const { virtualNow } = useTimeMachine();
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -14,7 +13,7 @@ const ProtectedRoute = ({ children }) => {
 
   try {
     const decoded = jwtDecode(token);
-    const now = virtualNow.getTime() / 1000;
+    const now = new Date().getTime() / 1000;
 
     if (decoded.exp < now) {
       sessionStorage.clear();

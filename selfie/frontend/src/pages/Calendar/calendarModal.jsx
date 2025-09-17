@@ -32,7 +32,6 @@ const CalendarModal = ({
   const [spanningDays, setSpanningDays] = useState(1);
   const [recurrence, setRecurrence] = useState({ frequency: "", interval: 1, endDate: "" });
   const [useBrowserNotif, setUseBrowserNotif] = useState(true);
-  const [useEmailNotif, setUseEmailNotif] = useState(false);
   const [advanceNotice, setAdvanceNotice] = useState(0);
   const [repeatCount, setRepeatCount] = useState(1);
   const [newDueDate, setNewDueDate] = useState("");
@@ -62,7 +61,6 @@ const CalendarModal = ({
       setNewDueDate("");
       setNewDueTime(tmNowHHmm);
       setUseBrowserNotif(true);
-      setUseEmailNotif(false);
       setAdvanceNotice(0);
       setRepeatCount(1);
       setNewLocation("");
@@ -123,7 +121,6 @@ const CalendarModal = ({
 
     const notificationPayload = {
       browser: useBrowserNotif,
-      email: useEmailNotif,
       advance: advanceNotice,
       repeat: repeatCount
     };
@@ -368,6 +365,7 @@ const CalendarModal = ({
                     className={`btn ${itemType === "activity" ? "btn-primary" : "btn-outline-primary"}`}
                     onClick={() => {
                       setItemType("activity");
+                      setIsPomodoro(false); // 🔒 forza OFF se diventa attività
                       setRecurrence({ frequency: "", interval: 1, endDate: "" });
                     }}
                   >
@@ -493,6 +491,7 @@ const CalendarModal = ({
                   type="checkbox"
                   id="isPomodoro"
                   checked={isPomodoro}
+                  disabled={itemType === "activity"} // 🔒 disabilitato se Attività
                   onChange={(e) => setIsPomodoro(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="isPomodoro">
@@ -664,18 +663,6 @@ const CalendarModal = ({
                           />
                           <label className="form-check-label" htmlFor="notify-browser">
                             Notifica browser
-                          </label>
-                        </div>
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="notify-email"
-                            checked={useEmailNotif}
-                            onChange={(e) => setUseEmailNotif(e.target.checked)}
-                          />
-                          <label className="form-check-label" htmlFor="notify-email">
-                            Notifica email
                           </label>
                         </div>
                       </div>
