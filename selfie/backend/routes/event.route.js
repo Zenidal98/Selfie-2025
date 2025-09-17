@@ -14,28 +14,28 @@ import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// All events routes require a valid JWT; controllers will use req.user.id
+// forza l'utilizzo di JWT, i controller useranno req.user.id
 router.use(auth);
 
-// GET -> events for the logged-in user (period via query)
+// GET -> eventi dell'utete (nel periodo di query)
 router.get("/", getEvents);
 
-// POST -> create a new manual event for the logged-in user
+// POST -> crea un evento 
 router.post("/", createEvent);
 
-// DELETE -> delete an existing event (and its recurrence, if any)
+// DELETE -> cancella un evento o serie ricorrente
 router.delete("/:id", deleteEvent);
 
-// PATCH -> exclude a single instance of a recurring event
+// PATCH -> esclude un'istanza singola di evento ricorrente
 router.patch("/:id/exclude", excludeOccurrence);
 
-// PATCH -> toggle an activity's completion
+// PATCH -> toggle di completamento attivita'
 router.patch("/:id/toggle-complete", toggleActivityCompletion);
 
-// GET -> export the user's calendar as .ics
+// GET -> export del calendario come .ics
 router.get("/export", exportIcal);
 
-// GET -> get the homepage report for the calendar activities
+// GET -> get del report per la homepage
 router.get("/report", getCalendarReport);
 
 router.get("/:id", auth, getEventById);

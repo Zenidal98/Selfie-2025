@@ -12,7 +12,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
 
   // Modifica la lista quando i filtri vengono cambiati =========================================================================
 
-  // Update filtered list when filters change
+  // gestisce il render della lista filtrata e ordinata
   useEffect(() => {
     let filteredList = notes.filter((n) => {
       const matchesTitle = n.title
@@ -38,7 +38,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
     setFiltered(filteredList);
   }, [notes, searchText, tagFilter, setFiltered, sortOption]);
 
-  // Unique tag list
+  // crea un insime di tag unici
   const uniqueTagsList = Array.from(new Set(notes.flatMap((n) => n.tags)));
 
 
@@ -124,7 +124,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
               type="button"
               className="btn btn-danger btn-sm position-absolute bottom-0 end-0 m-2 p-1"
               onClick={(e) => {
-                e.stopPropagation(); // avoid selecting card
+                e.stopPropagation(); 
                 onDelete(note._id);
               }}
             >

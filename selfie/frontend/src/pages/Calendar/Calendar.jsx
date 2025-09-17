@@ -105,7 +105,7 @@ const Calendar = () => {
         const dueDate = evt.dueDate ? parseISO(evt.dueDate) : parseISO(evt.date);
         const today = virtualNow;
 
-        // If due date is in the future
+        // marca gli eventi: giallo se in orario, rosso altrimenti
         if (dueDate > today) {
           if (format(currentDay, 'yyyy-MM-dd') === format(dueDate, 'yyyy-MM-dd')) {
             enrichedEvents.push({ ...evt, status: 'yellow' });
@@ -113,7 +113,7 @@ const Calendar = () => {
         } else if (format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
           if (format(currentDay, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
             let status = 'yellow';
-            if (evt.dueTime) {
+            if (evt.dueTime) { // stesso giorno, ma in ritardo sull'orario
               const dueDateTime = parse(evt.dueTime, 'HH:mm', today);
               if (isAfter(today, dueDateTime)) {
                 status = 'red';
@@ -122,7 +122,6 @@ const Calendar = () => {
             enrichedEvents.push({ ...evt, status });
           }
         }
-        // If due date is in the past
         else if (dueDate < today) {
           const dueStr = format(dueDate, 'yyyy-MM-dd');
           const todayStrLocal = format(today, 'yyyy-MM-dd');
@@ -155,14 +154,14 @@ const Calendar = () => {
         for (const occUTC of occurrencesUTC) {
           const startOfOccurrence = toZonedTime(occUTC, timeZone);
           const spanDays = [];
-          for (let i = 0; i < (evt.spanningDays || 1); i++) {
+          for (let i = 0; i < (evt.spanningDays || 1); i++) { // se l'evento dura piu' giorni 
             spanDays.push(format(addDays(startOfOccurrence, i), 'yyyy-MM-dd'));
           }
 
           if (spanDays.includes(dateStr)) {
             const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
-            if (evt.exclusions?.includes(startOccDateStr)) break;
-            enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true });
+            if (evt.exclusions?.includes(startOccDateStr)) break; // non espande gli eventi nella lista esclusioni
+            enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true }); // isVirtual marca gli eventi frutto della espansione
             break;
           }
         }
@@ -313,7 +312,7 @@ const Calendar = () => {
     // 👇 include lastManualChange so a TM jump is applied immediately
   }, [eventsCache, notifiedEvents, virtualNow, lastManualChange]);
 
-  // remove & update helpers unchanged ...
+  // cancella gli eventi dalla cache (e causa rerender)
   const handleEventDeletion = (deletedId) => {
     setEventsCache(cache => {
       const newCache = { ...cache };
@@ -330,6 +329,7 @@ const Calendar = () => {
     setSelectedEvents(evts => evts.filter(e => e._id !== deletedId));
   };
 
+  // gestisce l'eccezione di un evento istanza di una ricorrenza
   const handleEventExclusion = (eventId, excludedDate) => {
     setEventsCache(cache => {
       const newCache = { ...cache };
@@ -352,6 +352,7 @@ const Calendar = () => {
     setSelectedEvents(evts => evts.filter(e => !(e._id === eventId && e.date === excludedDate)));
   };
 
+  // gestisce l'aggiunta di un  evento in cache
   const handleEventAddition = (newEvt) => {
     if (newEvt.recurrence?.frequency || newEvt.type === 'activity') {
       setEventsCache({});
@@ -371,7 +372,7 @@ const Calendar = () => {
     }
   };
 
-  // gestisce il completamento di una attivita' e la rimuove
+  // gestisce il completamento di una attivita' e la rimuove dalla visualizzazione
   const handleActivityToggled = (updatedActivity) => {
     setEventsCache(cache => {
       const newCache = { ...cache };
@@ -421,11 +422,13 @@ const Calendar = () => {
     setSelectedEvents([]);
   };
 
+  // causa il download del file .ics alla pressione del pulsante
   const handleExport = async () => {
     try {
       const response = await api.get("/events/export", {
         responseType: "blob", //cosi' axios non lo parsa come JSON
       });
+      // crea, clicca e rimuove un link per il download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -441,6 +444,7 @@ const Calendar = () => {
     }
   };
 
+  // genera la vista mensile del calendario
   const generateCalendar = () => {
     const cells = [];
     const cm = eventsCache[monthKey] || {};
@@ -463,7 +467,7 @@ const Calendar = () => {
 
       cells.push(
         <div key={dateStr}
-          className={`calendar-cell day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : ''}`}
+          className={`calendar-cell day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : ''}`} // evidenzia la data (virtuale) di oggi
           onClick={() => showModal(dateStr)}>
           <div className="day-number">{dayNum}</div>
           {expandedToday.length > 0 && (
@@ -484,10 +488,11 @@ const Calendar = () => {
 
     while (cells.length < 42) {
       cells.push(<div key={`empty-end-${cells.length}`} className="calendar-cell empty" />);
-    }
+    } // pusha celle grigie alla fine del calendario, permette di avere un layout fisso e uniforme
     return cells;
   };
 
+  // genera la view settimanale del calendario
   const generateWeekView = () => {
     const cm = eventsCache[monthKey] || {};
     return weekDays.map(day => {
@@ -514,11 +519,12 @@ const Calendar = () => {
     });
   };
 
+  // genera la overview delle attivita'
   const generateActivitiesPanel = () => {
     const cm = eventsCache[monthKey] || {};
     const rawEvents = Object.values(cm).flat();
 
-    const days = viewMode === 'month' ? monthDays : weekDays;
+    const days = viewMode === 'month' ? monthDays : weekDays; // le attivita' del mese o della settimana in base alla view scelta
 
     const collected = [];
     days.forEach(day => {
@@ -527,7 +533,7 @@ const Calendar = () => {
       expanded
         .filter(e => e.type === 'activity')
         .forEach(e => {
-          if (!collected.find(c => c._id === e._id)) {
+          if (!collected.find(c => c._id === e._id)) { // evita la duplicazione delle attivita'
             collected.push(e);
           }
         });

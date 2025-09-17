@@ -18,7 +18,7 @@ const recurrenceSchema = new mongoose.Schema(
       enum: ["DAILY", "WEEKLY", "MONTHLY"],
       default: null,
     },
-    interval: { type: Number, default: 1 },
+    interval: { type: Number, default: 1 }, // numero di giorni - settimane - mesi di intervallo tra ripetizioni
     endDate: { type: String, default: null },
   },
   { _id: false }
@@ -60,13 +60,12 @@ const eventSchema = new mongoose.Schema(
     // per creare range orari
     endTime: { type: String, default: null },
     spanningDays: { type: Number, default: null },
-    // per inserire  l'attivita' di creazione nota
     type: {
       type: String,
       enum: ["manual", "note", "activity"],
       default: "manual",
     },
-    noteId: {
+    noteId: { // la "foreign key" per gli eventi di tipo nota
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",
       default: null,

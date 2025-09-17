@@ -5,6 +5,8 @@ import { parseISO } from "date-fns";
 //import { RRule } from "rrule";
 
 import { getNow, applyOffset } from "../utils/timemachine.util.js";
+
+// fetch degli eventi in una finestra di tempo (specificata in query, usata mese per mese)
 export const getEvents = async (req, res) => {
   const { start, end } = req.query;
   const userId = req.user.id; // dal JWT
@@ -18,7 +20,7 @@ export const getEvents = async (req, res) => {
     const events = await Event.find({
       userId,
       $or: [
-        // existing manual/note non-recurring
+        // eventi non ricorrenti
         {
           type: { $in: ["manual", "note"] },
           date: { $gte: start, $lte: end },
@@ -27,7 +29,7 @@ export const getEvents = async (req, res) => {
             { "recurrence.frequency": { $exists: false } },
           ],
         },
-        // existing recurring
+        // eventi ricorrenti
         {
           "recurrence.frequency": { $ne: null },
           date: { $lte: end },
@@ -36,7 +38,7 @@ export const getEvents = async (req, res) => {
             { "recurrence.endDate": { $gte: start } },
           ],
         },
-        // existing activities
+        // attivita'
         { type: "activity", isComplete: false, date: { $lte: end } },
 
         // 👉 NEW: Pomodoro events (non-recurring, same window)
@@ -59,7 +61,7 @@ export const getEvents = async (req, res) => {
           ],
         },
       ],
-    }).lean();
+    }).lean(); // lean perche' usa Plain old Javascript Objects e non documenti Mongoose, rendendo piu' snelle le query
 
     res.json(events);
   } catch (err) {
@@ -68,7 +70,7 @@ export const getEvents = async (req, res) => {
   }
 };
 
-// createEvent
+// crea un evento
 export const createEvent = async (req, res) => {
   try {
     const { recurrence, ...eventData } = req.body;
@@ -133,6 +135,7 @@ export const createEvent = async (req, res) => {
   }
 };
 
+//cancella un evento
 export const deleteEvent = async (req, res) => {
   const { id } = req.params;
   try {
@@ -149,6 +152,7 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
+// gestice l'esclusione di una istanza ricorrente lato db
 export const excludeOccurrence = async (req, res) => {
   const { id } = req.params;
   const { dateToExclude } = req.body;
@@ -176,6 +180,7 @@ export const excludeOccurrence = async (req, res) => {
   }
 };
 
+// getsice il toggle del completamento attivita' lato db
 export const toggleActivityCompletion = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -191,6 +196,7 @@ export const toggleActivityCompletion = async (req, res) => {
   }
 };
 
+// esporta il calendario di un utente come formato iCalendar (.ics) per essere usato su servizi di terze parti
 export const exportIcal = async (req, res) => {
   const userId = req.user.id;
   if (!userId) {
@@ -312,6 +318,7 @@ export const patchPomodoroState = async (req, res) => {
   }
 };
 
+// crea la preview attivita' per la homepage
 export const getCalendarReport = async (req, res) => {
   //console.log("user in getCalendarReport:", req.user); // debug
 

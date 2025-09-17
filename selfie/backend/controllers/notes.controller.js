@@ -5,7 +5,6 @@ import { format } from "date-fns";
 // Crea una nuova nota nel db ========================================================================================
 
 export const saveNotes = async (req, res) => {
-  // Always take userId from the JWT middleware
   const authUserId = req.user?.id;
 
   const { title, markdown, tags, createdAt, lastEdited } = req.body;
@@ -29,7 +28,7 @@ export const saveNotes = async (req, res) => {
 
     await newNote.save();
 
-    // Create a linked Event of type "note"
+    // Crea un evento associato per il calendario
     const eventDate = format(newNote.createdAt, "yyyy-MM-dd");
     const eventTime = format(newNote.createdAt, "HH:mm");
 
@@ -102,7 +101,6 @@ export const deleteNote = async (req, res) => {
   const { noteId } = req.params;
 
   try {
-    // Only delete if the note belongs to the logged-in user
     const deletedNote = await Note.findOneAndDelete({
       _id: noteId,
       userId: req.user.id,
@@ -112,7 +110,7 @@ export const deleteNote = async (req, res) => {
       return res.status(404).json({ error: "Note not found or not yours" });
     }
 
-    // Delete the linked Event as well
+    // cancella anche l'evento associato
     await Event.deleteOne({ noteId: noteId, userId: req.user.id });
 
     res.status(200).json({ message: "Deleted with success" });

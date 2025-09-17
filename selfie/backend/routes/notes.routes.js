@@ -10,22 +10,21 @@ import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// All notes routes require a valid JWT; controllers will use req.user.id
 router.use(auth);
 
-// POST -> create a new note for the logged-in user
+// POST -> crea una nuova nota
 router.post("/", saveNotes);
 
-// GET -> get the the homepage report
+// GET -> get del report homepage
 router.get("/recent", getMostRecentNote);
 
-// GET -> get notes of the logged-in user
+// GET -> get delle note dell'utente
 router.get("/", getUserNotes);
 
-// PUT -> update a note owned by the logged-in user
+// PUT -> salva le modifiche ad una nota preesistente
 router.put("/:noteId", updateNote);
 
-// DELETE -> delete a note owned by the logged-in user
+// DELETE -> cancella una nota
 router.delete("/:noteId", deleteNote);
 
 export default router;

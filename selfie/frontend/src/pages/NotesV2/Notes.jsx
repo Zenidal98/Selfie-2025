@@ -15,8 +15,8 @@ const NoteEditor = () => {
   const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
-  const [createdAt, setCreatedAt] = useState(new Date(virtualNow));     // ✅ TM on init
-  const [lastEdited, setLastEdited] = useState(new Date(virtualNow));   // ✅ TM on init
+  const [createdAt, setCreatedAt] = useState(new Date(virtualNow));     //  TM on init
+  const [lastEdited, setLastEdited] = useState(new Date(virtualNow));   //  TM on init
   const [showEditor, setShowEditor] = useState(true); // for mobile
   const textareaRef = useRef();
 
@@ -58,7 +58,7 @@ const NoteEditor = () => {
     setLastEdited(new Date(virtualNow));
   }, [title, markdown, tags]);
  
-  // carica l'ultima nota modifica automaticamente
+  // carica l'ultima nota modificata automaticamente
   useEffect(() => {
   const loadLastNote = async () => {
     try {
@@ -348,9 +348,9 @@ const NoteEditor = () => {
         {/* Pulsanti */}
         <div className="notes-buttons">
           <button className="btn btn-success" onClick={saveNote}>Salva</button>
-          <button className="btn btn-outline-light" onClick={() => resetEditor(true)}>Nuova</button>
-          <button className="btn btn-outline-warning" onClick={cloneNote}>Crea una copia</button>
-          <button className="btn btn-outline-info" onClick={goHome}>Home</button>
+          <button className="btn btn-light" onClick={() => resetEditor(true)}>Nuova</button>
+          <button className="btn btn-warning" onClick={cloneNote}>Crea una copia</button>
+          <button className="btn btn-info" onClick={goHome}>Home</button>
         </div>
 
         {/* Lista note */}

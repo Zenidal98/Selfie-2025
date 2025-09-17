@@ -75,7 +75,7 @@ const CalendarModal = ({
       setPomoCycles(5);
     }
   }, [selectedDate]);
-
+/**
   useEffect(() => {
     if (selectedDate) {
       const tmNowHHmm = hhmm(virtualNow);
@@ -85,8 +85,9 @@ const CalendarModal = ({
       setNewDueTime(tmNowHHmm);
     }
   }, [virtualNow]);
+**/
 
-  // Mutually exclusive UI: picking a due date disables recurrence; picking recurrence clears due date/time
+  // Accorgimenti per rendere le UI di eventi e attivita' mutuamente esclusive, per evitare mixup
   const handleDueDateChange = (e) => {
     const newDate = e.target.value;
     setNewDueDate(newDate);
@@ -116,6 +117,7 @@ const CalendarModal = ({
     }
   };
 
+  // gestisce l'aggiunta di nuovi eventi di ogni tipo
   const handleAdd = async () => {
     if (!newText.trim()) return;
 
@@ -128,7 +130,6 @@ const CalendarModal = ({
     let payload;
 
     if (itemType === "activity") {
-      // Create ACTIVITY (To-Do)
       payload = {
         type: "activity",
         text: newText.trim(),
@@ -167,6 +168,7 @@ const CalendarModal = ({
 
     try {
       const res = await api.post("/events", payload);
+      // resetta gli stati post-add
       onEventAdded(res.data);
       setNewText("");
       setNewDueDate("");
@@ -179,6 +181,7 @@ const CalendarModal = ({
     }
   };
 
+  // marca una attivita' come completata
   const handleToggleComplete = async (activityId) => {
     try {
       const res = await api.patch(`/events/${activityId}/toggle-complete`);
@@ -189,13 +192,14 @@ const CalendarModal = ({
     }
   };
 
+  // gestisce la cancellazione degli eventi
   const handleDelete = async (event) => {
     const seriesId = event._id;
-    if (event.isVirtual) {
+    if (event.isVirtual) { // se si tratta di un evento dato dall'espansione di una ricorrenza
       const choice = window.confirm(
         "This is a recurring event. Press OK to delete the ENTIRE series, or Cancel to delete ONLY this occurrence."
       );
-      if (choice) {
+      if (choice) { // cancella l'intera serie ricorrente
         try {
           await api.delete(`/events/${seriesId}`);
           onEventDeleted(seriesId);
@@ -204,7 +208,7 @@ const CalendarModal = ({
           alert("Error deleting the event series.");
         }
       } else {
-        try {
+        try { // cancella la singola istanza, aggiungendola all'array delle esclusioni (standard simile ad ics)
           await api.patch(`/events/${seriesId}/exclude`, { dateToExclude: event.date });
           onEventExclusion(seriesId, event.date);
         } catch (err) {
@@ -224,6 +228,7 @@ const CalendarModal = ({
     }
   };
 
+  // ordina gli eventi dello stesso giorno per orario
   const sortedEvents = [...selectedEvents].sort((a, b) =>
     (a.time || a.dueTime || "00:00").localeCompare(b.time || b.dueTime || "00:00")
   );
@@ -365,8 +370,8 @@ const CalendarModal = ({
                     className={`btn ${itemType === "activity" ? "btn-primary" : "btn-outline-primary"}`}
                     onClick={() => {
                       setItemType("activity");
-                      setIsPomodoro(false); // 🔒 forza OFF se diventa attività
-                      setRecurrence({ frequency: "", interval: 1, endDate: "" });
+                      setIsPomodoro(false); //  forza OFF se diventa attività
+                      setRecurrence({ frequency: "", interval: 1, endDate: "" }); // previene di avere campi di ricorrenza compilati per un evento attivita'
                     }}
                   >
                     Attività
@@ -375,7 +380,7 @@ const CalendarModal = ({
                     type="button"
                     className={`btn ${itemType === "event" ? "btn-primary" : "btn-outline-primary"}`}
                     onClick={() => {
-                      setItemType("event");
+                      setItemType("event"); // specularmente, gli eventi ricorrenti non devono avere campi di attivita'
                       setNewDueDate("");
                       setNewDueTime("");
                     }}
@@ -419,8 +424,8 @@ const CalendarModal = ({
                       onChange={(e) => {
                         const value = e.target.value;
                         setNewTime(value);
-                        // [FIX] forza l'ordine corretto degli orari (se stesso giorno)
-                        if (spanningDays === 1 && newEndTime && value > newEndTime) {
+                        // forza l'ordine corretto degli orari (l'orario di fine non puo' precedere la data di inizio)
+                        if (newEndTime && value > newEndTime) {
                           setNewEndTime(value);
                         }
                       }}
@@ -435,7 +440,7 @@ const CalendarModal = ({
                       onChange={(e) => {
                         // [FIX] segue sopra
                         const value = e.target.value;
-                        if (spanningDays === 1 && value < newTime) {
+                        if (value < newTime) {
                           setNewEndTime(newTime);
                         } else {
                           setNewEndTime(value);
@@ -451,13 +456,8 @@ const CalendarModal = ({
                       min="1"
                       value={spanningDays}
                       onChange={(e) => {
-                        // se lo user torna a singola giornata, rivalida
                         const value = parseInt(e.target.value) || 1;
-                        setSpanningDays(value);
-
-                        if (value === 1 && newEndTime < newTime) {
-                          setNewEndTime(newTime);
-                        }
+                        setSpanningDays(value); 
                       }}
                     />
                   </div>
@@ -594,7 +594,7 @@ const CalendarModal = ({
                     <button
                       className={`accordion-button ${advancedOpen ? "" : "collapsed"}`}
                       type="button"
-                      onClick={() => setAdvancedOpen(!advancedOpen)}
+                      onClick={() => setAdvancedOpen(!advancedOpen)} // toggle per la tenda delle opzioni avanzate
                       aria-expanded={advancedOpen}
                       aria-controls="collapseAdvanced"
                     >
@@ -700,7 +700,7 @@ const CalendarModal = ({
               </div>
 
               <div className="d-grid mt-4">
-                <button className="btn btn-primary" type="button" onClick={handleAdd}>
+                <button className="btn btn-primary" type="button" onClick={handleAdd} /** submit dell'evento **/>
                   Aggiungi +
                 </button>
               </div>

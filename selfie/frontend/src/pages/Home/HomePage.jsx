@@ -18,6 +18,7 @@ const HomePage = () => {
   const [report, setReport] = useState(null);
   const utente = JSON.parse(sessionStorage.getItem("utente"));
 
+  // stati per i report delle pagine Note e Calendar
   const [calendarReport, setCalendarReport] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [notesReport, setNotesReport] = useState(null);
