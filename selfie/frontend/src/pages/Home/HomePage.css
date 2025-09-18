@@ -78,11 +78,11 @@
 /* Sezioni specifiche con immagini via CSS */
 
 .section.note {
-  background-image: url('../../img/notes.jpg');
-}
+  background-image: url('../../img/notes2.jpg'); /** Image by Jess Bailey from Pixabay **/
+} /* https://pixabay.com/service/license-summary/ */
 
 .section.calendario {
-  background-image: url('../../img/calendar.jpg');
+  background-image: url('../../img/calendar2.jpg');
 }
 
 .section.pomodoro {
