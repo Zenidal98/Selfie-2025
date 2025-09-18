@@ -505,8 +505,8 @@ const Calendar = () => {
         <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : ''}`} onClick={() => showModal(dateStr)}>
           <div className="day-number">{format(day, 'EEE dd MMM')}</div>
           <div className="event-indicators">
-            {types.includes('note') && <i className="bi bi-stickies-fill note-icon" />}
-            {types.includes('manual') && <i className="bi bi-plus-circle manual-icon" />}
+            {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
+            {types.includes('manual') && (expandedToday.some(e => e.isPomodoro) ? <span className='manual-icon' title="Pomodoro">🍅</span> : <i className="bi bi-plus-circle manual-icon" title="Event"/>)}
             {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
               <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
             )}
