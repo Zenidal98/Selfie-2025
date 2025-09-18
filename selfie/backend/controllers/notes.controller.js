@@ -14,28 +14,28 @@ export const saveNotes = async (req, res) => {
   }
 
   try {
-    const created = createdAt ? new Date(createdAt) : getNow();
-    const edited = lastEdited ? new Date(lastEdited) : created;
+    const createdDate = new Date(req.body.createdAt);
+    //const edited = lastEdited ? new Date(lastEdited) : created;
 
     const newNote = new Note({
       userId: authUserId, // <-- force ownership
       title,
       markdown,
       tags,
-      createdAt: created,
-      lastEdited: edited,
+      createdAt: req.body.createdAt,
+      lastEdited: req.body.lastEdited,
     });
 
     await newNote.save();
 
     // Crea un evento associato per il calendario
-    const eventDate = format(newNote.createdAt, "yyyy-MM-dd");
-    const eventTime = format(newNote.createdAt, "HH:mm");
+    //const eventDate = format(createdDate, "yyyy-MM-dd");
+    //const eventTime = format(createdDate, "HH:mm");
 
     const newNoteEvent = new Event({
       userId: authUserId, // <-- force ownership for the event too
-      date: eventDate,
-      time: eventTime,
+      date: req.body.createdAt.slice(0, 10), // yyyy-MM-dd
+      time: req.body.createdAt.slice(11, 16), // HH:mm
       text: `Note created: "${title}"`,
       type: "note",
       noteId: newNote._id,
