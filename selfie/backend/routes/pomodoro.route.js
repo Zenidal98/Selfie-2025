@@ -7,13 +7,13 @@ import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// All pomodoro routes require a valid JWT; controllers will use req.user.id
+// tutte le route Pomodoro richiedono un JWT valido e devono passare per auth; i controller usano poi req.user.id per identificare l’utente
 router.use(auth);
 
-// POST -> create a new Pomodoro session for the logged-in user
+// POST -> crea una nuova sessione pomodoro
 router.post("/", createPomodoroSession);
 
-// GET -> fetch the last Pomodoro session of the logged-in user
+// GET -> prende l'ultima sessione di pomodoro dell'utente
 router.get("/last/:userId", getLastPomodoroByUser);
 
 export default router;

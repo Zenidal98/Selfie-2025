@@ -26,18 +26,18 @@ const recurrenceSchema = new mongoose.Schema(
 
 const pomodoroSchema = new mongoose.Schema(
   {
-    // PLAN (choose ONE mode)
+    //modalità classica o personalizzata con tempo personalizzabile a seconda di quanto metti
     mode: { type: String, enum: ["total", "fixed"], default: "fixed" },
 
-    // mode === 'total' → derive cycles using your 30+5 rule
+    // modalità totale faccio i cicli secondo il 30+5
     totalMinutes: { type: Number, default: null, min: 0 },
 
-    // mode === 'fixed' → explicit values
+    // fissato -> valori espliciti
     studyMinutes: { type: Number, default: 30, min: 1 },
     breakMinutes: { type: Number, default: 5, min: 1 },
     cycles: { type: Number, default: 5, min: 1 },
 
-    // RUNTIME (optional) — just enough to resume after reload
+    // stato per dire a che punto sei arrivato. Serve per poter riprendere il Pomodoro se l’utente ricarica la pagina o chiude l’app
     state: {
       dayISO: { type: String, default: null }, // 'YYYY-MM-DD'
       phase: { type: String, enum: ["study", "break"], default: "study" },

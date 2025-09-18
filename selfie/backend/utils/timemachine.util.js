@@ -1,4 +1,4 @@
-// Simple in-memory offset (ms). Default = 0 (real time).
+// offset di base che all'inizio è 0 ossia al tempo normale del sistema operativo
 let offsetMs = 0;
 
 export const setOffset = (ms) => {

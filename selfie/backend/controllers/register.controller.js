@@ -43,7 +43,6 @@ export const registerUser = async (req, res) => {
 
     await newUser.save();
 
-    // Non restituiamo la password al frontend. Forse inutile ? Vediamo piu avanti intanto lo lascio
     const { password: _, ...userWithoutPassword } = newUser.toObject();
 
     res.status(201).json({ success: true, data: userWithoutPassword });

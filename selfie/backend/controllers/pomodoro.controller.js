@@ -1,10 +1,11 @@
 import Pomodoro from "../models/pomodoro.model.js";
 import mongoose from "mongoose";
 import { getNow } from "../utils/timemachine.util.js";
+
 // crea nuova sessione pomodoro ad analizzare
 export const createPomodoroSession = async (req, res) => {
   try {
-    const authUserId = req.user.id; // from JWT
+    const authUserId = req.user.id; // JWT
 
     const session = new Pomodoro({
       ...req.body,
