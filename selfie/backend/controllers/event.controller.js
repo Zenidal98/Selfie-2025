@@ -41,7 +41,7 @@ export const getEvents = async (req, res) => {
         // attivita'
         { type: "activity", isComplete: false, date: { $lte: end } },
 
-        // 👉 NEW: Pomodoro events (non-recurring, same window)
+        // eventi pomodoro
         {
           isPomodoro: true,
           date: { $gte: start, $lte: end },
@@ -50,7 +50,7 @@ export const getEvents = async (req, res) => {
             { "recurrence.frequency": { $exists: false } },
           ],
         },
-        // 👉 NEW: Pomodoro recurring window
+        // finestra di ricorrenza degli eventi pomodoro
         {
           isPomodoro: true,
           "recurrence.frequency": { $ne: null },
@@ -75,7 +75,7 @@ export const createEvent = async (req, res) => {
   try {
     const { recurrence, ...eventData } = req.body;
 
-    // 👉 Minimal Pomodoro validation (optional but helpful)
+    // controlli di validazione per pomodoro per controllare un minimo che le cose siano ok
     if (eventData.isPomodoro) {
       const p = eventData.pomodoro || {};
       if (p.mode === "total") {
@@ -95,7 +95,7 @@ export const createEvent = async (req, res) => {
           return res.status(400).json({ error: "Invalid fixed pomodoro plan" });
         }
       }
-      // Ensure state exists as object if client omitted it
+      // ci assicuriamo che esista lo stato come oggetto nel caso il cliente l abbia dimenticato
       eventData.pomodoro = {
         mode: p.mode || "fixed",
         totalMinutes: p.totalMinutes ?? null,

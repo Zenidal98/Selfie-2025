@@ -186,19 +186,19 @@ const Calendar = () => {
     }
   }, [eventsCache, selectedDate, monthKey, virtualNow]);
 
-  // 🔔 Browser notifications — driven by Time Machine
+  // notifiche browser controllate dalla time machine, calcola quali eventi vanno notificati nell’istante corrente
   useEffect(() => {
 
 
     const interval = setInterval(() => {
-      // always use the current virtual time
+      // usa sempre il tempo attuale virtual time
       const now = virtualNow;
       const nowMin = Math.floor(now.getTime() / 60000);
       const allEvents = Object.values(eventsCache).flat(2);
       const today = format(now, 'yyyy-MM-dd');
-      const GRACE_MINUTES = 5; // fire if late by < 5 minutes
+      const GRACE_MINUTES = 5; // fallo se il ritardo è inferiore a 5 minuti, serve per dare una mini finestra di tolleranza alle notifiche
 
-      // build the list of events to notify (current virtual day only)
+      // fa la lista di eventi da notificare (solo per il giorno virtuale corrente)
       const eventsForNotification = allEvents.reduce((acc, dayObj) => {
         if (!dayObj || typeof dayObj !== 'object') return acc;
 
@@ -208,7 +208,7 @@ const Calendar = () => {
           for (const event of events) {
             if (!event) continue;
 
-            // 1) Activities: notify when due today and not complete
+            // 1) Attività: notifica se scadono oggi e non sono completate
             if (event.type === 'activity') {
               if (!event.isComplete && event.dueDate === today) {
                 acc.push(event);
@@ -216,29 +216,29 @@ const Calendar = () => {
               continue;
             }
 
-            // 2) Recurring events
+            // 2) Eventi ricorrenti
             if (event.recurrence?.frequency) {
               const rule = new RRule({
                 freq: RRule[event.recurrence.frequency],
                 interval: event.recurrence.interval || 1,
-                dtstart: parseISO(event.date), // anchor/start
+                dtstart: parseISO(event.date), // start
                 until: event.recurrence.endDate ? parseISO(event.recurrence.endDate) : undefined,
               });
 
-              // search around virtual 'now' to avoid off-by-one
+              // cerca intorno al now virtuale per evitare errori di un singolo giorno
               const occurrencesUTC = rule.between(subDays(now, 1), addDays(now, 1), true);
 
               for (const occUTC of occurrencesUTC) {
                 const occDateStr = format(toZonedTime(occUTC, timeZone), 'yyyy-MM-dd');
                 if (occDateStr === today && !(event.exclusions || []).includes(occDateStr)) {
-                  acc.push({ ...event, date: today }); // normalize to today's occurrence
+                  acc.push({ ...event, date: today }); // normalizza all'occorrenza di oggi
                   break;
                 }
               }
               continue;
             }
 
-            // 3) One-off (non-recurring) events: only those on today's date
+            // 3) Eventi singoli (ossia non ricorrenti): solo se cadono nella data di oggi 
             if (event.date === today || dateKey === today) {
               acc.push(event);
             }
@@ -248,9 +248,9 @@ const Calendar = () => {
       }, []);
 
 
-      // process and notify at the right virtual minute (with grace)
+      // elabora e notifica al minuto virtuale corretto (con la tolleranza di sopra) 
       eventsForNotification.forEach(event => {
-        // Decide the occurrence's date/time strings
+        // decidi le stringhe di data/ora dell’occorrenza
         let eventDateStr, eventTimeStr;
 
         if (event.type === 'activity') {
@@ -262,13 +262,13 @@ const Calendar = () => {
           eventDateStr = event.date;
           eventTimeStr = event.time;
         } else {
-          return; // unknown type
+          return; 
         }
 
         const [hour, minute] = String(eventTimeStr).split(':').map(n => Number(n));
         if (!Number.isFinite(hour) || !Number.isFinite(minute)) return;
 
-        // Construct LOCAL datetime; ensure your virtual "now" & date math uses same TZ basis
+        // costruisce la data e ora locale
         const evtDateTime = new Date(
           `${eventDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
         );
@@ -285,11 +285,11 @@ const Calendar = () => {
           const thisNotifyMin = notifyMin + i * repeatIntervalMin;
           const baseKey = `${event._id}-${eventDateStr}-${thisNotifyMin}`;
 
-          // Fire within grace window: [thisNotifyMin, thisNotifyMin + GRACE_MINUTES)
+          // notifica entro la finestra di tolleranza: [thisNotifyMin, thisNotifyMin + GRACE_MINUTES)
           const inWindow = nowMin >= thisNotifyMin && nowMin < thisNotifyMin + GRACE_MINUTES;
           if (!inWindow) continue;
 
-          // Browser channel
+          // Browser 
           if (event.notificationPrefs?.browser) {
             const uniqueId = `browser-${baseKey}`;
             const ackKey = `event-ack-browser-${baseKey}`;
@@ -309,7 +309,7 @@ const Calendar = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-    // 👇 include lastManualChange so a TM jump is applied immediately
+    // includi lastManualChange così un salto della Time Machine viene applicato subito
   }, [eventsCache, notifiedEvents, virtualNow, lastManualChange]);
 
   // cancella gli eventi dalla cache (e causa rerender)

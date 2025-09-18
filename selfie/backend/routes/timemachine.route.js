@@ -7,13 +7,13 @@ import {
 
 const router = express.Router();
 
-// Set new virtual time
+// imposta il nuovo orario manuale
 router.post("/", setVirtualTime);
 
-// Get current virtual + system time
+// prende un resoconto diciamo del tempo vero e del tempo della time machine
 router.get("/", getVirtualTime);
 
-// Reset to real system time
+// resetta il tutto all'orario normale del sistema operativo
 router.delete("/", resetVirtualTime);
 
 export default router;

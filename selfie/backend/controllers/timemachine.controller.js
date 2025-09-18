@@ -5,6 +5,7 @@ import {
   getNow,
 } from "../utils/timemachine.util.js";
 
+//imposta il tempo messo manualmente
 export const setVirtualTime = (req, res) => {
   try {
     const { virtualTime } = req.body;
@@ -31,6 +32,7 @@ export const setVirtualTime = (req, res) => {
   }
 };
 
+// fa un recap del tempo vero, tempo time machine, offset ecc
 export const getVirtualTime = (req, res) => {
   try {
     return res.json({
@@ -44,6 +46,7 @@ export const getVirtualTime = (req, res) => {
   }
 };
 
+//riporta il tempo esattamente a quello del sistema operativo
 export const resetVirtualTime = (req, res) => {
   try {
     resetOffset();
