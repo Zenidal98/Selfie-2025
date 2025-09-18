@@ -5,7 +5,7 @@ import "./HomePage.css";
 import api from "../../utils/api";
 import { jwtDecode } from "jwt-decode";
 import { format } from "date-fns";
-import { useTimeMachine } from "../../utils/TimeMachine"; // 👈 TM
+import { useTimeMachine } from "../../utils/TimeMachine"; 
 
 const sections = [
   { id: "note", label: "Note", path: "/notes" },
@@ -24,7 +24,7 @@ const HomePage = () => {
   const [notesReport, setNotesReport] = useState(null);
   const [notesLoading, setNotesLoading] = useState(false);
 
-  const { lastManualChange } = useTimeMachine();
+  const { virtualNow } = useTimeMachine();
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -68,8 +68,18 @@ const HomePage = () => {
   const fetchNotesReport = async () => {
     setNotesLoading(true);
     try {
-      const res = await api.get("notes/recent");
-      setNotesReport(res.data);
+      const res = await api.get("/notes");
+      let notes = res.data;
+
+      if (virtualNow) {
+        const virtualDate = new Date(virtualNow);
+        // mostra solo le note modificate che esistono PRIMA di virtualNow
+        notes = notes.filter(note => new Date(note.lastEdited) <= virtualDate);
+      }
+
+      // mostra la piu' recente
+      const mostRecentNote = notes.sort((a, b) => new Date(b.lastEdited) - new Date(a.lastEdited))[0] || null;
+      setNotesReport(mostRecentNote);
     } catch (error) {
       console.error("Failed to fetch notes report", error);
     } finally {
@@ -93,11 +103,11 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    if (lastManualChange !== null) {
+    if (virtualNow !== null) {
       fetchCalendarReport();
       fetchNotesReport();
     }
-  }, [lastManualChange]);
+  }, [virtualNow]);
 
   return (
     <div className="home-page">
@@ -130,7 +140,7 @@ const HomePage = () => {
               {sec.id === "note" && (
                 <div className="text-white text-center">
                   <div className="mb-2">
-                    <p className="text-center mb-0">
+                    <p className="text-center mb-0 text-dark">
                       Ultima nota creata o modificata.
                     </p>
                   </div>
@@ -162,7 +172,7 @@ const HomePage = () => {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-center">Nessuna nota recente</p>
+                    <p className="text-center text-dark">Nessuna nota recente</p>
                   )}
                 </div>
               )}
@@ -170,7 +180,7 @@ const HomePage = () => {
               {sec.id === "calendario" && (
                 <div className="calendar-report text-dark text-center">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <p className="text-center flex-grow-1 mb-0 text-white">Consulta i tuoi eventi e appuntamenti.</p>
+                    <p className="text-center flex-grow-1 mb-0 text-dark">Consulta i tuoi eventi e appuntamenti.</p>
                     {/**
                     <button
                       className="btn btn-sm btn-outline-light"
@@ -186,13 +196,17 @@ const HomePage = () => {
                     <>
                       <strong>Prossime attività:</strong>
                       <ul className="list-unstyled mt-2">
-                        {calendarReport.map((act, i) => (
-                          <li key={i}>
-                            {format(new Date(act.dueDate), "EEE dd MMM")}{" "}
-                            {act.dueTime ? act.dueTime : ""} -- {act.text}{" -- "}
-                            {act.location ? act.location : ""}
-                          </li>
-                        ))}
+                        {calendarReport.map((act, i) => { // marca le attivita' in ritardo
+                          const isLate = new Date(act.dueDate) < new Date(virtualNow);
+                          return (
+                            <li key={i} style={{ color: isLate ? "tomato" : "inherit", fontWeight: isLate ? "bold" : "normal" }}>
+                              {format(new Date(act.dueDate), "EEE dd MMM")}{" "}
+                              {act.dueTime ? act.dueTime : ""} -- {act.text}{" -- "}
+                              {act.location ? act.location : ""}
+                              {isLate && " ⚠ IN RITARDO"}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </>
                   ) : (

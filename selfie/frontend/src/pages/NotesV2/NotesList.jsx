@@ -36,7 +36,7 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
     });
 
     setFiltered(filteredList);
-  }, [notes, searchText, tagFilter, setFiltered, sortOption]);
+  }, [notes, searchText, tagFilter, setFiltered, sortOption, virtualNow]);
 
   // crea un insime di tag unici
   const uniqueTagsList = Array.from(new Set(notes.flatMap((n) => n.tags)));
@@ -102,10 +102,18 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
               </p>
               <div className="mt-auto">
                 <small className="text-muted">
-                  Modificata{" "}
-                  {formatDistanceToNow(new Date(note.lastEdited), {
-                    addSuffix: true,
-                  })}
+                  {(() => { // testo di distsnza in tempo da virtualNow, rosso se "nel futuro"
+                    const diffText = formatDistance(new Date(note.lastEdited), new Date(virtualNow), { addSuffix: true });
+                    const isFuture = new Date(note.lastEdited) > new Date(virtualNow);
+                    return (
+                      <>
+                        Modificata{" "}
+                        <span style={{ color: isFuture ? "tomato" : "inherit" }}>
+                          {diffText}
+                        </span>
+                      </>
+                    );
+                  })()}
                 </small>
               </div>
             </div>
