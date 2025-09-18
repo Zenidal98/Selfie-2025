@@ -82,8 +82,8 @@
 } /* https://pixabay.com/service/license-summary/ */
 
 .section.calendario {
-  background-image: url('../../img/calendar2.jpg');
-}
+  background-image: url('../../img/calendar2.jpg'); /** Image by StockSnap from Pixabay **/ 
+} /* https://pixabay.com/service/license-summary/ */
 
 .section.pomodoro {
   background-image: url('../../img/pomodorotimer.jpg');
