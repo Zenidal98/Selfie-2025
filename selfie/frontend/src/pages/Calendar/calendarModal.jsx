@@ -80,6 +80,23 @@ const CalendarModal = ({
     setEditingEvent(null);
   };
 
+  // assicura il reset del modale post chiusura
+  useEffect(() => {
+    if (!modalRef.current) return;
+
+    const modalEl = modalRef.current;
+
+    const handleModalClose = () => {
+      resetForm();
+    };
+
+    modalEl.addEventListener("hidden.bs.modal", handleModalClose);
+
+    return () => {
+      modalEl.removeEventListener("hidden.bs.modal", handleModalClose);
+    };
+  }, [modalRef]);
+
   // Reset form when date changes — defaults come from Time Machine ⏱️
   useEffect(() => {
     if (selectedDate) {
@@ -151,9 +168,15 @@ const CalendarModal = ({
 
   // inizia la modalita' di modifica evento
   const startEdit = (event) => {
+
+    if (event.type === "activity" && event.dueDate !== selectedDate) {
+      alert("Le attività possono essere modificate solo nella data di scadenza.");
+      return;
+    }
+
     if (event.isVirtual) {
       const choice = window.confirm(
-        "This is an occurrence of a recurring event. Editing will modify the entire series. THE SELECTED DAY WILL BECOME THE NEW BASE EVENT FOR RECURRENCY, YOU MIGHT LOSE PRIOR DATA. DO YOU CONFIRM?."
+        "Modificare un evento ricorrente lo ribasa nella data selezionata. Gli eventi precedenti saranno persi, e la struttura della ricorrenza potrebbe variare se si e' scelto un giorno interno ad un evento lungo. Procedere?"
       );
       if (!choice) return;
     }
