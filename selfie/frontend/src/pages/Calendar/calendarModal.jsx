@@ -265,7 +265,7 @@ const CalendarModal = ({
                       {event.type === "manual" && (
                         <small className="text-muted">
                           Evento alle {event.time}
-                          {event.endTime ? ` - Termina alle ${event.endTime}` : ""}
+                          {!event.isPomodoro && event.endTime ? ` - Termina alle ${event.endTime}` : ""}
                           {event.spanningDays && event.spanningDays > 1
                             ? ` (del ${new Date(
                               new Date(event.date).getTime() +
@@ -437,6 +437,7 @@ const CalendarModal = ({
                       type="time"
                       className="form-control"
                       value={newEndTime}
+                      disabled={isPomodoro}
                       onChange={(e) => {
                         // [FIX] segue sopra
                         const value = e.target.value;
