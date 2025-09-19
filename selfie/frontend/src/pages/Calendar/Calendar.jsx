@@ -456,7 +456,6 @@ const Calendar = () => {
       }
       return newCache;
     });
-    // update currently selected events shown in modal if present
     setSelectedEvents(es => es.map(e => (e._id === updatedEvt._id ? updatedEvt : e)));
   };
 

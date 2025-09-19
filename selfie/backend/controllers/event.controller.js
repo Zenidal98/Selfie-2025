@@ -353,7 +353,6 @@ export const updateEvent = async (req, res) => {
       return res.status(404).json({ error: "Event not found or not yours" });
     }
 
-    // special case: pomodoro validation
     if (updates.isPomodoro) {
       const p = updates.pomodoro || {};
       if (p.mode === "total") {

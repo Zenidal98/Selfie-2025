@@ -44,6 +44,7 @@ router.get("/:id", auth, getEventById);
 // PATCH -> sincronizza il timer Pomodoro del frontend col database, così se l’utente ricarica o cambia device non perde lo stato
 router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
 
+// PATCH -> modifica un evento pre esistente
 router.patch("/:id", updateEvent);
 
 export default router;

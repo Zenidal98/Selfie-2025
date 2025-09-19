@@ -97,7 +97,6 @@ const CalendarModal = ({
     };
   }, [modalRef]);
 
-  // Reset form when date changes — defaults come from Time Machine ⏱️
   useEffect(() => {
     if (selectedDate) {
       const tmNowHHmm = hhmm(virtualNow);
@@ -207,7 +206,6 @@ const CalendarModal = ({
         setPomoCycles(event.pomodoro.cycles || 5);
       }
     }
-    // optionally open advanced options for ease of edit
     setAdvancedOpen(true);
   };
 
