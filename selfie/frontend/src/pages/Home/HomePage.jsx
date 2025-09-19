@@ -126,13 +126,13 @@ const HomePage = () => {
               </button>
 
               {sec.id === "pomodoro" && report && (
-                <div className="text-white text-start">
-                  <p className="text-white text-center">Puoi creare e organizzare cicli di studio.</p>
+                <div className="text-dark text-center">
+                  <p className="text-center mb-2">Puoi creare e organizzare cicli di studio.</p>
                   <strong>Report ultimo Pomodoro:</strong><br />
                   Cicli completati: {report.cyclesCompleted}<br />
                   Studio: {report.studyDuration} min<br />
                   Pausa: {report.breakDuration} min<br />
-                  Totale: {report.totalStudyTime} min
+                  Studio Totale: {report.totalStudyTime} min
                 </div>
               )}
 
