@@ -13,7 +13,8 @@ const CalendarModal = ({
   onEventAdded,
   onEventDeleted,
   onEventExclusion,
-  onActivityToggled
+  onActivityToggled,
+  onEventUpdated
 }) => {
   const navigate = useNavigate();
   const { virtualNow } = useTimeMachine(); // 👈 virtual time
@@ -47,6 +48,37 @@ const CalendarModal = ({
   const [pomoStudy, setPomoStudy] = useState(30);
   const [pomoBreak, setPomoBreak] = useState(5);
   const [pomoCycles, setPomoCycles] = useState(5);
+
+  const [editingEvent, setEditingEvent] = useState(null);
+
+  // azzera il form dopo le modifiche
+  const resetForm = () => {
+    const tmNowHHmm = hhmm(virtualNow);
+
+    setEditingEvent(null);
+    setNewText("");
+    setNewTime(tmNowHHmm);
+    setNewEndTime(tmNowHHmm);
+    setSpanningDays(1);
+    setRecurrence({ frequency: "", interval: 1, endDate: "" });
+    setNewDueDate("");
+    setNewDueTime(tmNowHHmm);
+    setUseBrowserNotif(true);
+    setAdvanceNotice(0);
+    setRepeatCount(1);
+    setNewLocation("");
+    setItemType("event");
+
+    // reset pomodoro
+    setIsPomodoro(false);
+    setPomoMode("total");
+    setPomoTotalMinutes("");
+    setPomoStudy(30);
+    setPomoBreak(5);
+    setPomoCycles(5);
+
+    setEditingEvent(null);
+  };
 
   // Reset form when date changes — defaults come from Time Machine ⏱️
   useEffect(() => {
@@ -117,6 +149,45 @@ const CalendarModal = ({
     }
   };
 
+  // inizia la modalita' di modifica evento
+  const startEdit = (event) => {
+    if (event.isVirtual) {
+      const choice = window.confirm(
+        "This is an occurrence of a recurring event. Editing will modify the entire series. THE SELECTED DAY WILL BECOME THE NEW BASE EVENT FOR RECURRENCY, YOU MIGHT LOSE PRIOR DATA. DO YOU CONFIRM?."
+      );
+      if (!choice) return;
+    }
+
+    setEditingEvent(event);
+
+    setItemType(event.type === "activity" ? "activity" : "event");
+    setNewText(event.text || "");
+    setNewLocation(event.location || "");
+    setNewTime(event.time || hhmm(virtualNow));
+    setNewEndTime(event.endTime || (event.time || hhmm(virtualNow)));
+    setSpanningDays(event.spanningDays || 1);
+    setRecurrence(event.recurrence || { frequency: "", interval: 1, endDate: "" });
+    setNewDueDate(event.dueDate || "");
+    setNewDueTime(event.dueTime || hhmm(virtualNow));
+    setUseBrowserNotif(Boolean(event.notificationPrefs?.browser ?? true));
+    setAdvanceNotice(Number(event.notificationPrefs?.advance ?? 0));
+    setRepeatCount(Number(event.notificationPrefs?.repeat ?? 1));
+    setIsPomodoro(Boolean(event.isPomodoro || false));
+    if (event.isPomodoro && event.pomodoro) {
+      if (event.pomodoro.mode === "total") {
+        setPomoMode("total");
+        setPomoTotalMinutes(event.pomodoro.totalMinutes || "");
+      } else {
+        setPomoMode("fixed");
+        setPomoStudy(event.pomodoro.studyMinutes || 30);
+        setPomoBreak(event.pomodoro.breakMinutes || 5);
+        setPomoCycles(event.pomodoro.cycles || 5);
+      }
+    }
+    // optionally open advanced options for ease of edit
+    setAdvancedOpen(true);
+  };
+
   // gestisce l'aggiunta di nuovi eventi di ogni tipo
   const handleAdd = async () => {
     if (!newText.trim()) return;
@@ -167,14 +238,22 @@ const CalendarModal = ({
     }
 
     try {
-      const res = await api.post("/events", payload);
-      // resetta gli stati post-add
-      onEventAdded(res.data);
-      setNewText("");
-      setNewDueDate("");
-      setNewTime(hhmm(virtualNow));
-      setNewLocation("");
-      setIsPomodoro(false);
+      if (editingEvent) { // aggiorna anziche creare nuovo
+        const res = await api.patch(`/events/${editingEvent._id}`, payload);
+        setEditingEvent(null);
+        resetForm();
+
+        if (onEventUpdated) {
+          onEventUpdated(res.data); // causa refresh
+        } else {
+          onEventAdded(res.data);
+        }
+        setEditingEvent(null);
+      } else {
+        const res = await api.post("/events", payload); 
+        onEventAdded(res.data);
+      }
+      resetForm();
     } catch (err) {
       console.error(err);
       alert("Errore nella creazione dell'elemento.");
@@ -342,6 +421,7 @@ const CalendarModal = ({
 
                       {/* Delete (skip notes) */}
                       {event.type !== "note" && (
+                        <div>
                         <button
                           className="btn btn-sm btn-outline-danger"
                           title="Delete"
@@ -349,6 +429,8 @@ const CalendarModal = ({
                         >
                           &times;
                         </button>
+                        <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}>Edit</button>
+                        </div>
                       )}
                     </div>
                   </li>

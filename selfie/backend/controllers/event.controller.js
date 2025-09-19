@@ -341,3 +341,57 @@ export const getCalendarReport = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch calendar report" });
   }
 };
+
+// modifica un evento preesistente
+export const updateEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { recurrence, ...updates } = req.body;
+
+    const event = await Event.findOne({ _id: id, userId: req.user.id });
+    if (!event) {
+      return res.status(404).json({ error: "Event not found or not yours" });
+    }
+
+    // special case: pomodoro validation
+    if (updates.isPomodoro) {
+      const p = updates.pomodoro || {};
+      if (p.mode === "total") {
+        if (typeof p.totalMinutes !== "number" || p.totalMinutes <= 0) {
+          return res.status(400).json({ error: "Invalid pomodoro.totalMinutes" });
+        }
+      } else {
+        const { studyMinutes, breakMinutes, cycles } = p;
+        if (![studyMinutes, breakMinutes, cycles].every(n => Number.isFinite(n) && n > 0)) {
+          return res.status(400).json({ error: "Invalid fixed pomodoro plan" });
+        }
+      }
+      updates.pomodoro = {
+        mode: p.mode || "fixed",
+        totalMinutes: p.totalMinutes ?? null,
+        studyMinutes: p.studyMinutes ?? 30,
+        breakMinutes: p.breakMinutes ?? 5,
+        cycles: p.cycles ?? 5,
+        state: p.state || event.pomodoro?.state || {
+          dayISO: null,
+          phase: "study",
+          cycleIndex: 0,
+          secondsLeft: 0,
+          lastRunAt: null,
+        },
+      };
+    }
+
+    if (recurrence) {
+      updates.recurrence = recurrence;
+    }
+
+    Object.assign(event, updates, { updatedAt: getNow() });
+    await event.save();
+
+    res.json(event);
+  } catch (err) {
+    console.error("Error updating event:", err);
+    res.status(500).json({ error: "Failed to update event" });
+  }
+};

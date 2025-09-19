@@ -444,6 +444,22 @@ const Calendar = () => {
     }
   };
 
+  // aggiorna un evento esistente in cache (post-edit) 
+  const handleEventUpdated = (updatedEvt) => {
+    setEventsCache(cache => {
+      const newCache = { ...cache };
+      for (const key in newCache) {
+        const monthMap = newCache[key];
+        for (const date in monthMap) {
+          monthMap[date] = monthMap[date].map(e => (e._id === updatedEvt._id ? updatedEvt : e));
+        }
+      }
+      return newCache;
+    });
+    // update currently selected events shown in modal if present
+    setSelectedEvents(es => es.map(e => (e._id === updatedEvt._id ? updatedEvt : e)));
+  };
+
   // genera la vista mensile del calendario
   const generateCalendar = () => {
     const cells = [];
@@ -643,6 +659,7 @@ const Calendar = () => {
         onEventDeleted={handleEventDeletion}
         onEventExclusion={handleEventExclusion}
         onActivityToggled={handleActivityToggled}
+        onEventUpdated={handleEventUpdated}
       />
     </div>
   );

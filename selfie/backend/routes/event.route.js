@@ -9,6 +9,7 @@ import {
   getEventById,
   patchPomodoroState,
   getCalendarReport,
+  updateEvent
 } from "../controllers/event.controller.js";
 import { auth } from "../middleware/auth.js";
 
@@ -42,5 +43,7 @@ router.get("/:id", auth, getEventById);
 
 // PATCH -> sincronizza il timer Pomodoro del frontend col database, così se l’utente ricarica o cambia device non perde lo stato
 router.patch("/:id/pomodoro/state", auth, patchPomodoroState);
+
+router.patch("/:id", updateEvent);
 
 export default router;
