@@ -137,6 +137,10 @@ const Calendar = () => {
         if (evt.recurrence.endDate) {
           const [uYear, uMonth, uDay] = evt.recurrence.endDate.split('-').map(Number);
           until = new Date(Date.UTC(uYear, uMonth - 1, uDay, 23, 59, 59));
+        } else {
+          // default a 3 anni
+          const defaultEndDate = addYears(monthEnd, 3);
+                until = new Date(Date.UTC(defaultEndDate.getFullYear(), defaultEndDate.getMonth(), defaultEndDate.getDate(), 23, 59, 59));
         }
 
         const rule = new RRule({
@@ -149,7 +153,12 @@ const Calendar = () => {
         // garantisce di trovare gli eventi in caso di errori off-by-one
         const wideSearchStart = subDays(monthStart, 2);
         const wideSearchEnd = addDays(monthEnd, 2);
-        const occurrencesUTC = rule.between(wideSearchStart, wideSearchEnd, true);
+
+        const startUTC = new Date(Date.UTC(wideSearchStart.getFullYear(), wideSearchStart.getMonth(), wideSearchStart.getDate()));
+        const endUTC = new Date(Date.UTC(wideSearchEnd.getFullYear(), wideSearchEnd.getMonth(), wideSearchEnd.getDate()));
+
+
+        const occurrencesUTC = rule.between(startUTC, endUTC, true);
 
         for (const occUTC of occurrencesUTC) {
           const startOfOccurrence = toZonedTime(occUTC, timeZone);
@@ -160,9 +169,8 @@ const Calendar = () => {
 
           if (spanDays.includes(dateStr)) {
             const startOccDateStr = format(startOfOccurrence, 'yyyy-MM-dd');
-            if (evt.exclusions?.includes(startOccDateStr)) break; // non espande gli eventi nella lista esclusioni
+            if (evt.exclusions?.includes(startOccDateStr)) continue; // non espande gli eventi nella lista esclusioni
             enrichedEvents.push({ ...evt, date: startOccDateStr, isVirtual: true }); // isVirtual marca gli eventi frutto della espansione
-            break;
           }
         }
       } else {

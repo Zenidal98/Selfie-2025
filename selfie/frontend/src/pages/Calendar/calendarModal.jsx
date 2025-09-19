@@ -5,6 +5,7 @@ import api from "../../utils/api";
 // [MOD] preview piano Pomodoro (adegua il path se diverso)
 import { calcolaCicliStandard } from "../Pomodoro/PomodoroUtils";
 import { useTimeMachine } from "../../utils/TimeMachine"; // 👈 TM
+import { addYears, parseISO, format } from "date-fns";
 
 const CalendarModal = ({
   modalRef,
@@ -240,7 +241,12 @@ const CalendarModal = ({
         time: newTime,
         endTime: newEndTime,
         spanningDays: spanningDays,
-        recurrence: recurrence.frequency ? recurrence : undefined,
+        recurrence: recurrence.frequency
+        ? {
+          ...recurrence,
+          endDate: recurrence.endDate || format(addYears(parseISO(selectedDate), 3), 'yyyy-MM-dd')
+        }
+        : undefined, 
         notificationPrefs: notificationPayload,
         location: newLocation.trim() || null,
         // Pomodoro block
