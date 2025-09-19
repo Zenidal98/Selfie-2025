@@ -55,7 +55,9 @@ const NoteEditor = () => {
   // aggiorna la data di modifica ====================================================
 
   useEffect(() => {
-    setLastEdited(new Date(virtualNow));
+    if (lastEdited < virtualNow) {
+      setLastEdited(new Date(virtualNow));
+    }
   }, [title, markdown, tags]);
  
   // carica l'ultima nota modificata automaticamente
@@ -282,7 +284,10 @@ const NoteEditor = () => {
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+              setTitle(e.target.value);
+          }}          
           placeholder="Titolo della nota"
           className="form-control form-control-sm mb-2"
         />
@@ -293,7 +298,10 @@ const NoteEditor = () => {
             <span key={index} className="badge bg-primary text-white">
               {truncateTag(tag)}
               <button
-                onClick={() => removeTag(tag)}
+                onClick={() => {
+                  if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+                  removeTag(tag)
+                }}
                 className="btn-close btn-close-white btn-sm ms-2"
               />
             </span>
@@ -307,10 +315,20 @@ const NoteEditor = () => {
               className="form-control"
               placeholder="Aggiungi un tag! (Premi INVIO per confermare)"
               value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addTag()}
+              onChange={(e) => {
+                if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+                setTagInput(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+                e.key === "Enter" && addTag()
+              }}
             />
-            <button onClick={addTag} className="btn btn-outline-secondary">Add</button>
+            <button onClick={() => {
+              if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+              addTag();
+              }} 
+              className="btn btn-outline-secondary">Add</button>
           </div>
         )}
 
@@ -322,12 +340,13 @@ const NoteEditor = () => {
 
         {/* Toolbar */}
         <div className="btn-group btn-group-sm mb-2">
-          <button onClick={() => applyMarkdown("bold")} className="btn btn-outline-light">Bold</button>
-          <button onClick={() => applyMarkdown("italic")} className="btn btn-outline-light">Italic</button>
-          <button onClick={() => applyMarkdown("h1")} className="btn btn-outline-light">H1</button>
-          <button onClick={() => applyMarkdown("h2")} className="btn btn-outline-light">H2</button>
-          <button onClick={() => applyMarkdown("ul")} className="btn btn-outline-light">• List</button>
-          <button onClick={() => applyMarkdown("ol")} className="btn btn-outline-light">1. List</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("bold")} className="btn btn-outline-light">Bold</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("italic")} className="btn btn-outline-light">Italic</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("h1")} className="btn btn-outline-light">H1</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("h2")} className="btn btn-outline-light">H2</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("ul")} className="btn btn-outline-light">• List</button>
+          <button onClick={() => lastEdited > virtualNow ? alert("Non puoi modificare una nota futura!") : applyMarkdown("ol")} className="btn btn-outline-light">1. List</button>
+
         </div>
 
         {/* Editor + Preview */}
@@ -335,7 +354,10 @@ const NoteEditor = () => {
           <textarea
             ref={textareaRef}
             value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
+            onChange={(e) => {
+              if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
+              setMarkdown(e.target.value);
+            }}            
             className="form-control"
             placeholder="Scripta Manent!"
           />
@@ -347,7 +369,13 @@ const NoteEditor = () => {
 
         {/* Pulsanti */}
         <div className="notes-buttons">
-          <button className="btn btn-success" onClick={saveNote}>Salva</button>
+          <button className="btn btn-success" onClick={() => {
+            if (lastEdited > virtualNow) {
+              alert("Non puoi salvare una nota futura!");
+              return;
+            }
+            saveNote();
+          }}>Salva</button>
           <button className="btn btn-light" onClick={() => resetEditor(true)}>Nuova</button>
           <button className="btn btn-warning" onClick={cloneNote}>Crea una copia</button>
           <button className="btn btn-info" onClick={goHome}>Home</button>

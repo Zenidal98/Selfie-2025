@@ -166,8 +166,8 @@ const HomePage = () => {
                       )}
 
                       <p className="mt-1">
-                        {notesReport.markdown.length > 100
-                          ? notesReport.markdown.slice(0, 100) + "…"
+                        {notesReport.markdown.length > 200
+                          ? notesReport.markdown.slice(0, 200) + "…"
                           : notesReport.markdown}
                       </p>
                     </div>

@@ -174,3 +174,12 @@ body {
   z-index: 5; /* keeps button above card content */
 }
 
+.preview-box h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.preview-box h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
