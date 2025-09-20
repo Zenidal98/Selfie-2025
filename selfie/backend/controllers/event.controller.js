@@ -353,6 +353,14 @@ export const updateEvent = async (req, res) => {
       return res.status(404).json({ error: "Event not found or not yours" });
     }
 
+    // check di sicurezza
+    if (event.recurrence) {
+      return res.status(400).json({ error: "Recurring events cannot be edited" });
+    }
+
+
+
+
     if (updates.isPomodoro) {
       const p = updates.pomodoro || {};
       if (p.mode === "total") {

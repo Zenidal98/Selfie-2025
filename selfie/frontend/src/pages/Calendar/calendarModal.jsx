@@ -51,6 +51,7 @@ const CalendarModal = ({
   const [pomoCycles, setPomoCycles] = useState(5);
 
   const [editingEvent, setEditingEvent] = useState(null);
+  const [newDate, setNewDate] = useState(selectedDate); // per cambiare la data negli edit
 
   // azzera il form dopo le modifiche
   const resetForm = () => {
@@ -169,12 +170,14 @@ const CalendarModal = ({
   // inizia la modalita' di modifica evento
   const startEdit = (event) => {
 
+    // le attività devono essere editate nella data di riferimento
     if (event.type === "activity" && event.dueDate !== selectedDate) {
       alert("Le attività possono essere modificate solo nella data di scadenza.");
       return;
     }
 
-    if (event.isVirtual) {
+    // dead code, la possibilità di editare gli eventi è stata ristretta a eventi semplici e attività
+    if (event.isVirtual || event.recurrence) {
       const choice = window.confirm(
         "Modificare un evento ricorrente lo ribasa nella data selezionata. Gli eventi precedenti saranno persi, e la struttura della ricorrenza potrebbe variare se si e' scelto un giorno interno ad un evento lungo. Procedere?"
       );
@@ -183,6 +186,7 @@ const CalendarModal = ({
 
     setEditingEvent(event);
 
+    setNewDate(event.date || selectedDate);
     setItemType(event.type === "activity" ? "activity" : "event");
     setNewText(event.text || "");
     setNewLocation(event.location || "");
@@ -226,8 +230,8 @@ const CalendarModal = ({
       payload = {
         type: "activity",
         text: newText.trim(),
-        date: selectedDate,
-        dueDate: selectedDate,
+        date: newDate ? newDate : selectedDate,
+        dueDate: newDate ? newDate : selectedDate,
         dueTime: newDueTime,
         notificationPrefs: notificationPayload,
         location: newLocation.trim() || null
@@ -237,7 +241,7 @@ const CalendarModal = ({
       payload = {
         type: "manual",
         text: newText.trim(),
-        date: selectedDate,
+        date: newDate ? newDate : selectedDate,
         time: newTime,
         endTime: newEndTime,
         spanningDays: spanningDays,
@@ -456,7 +460,9 @@ const CalendarModal = ({
                         >
                           &times;
                         </button>
-                        <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}>Edit</button>
+                        {(!event.recurrence && event.spanningDays <= 1) && ( // solo gli eventi semplici e le attività possono essere editate
+                          <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}>Edit</button>
+                        )}
                         </div>
                       )}
                     </div>
@@ -515,12 +521,22 @@ const CalendarModal = ({
                   onChange={(e) => setNewLocation(e.target.value)}
                 />
               </div>
-              {/**
-              <p className="text-muted small">
-                Compila la data di scadenza per creare un'attività (To-Do), altrimenti verrà creato un normale
-                evento. Per un Pomodoro, usa l'interruttore qui sotto.
-              </p>
-              **/}
+              {editingEvent && !editingEvent.recurrence && (
+                <div className="mt-4">
+                  <label className="block text-red-600 font-bold mb-1 me-2">
+                    Cambia Data
+                  </label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={e => setNewDate(e.target.value)}
+                    className="border border-red-500 rounded px-2 py-1 w-full text-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                  <p className="text-sm text-red mt-1">
+                    ⚠️  Spostare l'evento lo rimuoverà dalla data originale.
+                  </p>
+                  </div>
+              )}
               {/* Base date/time for events */}
               {itemType === "event" && (
                 <div className="row">

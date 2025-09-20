@@ -456,15 +456,25 @@ const Calendar = () => {
   const handleEventUpdated = (updatedEvt) => {
     setEventsCache(cache => {
       const newCache = { ...cache };
+
+      // togli da vecchia data se sposti
       for (const key in newCache) {
-        const monthMap = newCache[key];
-        for (const date in monthMap) {
-          monthMap[date] = monthMap[date].map(e => (e._id === updatedEvt._id ? updatedEvt : e));
+        for (const date in newCache[key]) {
+          newCache[key][date] = newCache[key][date].filter(e => e._id !== updatedEvt._id);
         }
       }
+
+      // aggiungi alla nuova
+      const monthKey = updatedEvt.date.slice(0, 7); // yyyy-MM
+      if (!newCache[monthKey]) newCache[monthKey] = {};
+      if (!newCache[monthKey][updatedEvt.date]) newCache[monthKey][updatedEvt.date] = [];
+      newCache[monthKey][updatedEvt.date].push(updatedEvt);
+
       return newCache;
     });
+
     setSelectedEvents(es => es.map(e => (e._id === updatedEvt._id ? updatedEvt : e)));
+
   };
 
   // genera la vista mensile del calendario
