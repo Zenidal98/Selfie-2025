@@ -79,6 +79,8 @@ const CalendarModal = ({
     setPomoBreak(5);
     setPomoCycles(5);
 
+    setNewDate(null);
+
     setEditingEvent(null);
   };
 
@@ -123,6 +125,8 @@ const CalendarModal = ({
       setPomoStudy(30);
       setPomoBreak(5);
       setPomoCycles(5);
+
+      setNewDate(null);
     }
   }, [selectedDate]);
 /**
@@ -460,8 +464,8 @@ const CalendarModal = ({
                         >
                           &times;
                         </button>
-                        {(!event.recurrence && event.spanningDays <= 1) && ( // solo gli eventi semplici e le attività possono essere editate
-                          <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}>Edit</button>
+                        {(!event.recurrence && event.spanningDays <= 1) && ( // solo gli eventi semplici e le attività possono essere editate 
+                          <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}><i class="bi bi-pencil"></i> Edit</button>
                         )}
                         </div>
                       )}
@@ -523,14 +527,14 @@ const CalendarModal = ({
               </div>
               {editingEvent && !editingEvent.recurrence && (
                 <div className="mt-4">
-                  <label className="block text-red-600 font-bold mb-1 me-2">
+                  <label className="block mb-1 me-2">
                     Cambia Data
                   </label>
                   <input
                     type="date"
                     value={newDate}
                     onChange={e => setNewDate(e.target.value)}
-                    className="border border-red-500 rounded px-2 py-1 w-full text-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    className="border border-red-500 rounded px-2 py-1 w-full"
                   />
                   <p className="text-sm text-red mt-1">
                     ⚠️  Spostare l'evento lo rimuoverà dalla data originale.
@@ -585,6 +589,7 @@ const CalendarModal = ({
                         const value = parseInt(e.target.value) || 1;
                         setSpanningDays(value); 
                       }}
+                      disabled={editingEvent}
                     />
                   </div>
                 </div>
