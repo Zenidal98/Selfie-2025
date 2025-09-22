@@ -135,8 +135,8 @@ const PomodoroPage = () => {
           eventId={eventId || null}
         />
 
-        {/* Settings (lets user recompute plan ad-hoc) */}
-        <PomodoroSettings onSettingsChange={handleSettingsChange} />
+        {/* settings ossia il riquadro di modifiche bianco che appare solo in caso di pomodoro non evento */}
+        {!eventId && (<PomodoroSettings onSettingsChange={handleSettingsChange} />)}
       </div>
     </div>
   );

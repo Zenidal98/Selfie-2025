@@ -131,7 +131,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
                 <input
                   type="number"
                   className="form-control"
-                  min={1}
+                  min={30}
                   value={studyFixed}
                   onChange={(e) => setStudyFixed(e.target.value)}
                 />
@@ -141,7 +141,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
                 <input
                   type="number"
                   className="form-control"
-                  min={1}
+                  min={5}
                   value={breakFixed}
                   onChange={(e) => setBreakFixed(e.target.value)}
                 />
