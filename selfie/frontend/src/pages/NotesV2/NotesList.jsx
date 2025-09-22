@@ -6,7 +6,7 @@ import { useTimeMachine } from "../../utils/TimeMachine";
 function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
   const [searchText, setSearchText] = useState("");
   const [tagFilter, setTagFilter] = useState("");
-  const [sortOption, setSortOption] = useState("lastEdited"); // ordina per data di modifica oppure lunghezza del testo ("textLength")
+  const [sortOption, setSortOption] = useState("lastEdited"); // ordina per data di modifica oppure lunghezza del testo ("textLength") o per  ordine alfabetico di titolo
 
   const { virtualNow } = useTimeMachine();
 
@@ -30,6 +30,10 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
         return a.markdown.length - b.markdown.length;
       } else if (sortOption === "textLengthDesc") {
         return b.markdown.length - a.markdown.length;
+      } else if (sortOption === "titleAsc") {
+        return a.title.localeCompare(b.title);
+      } else if (sortOption === "titleDesc") {
+        return b.title.localeCompare(a.title);
       } else {
         return 0;
       }
@@ -61,6 +65,8 @@ function NotesList({ notes, filtered, setFiltered, onSelect, onDelete }) {
           <option value="lastEdited">Ordina per ultima modifica</option>
           <option value="textLengthAsc">Ordina per lunghezza testo ↑</option>
           <option value="textLengthDesc">Ordina per lunghezza testo ↓</option>
+          <option value="titleAsc">Ordina per titolo A–Z</option>
+          <option value="titleDesc">Ordina per titolo Z–A</option>
         </select>
 
 

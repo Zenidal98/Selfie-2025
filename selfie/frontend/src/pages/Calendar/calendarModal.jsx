@@ -471,7 +471,7 @@ const CalendarModal = ({
                         >
                           &times;
                         </button>
-                        {(!event.recurrence && event.spanningDays <= 1) && ( // solo gli eventi semplici e le attività possono essere editate 
+                        {(!event.recurrence && event.spanningDays <= 1 && !event.isPomodoro) && ( // solo gli eventi semplici e le attività possono essere editate 
                           <button  className="btn btn-sm btn-dark ms-2" onClick={() => startEdit(event)}><i class="bi bi-pencil"></i> Edit</button>
                         )}
                         </div>
@@ -532,7 +532,7 @@ const CalendarModal = ({
                   onChange={(e) => setNewLocation(e.target.value)}
                 />
               </div>
-              {editingEvent && !editingEvent.recurrence && (
+              {editingEvent && !editingEvent.recurrence && !editingEvent.isPomodoro && (
                 <div className="mt-4">
                   <label className="block mb-1 me-2">
                     Cambia Data
@@ -629,7 +629,7 @@ const CalendarModal = ({
                   type="checkbox"
                   id="isPomodoro"
                   checked={isPomodoro}
-                  disabled={itemType === "activity"} // 🔒 disabilitato se Attività
+                  disabled={itemType === "activity" || editingEvent} // 🔒 disabilitato se Attività o in fase di editing
                   onChange={(e) => setIsPomodoro(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="isPomodoro">
