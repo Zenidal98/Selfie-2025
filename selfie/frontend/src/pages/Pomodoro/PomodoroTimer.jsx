@@ -3,6 +3,7 @@ import "./PomodoroPage.css";
 import api from "../../utils/api"; // shared axios instance with JWT
 import { jwtDecode } from "jwt-decode";
 import { useTimeMachine } from "../../utils/TimeMachine";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Props:
@@ -14,6 +15,7 @@ import { useTimeMachine } from "../../utils/TimeMachine";
 const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null }) => {
   // Time Machine
   const { virtualNow } = useTimeMachine();
+  const navigate = useNavigate();
 
   // Timer state
   const [secondsLeft, setSecondsLeft] = useState(studyDuration * 60);
@@ -21,21 +23,53 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   const [isStudyTime, setIsStudyTime] = useState(true);
   const [currentCycle, setCurrentCycle] = useState(1); // 1-based for UI
   const [isComplete, setIsComplete] = useState(false);
+  const [stateLoaded, setStateLoaded] = useState(false);
+  const [currentDay, setCurrentDay] = useState(null);
 
   // intervals
   const tickRef = useRef(null);
   const autosaveRef = useRef(null);
+  const dayCheckRef = useRef(null);
 
-  // reset when plan changes
+  // Load saved state for calendar events
   useEffect(() => {
-    clearInterval(tickRef.current);
-    clearInterval(autosaveRef.current);
-    setSecondsLeft(studyDuration * 60);
-    setIsRunning(false);
-    setIsStudyTime(true);
-    setCurrentCycle(1);
-    setIsComplete(false);
-  }, [studyDuration, breakDuration, cycles]);
+    if (eventId && !stateLoaded) {
+      loadSavedState();
+    }
+  }, [eventId, stateLoaded]);
+
+  const loadSavedState = async () => {
+    if (!eventId) return;
+    try {
+      const res = await api.get(`/events/${eventId}`);
+      const event = res.data;
+
+      if (event.pomodoro?.state?.lastRunAt) {
+        const state = event.pomodoro.state;
+        setCurrentCycle(state.cycleIndex + 1); // Convert to 1-based for UI
+        setIsStudyTime(state.phase === "study");
+        setSecondsLeft(state.secondsLeft !== undefined ? state.secondsLeft : (state.phase === "study" ? studyDuration * 60 : breakDuration * 60));
+      }
+      setStateLoaded(true);
+    } catch (err) {
+      console.error("Failed to load saved state", err);
+      setStateLoaded(true);
+    }
+  };
+
+  // reset when plan changes (but not on initial load for calendar events)
+  useEffect(() => {
+    if (stateLoaded && !eventId) {
+
+      clearInterval(tickRef.current);
+      clearInterval(autosaveRef.current);
+      setSecondsLeft(studyDuration * 60);
+      setIsRunning(false);
+      setIsStudyTime(true);
+      setCurrentCycle(1);
+      setIsComplete(false);
+    }
+  }, [studyDuration, breakDuration, cycles, stateLoaded, eventId]);
 
   // notification permission
   useEffect(() => {
@@ -64,7 +98,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   };
 
   const patchState = async ({ reason = "tick" } = {}) => {
-    if (!eventId) return;
+    if (!eventId || isComplete) return;
     try {
       await api.patch(`/events/${eventId}/pomodoro/state`, {
         dayISO: getDayISO(),
@@ -73,8 +107,14 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         secondsLeft,
         meta: { reason }, // ignored by backend but useful if you ever log it
       });
-    } catch {
-      // non-blocking
+    } catch (err) {
+      if (err.response?.status === 404) {
+        clearInterval(tickRef.current);
+        clearInterval(autosaveRef.current);
+        setIsRunning(false);
+        setIsComplete(true);
+        return;
+      }
     }
   };
 
@@ -200,11 +240,35 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     return () => {
       clearInterval(tickRef.current);
       clearInterval(autosaveRef.current);
+      clearInterval(dayCheckRef.current);
       // best-effort save on unmount
-      patchState({ reason: "unmount" });
+      // patchState({ reason: "unmount" });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Monitor for day changes and auto-move to next day
+  useEffect(() => {
+    if (!eventId) return;
+
+    // Initialize current day
+    const today = getDayISO();
+    setCurrentDay(today);
+
+    // Check for day change every 30 seconds for more responsive detection
+    dayCheckRef.current = setInterval(() => {
+      const newDay = getDayISO();
+      if (currentDay && newDay !== currentDay && secondsLeft > 0 && !isComplete) {
+        console.log(`Day changed from ${currentDay} to ${newDay}, auto-moving Pomodoro`);
+        autoMoveToNextDay();
+      }
+      setCurrentDay(newDay);
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      clearInterval(dayCheckRef.current);
+    };
+  }, [eventId, currentDay, secondsLeft, isComplete]);
 
   const handleSaveSession = async () => {
     try {
@@ -242,6 +306,144 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const autoMoveToNextDay = async () => {
+    if (!eventId || isComplete || secondsLeft <= 0) return;
+
+    try {
+      // Get current event to calculate remaining time
+      const res = await api.get(`/events/${eventId}`);
+      const currentEvent = res.data;
+
+      if (!currentEvent.pomodoro?.state) return;
+
+      const remainingMinutes = Math.ceil(secondsLeft / 60);
+
+      if (remainingMinutes <= 0) return;
+
+      // Calculate next day
+      const currentDate = new Date(currentEvent.date);
+      const nextDay = new Date(currentDate);
+      nextDay.setDate(currentDate.getDate() + 1);
+      const nextDayISO = nextDay.toISOString().slice(0, 10);
+
+      // Create new Pomodoro event for next day with remaining time
+      const newEventPayload = {
+        type: "manual",
+        text: `${currentEvent.text} (continua automaticamente)`,
+        date: nextDayISO,
+        time: currentEvent.time,
+        isPomodoro: true,
+        pomodoro: {
+          mode: "total",
+          totalMinutes: remainingMinutes
+        },
+        location: currentEvent.location,
+        notificationPrefs: currentEvent.notificationPrefs
+      };
+
+      // Create new event and get its ID
+      const newEventResponse = await api.post("/events", newEventPayload);
+      const newEventId = newEventResponse.data._id;
+
+      // Transfer current state to the new event
+      await api.patch(`/events/${newEventId}/pomodoro/state`, {
+        dayISO: getDayISO(),
+        phase: isStudyTime ? "study" : "break",
+        cycleIndex: Math.max(0, currentCycle - 1),
+        secondsLeft: secondsLeft
+      });
+
+      // Delete the current event
+      await api.delete(`/events/${eventId}`);
+
+      // Show notification about auto-move
+      sendNotification(`⏰ Tempo rimanente (${remainingMinutes} min) spostato automaticamente a ${nextDayISO}`);
+
+      // Stop the current timer
+      setIsRunning(false);
+      setIsComplete(true);
+      clearInterval(tickRef.current);
+      clearInterval(autosaveRef.current);
+      clearInterval(dayCheckRef.current);
+
+    } catch (err) {
+      console.error("Failed to auto-move to next day", err);
+    }
+  };
+
+  const handleMoveToNextDay = async () => {
+    if (!eventId) {
+      alert("Questa funzione è disponibile solo per eventi calendario.");
+      return;
+    }
+
+    const confirmMove = window.confirm(
+      "Vuoi spostare il tempo rimanente di questo Pomodoro al giorno successivo? Questo creerà un nuovo evento Pomodoro domani."
+    );
+
+    if (!confirmMove) return;
+
+    try {
+      // Get current event to calculate remaining time
+      const res = await api.get(`/events/${eventId}`);
+      const currentEvent = res.data;
+
+      if (!currentEvent.pomodoro?.state) {
+        alert("Nessun stato salvato trovato per questo Pomodoro.");
+        return;
+      }
+
+      const remainingMinutes = Math.ceil(secondsLeft / 60);
+
+      if (remainingMinutes <= 0) {
+        alert("Non c'è tempo rimanente da spostare.");
+        return;
+      }
+
+      // Calculate next day
+      const currentDate = new Date(currentEvent.date);
+      const nextDay = new Date(currentDate);
+      nextDay.setDate(currentDate.getDate() + 1);
+      const nextDayISO = nextDay.toISOString().slice(0, 10);
+
+      // Create new Pomodoro event for next day with remaining time
+      const newEventPayload = {
+        type: "manual",
+        text: `${currentEvent.text}`,
+        date: nextDayISO,
+        time: currentEvent.time,
+        isPomodoro: true,
+        pomodoro: {
+          mode: "total",
+          totalMinutes: remainingMinutes
+        },
+        location: currentEvent.location,
+        notificationPrefs: currentEvent.notificationPrefs
+      };
+
+      // Create new event and get its ID
+      const newEventResponse = await api.post("/events", newEventPayload);
+      const newEventId = newEventResponse.data._id;
+
+      // Transfer current state to the new event
+      await api.patch(`/events/${newEventId}/pomodoro/state`, {
+        dayISO: getDayISO(),
+        phase: isStudyTime ? "study" : "break",
+        cycleIndex: Math.max(0, currentCycle - 1),
+        secondsLeft: secondsLeft
+      });
+
+      // Delete the current event
+      await api.delete(`/events/${eventId}`);
+
+      alert(`Nuovo evento Pomodoro creato per ${nextDayISO} con ${remainingMinutes} minuti rimanenti.`);
+      navigate("/calendar");
+    } catch (err) {
+      console.error("Failed to move to next day", err);
+      alert("Errore nella creazione dell'evento per il giorno successivo.");
+    }
+  };
+
   return (
     <div className="pomodoro-timer mb-4 p-3 shadow rounded">
       <h5>
@@ -274,6 +476,11 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         <button className="btn btn-danger" onClick={finishCycle} disabled={isComplete}>
           Termina ciclo
         </button>
+        {eventId && (
+          <button className="btn btn-outline-warning" onClick={handleMoveToNextDay} disabled={isComplete}>
+            Sposta a Domani
+          </button>
+        )}
       </div>
     </div>
   );

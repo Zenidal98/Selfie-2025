@@ -34,6 +34,7 @@ const CalendarModal = ({
   const [spanningDays, setSpanningDays] = useState(1);
   const [recurrence, setRecurrence] = useState({ frequency: "", interval: 1, endDate: "" });
   const [useBrowserNotif, setUseBrowserNotif] = useState(true);
+  const [useUrgencyNotif, setUseUrgencyNotif] = useState(false);
   const [advanceNotice, setAdvanceNotice] = useState(0);
   const [repeatCount, setRepeatCount] = useState(1);
   const [newDueDate, setNewDueDate] = useState("");
@@ -66,6 +67,7 @@ const CalendarModal = ({
     setNewDueDate("");
     setNewDueTime(tmNowHHmm);
     setUseBrowserNotif(true);
+    setUseUrgencyNotif(false);
     setAdvanceNotice(0);
     setRepeatCount(1);
     setNewLocation("");
@@ -113,6 +115,7 @@ const CalendarModal = ({
       setNewDueDate("");
       setNewDueTime(tmNowHHmm);
       setUseBrowserNotif(true);
+      setUseUrgencyNotif(false);
       setAdvanceNotice(0);
       setRepeatCount(1);
       setNewLocation("");
@@ -201,6 +204,7 @@ const CalendarModal = ({
     setNewDueDate(event.dueDate || "");
     setNewDueTime(event.dueTime || hhmm(virtualNow));
     setUseBrowserNotif(Boolean(event.notificationPrefs?.browser ?? true));
+    setUseUrgencyNotif(Boolean(event.notificationPrefs?.urgency ?? false));
     setAdvanceNotice(Number(event.notificationPrefs?.advance ?? 0));
     setRepeatCount(Number(event.notificationPrefs?.repeat ?? 1));
     setIsPomodoro(Boolean(event.isPomodoro || false));
@@ -224,6 +228,7 @@ const CalendarModal = ({
 
     const notificationPayload = {
       browser: useBrowserNotif,
+      urgency: itemType === "activity" ? useUrgencyNotif : false,
       advance: advanceNotice,
       repeat: repeatCount
     };
@@ -428,18 +433,20 @@ const CalendarModal = ({
                     </div>
 
                     <div className="d-flex align-items-center ms-2 mt-2 mt-md-0">
-                      {/* Start Pomodoro */}
+                      {/* Start/Resume Pomodoro */}
                       {event.isPomodoro && (
                         <button
-                          className="btn btn-sm btn-outline-primary me-2"
+                          className={`btn btn-sm me-2 ${
+                            event.pomodoro?.state?.lastRunAt ? "btn-warning" : "btn-outline-primary"
+                          }`}
                           onClick={() => {
                             // chiudi modale e naviga alla pagina Pomodoro
                             document.querySelector(".modal.show .btn-close")?.click();
                             navigate(`/pomodoro?eventId=${event._id}`);
                           }}
-                          title="Apri Pomodoro"
+                          title={event.pomodoro?.state?.lastRunAt ? "Riprendi Pomodoro" : "Avvia Pomodoro"}
                         >
-                          Start
+                          {event.pomodoro?.state?.lastRunAt ? "Resume" : "Start"}
                         </button>
                       )}
 
@@ -796,6 +803,20 @@ const CalendarModal = ({
                             Notifica browser
                           </label>
                         </div>
+                        {itemType === "activity" && (
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              id="notify-urgency"
+                              checked={useUrgencyNotif}
+                              onChange={(e) => setUseUrgencyNotif(e.target.checked)}
+                            />
+                            <label className="form-check-label" htmlFor="notify-urgency">
+                              Notifiche di urgenza (per ritardi)
+                            </label>
+                          </div>
+                        )}
                       </div>
 
                       <div className="mb-3">

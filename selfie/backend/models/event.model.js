@@ -5,6 +5,7 @@ const notificationPrefsSchema = new mongoose.Schema(
   {
     browser: { type: Boolean, default: true },
     email: { type: Boolean, default: false },
+    urgency: { type: Boolean, default: false }, // for escalating notifications on overdue activities
     advance: { type: Number, default: 0 }, // in minuti
     repeat: { type: Number, default: 1 }, // numero di ripetizioni (999 = fino a risposta)
   },
@@ -65,7 +66,8 @@ const eventSchema = new mongoose.Schema(
       enum: ["manual", "note", "activity"],
       default: "manual",
     },
-    noteId: { // la "foreign key" per gli eventi di tipo nota
+    noteId: {
+      // la "foreign key" per gli eventi di tipo nota
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",
       default: null,

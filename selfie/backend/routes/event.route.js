@@ -9,7 +9,7 @@ import {
   getEventById,
   patchPomodoroState,
   getCalendarReport,
-  updateEvent
+  updateEvent,
 } from "../controllers/event.controller.js";
 import { auth } from "../middleware/auth.js";
 
@@ -21,7 +21,7 @@ router.use(auth);
 // GET -> eventi dell'utete (nel periodo di query)
 router.get("/", getEvents);
 
-// POST -> crea un evento 
+// POST -> crea un evento
 router.post("/", createEvent);
 
 // DELETE -> cancella un evento o serie ricorrente

@@ -221,6 +221,26 @@ const Calendar = () => {
               if (!event.isComplete && event.dueDate === today) {
                 acc.push(event);
               }
+              
+              // 1b) Urgency notifications for overdue activities
+              if (!event.isComplete && event.notificationPrefs?.urgency && event.dueDate && event.dueTime) {
+                const dueDateTime = new Date(`${event.dueDate}T${event.dueTime}:00`);
+                if (now > dueDateTime) {
+                  // Calculate days overdue
+                  const diffTime = now - dueDateTime;
+                  const daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                  
+                  // Add urgency notification info to the event
+                  const urgencyEvent = {
+                    ...event,
+                    isUrgencyNotification: true,
+                    daysOverdue,
+                    originalDueDateTime: dueDateTime
+                  };
+                  acc.push(urgencyEvent);
+                }
+              }
+              
               continue;
             }
 
@@ -258,6 +278,45 @@ const Calendar = () => {
 
       // elabora e notifica al minuto virtuale corretto (con la tolleranza di sopra) 
       eventsForNotification.forEach(event => {
+        // Handle urgency notifications differently
+        if (event.isUrgencyNotification) {
+          const daysOverdue = event.daysOverdue;
+          const [baseHour, baseMinute] = event.dueTime.split(':').map(n => Number(n));
+          
+          // Calculate how many notifications for today (max 10)
+          const notificationsToday = Math.min(daysOverdue, 10);
+          
+          for (let i = 0; i < notificationsToday; i++) {
+            // Each notification is 1 hour later than the previous
+            const urgencyHour = baseHour + i;
+            const urgencyTime = new Date(now);
+            urgencyTime.setHours(urgencyHour, baseMinute, 0, 0);
+            
+            const urgencyMin = Math.floor(urgencyTime.getTime() / 60_000);
+            const baseKey = `urgency-${event._id}-${today}-${i}`;
+            
+            // Check if it's time for this urgency notification (within 5 minute window)
+            const inWindow = nowMin >= urgencyMin && nowMin < urgencyMin + GRACE_MINUTES;
+            if (!inWindow) continue;
+            
+            // Browser urgency notification
+            if (event.notificationPrefs?.browser) {
+              const uniqueId = `browser-${baseKey}`;
+              const ackKey = `event-ack-browser-${baseKey}`;
+              if (!notifiedEvents.has(uniqueId) && !localStorage.getItem(ackKey)) {
+                showNotification(
+                  {
+                    title: `🚨 Attività in ritardo (${daysOverdue} giorno/i)`,
+                    body: `"${event.text}" - Notifica ${i + 1} di oggi`
+                  },
+                  () => localStorage.setItem(ackKey, 'true')
+                );
+                setNotifiedEvents(prev => new Set(prev).add(uniqueId));
+              }
+            }
+          }
+          return; // Skip normal notification processing for urgency events
+        }
         // decidi le stringhe di data/ora dell’occorrenza
         let eventDateStr, eventTimeStr;
 

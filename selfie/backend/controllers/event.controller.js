@@ -227,9 +227,8 @@ export const exportIcal = async (req, res) => {
           : applyOffset(new Date(start.getTime() + 60 * 60 * 1000));
       }
 
-
       if (event.spanningDays && event.spanningDays > 1) {
-          end = addDays(end, event.spanningDays - 1);
+        end = addDays(end, event.spanningDays - 1);
       }
 
       const calEvent = {
@@ -248,13 +247,12 @@ export const exportIcal = async (req, res) => {
             ? applyOffset(new Date(event.recurrence.endDate))
             : undefined,
         };
-        
+
         if (event.exclusions?.length) {
-          calEvent.exdate = event.exclusions.map((d) =>
-            new Date(`${d}T${event.time || "00:00"}:00`)
+          calEvent.exdate = event.exclusions.map(
+            (d) => new Date(`${d}T${event.time || "00:00"}:00`)
           );
         }
-        
       }
 
       calendar.createEvent(calEvent);
@@ -355,21 +353,26 @@ export const updateEvent = async (req, res) => {
 
     // check di sicurezza
     if (event.recurrence) {
-      return res.status(400).json({ error: "Recurring events cannot be edited" });
+      return res
+        .status(400)
+        .json({ error: "Recurring events cannot be edited" });
     }
-
-
-
 
     if (updates.isPomodoro) {
       const p = updates.pomodoro || {};
       if (p.mode === "total") {
         if (typeof p.totalMinutes !== "number" || p.totalMinutes <= 0) {
-          return res.status(400).json({ error: "Invalid pomodoro.totalMinutes" });
+          return res
+            .status(400)
+            .json({ error: "Invalid pomodoro.totalMinutes" });
         }
       } else {
         const { studyMinutes, breakMinutes, cycles } = p;
-        if (![studyMinutes, breakMinutes, cycles].every(n => Number.isFinite(n) && n > 0)) {
+        if (
+          ![studyMinutes, breakMinutes, cycles].every(
+            (n) => Number.isFinite(n) && n > 0
+          )
+        ) {
           return res.status(400).json({ error: "Invalid fixed pomodoro plan" });
         }
       }
@@ -379,13 +382,14 @@ export const updateEvent = async (req, res) => {
         studyMinutes: p.studyMinutes ?? 30,
         breakMinutes: p.breakMinutes ?? 5,
         cycles: p.cycles ?? 5,
-        state: p.state || event.pomodoro?.state || {
-          dayISO: null,
-          phase: "study",
-          cycleIndex: 0,
-          secondsLeft: 0,
-          lastRunAt: null,
-        },
+        state: p.state ||
+          event.pomodoro?.state || {
+            dayISO: null,
+            phase: "study",
+            cycleIndex: 0,
+            secondsLeft: 0,
+            lastRunAt: null,
+          },
       };
     }
 
