@@ -16,13 +16,13 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // niente URL assoluto: usa l'istanza api con baseURL
+     // istanza api con baseURL
       const res = await api.post("/login", credentials);
       const token = res.data.token;
 
       const user = jwtDecode(token);
 
-      // salvi in sessionStorage (coerente col tuo codice)
+      // salviamo il tutto in sessionStorage per una sessione che dura fino alla chiusura della pagina
       sessionStorage.setItem("token", token);
       sessionStorage.setItem("utente", JSON.stringify(user));
 

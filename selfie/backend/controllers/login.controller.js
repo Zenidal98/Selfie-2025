@@ -17,7 +17,7 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ success: false, message: "Password errata" });
     }
 
-    // questo è il token jwt che contiene tutti i campi che poi ci serviranno nella home. Cosi non uso piu local storage
+    // questo è il token jwt che contiene tutti i campi che poi ci serviranno nella home in modo da non usare più local storage
     const payload = {
       id: user._id,
       nome: user.nome,

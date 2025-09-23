@@ -82,14 +82,15 @@ const eventSchema = new mongoose.Schema(
     }, //lookup veloce per gli eventi ripetuti
     exclusions: { type: [String], default: [] }, // per cancellare singole istanze
 
-    // aggiunta preferenze notifica
+    // aggiunta preferenze notifica 
     notificationPrefs: notificationPrefsSchema,
 
     //aggiunte per le Attivita'
     dueDate: { type: String, default: null }, //YYYY-MM-DD
     dueTime: { type: String, default: null }, //HH:mm
     isComplete: { type: Boolean, default: false },
-
+    
+    //check pomodoro
     isPomodoro: { type: Boolean, default: false, index: true },
     pomodoro: { type: pomodoroSchema, default: null },
   },

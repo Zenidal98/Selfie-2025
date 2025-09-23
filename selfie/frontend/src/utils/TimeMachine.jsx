@@ -11,7 +11,7 @@ export const TimeMachineProvider = ({ children }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [lastManualChange, setLastManualChange] = useState(null);
 
-  // 🔹 On mount → fetch current virtual time from backend
+  // fa una richiesta lato server per prendere il valore corrente della virtualNow salvato lato server, evita cancellamenti se si ricarica la pagina
   useEffect(() => {
     const fetchTime = async () => {
       try {
@@ -25,7 +25,7 @@ export const TimeMachineProvider = ({ children }) => {
     fetchTime();
   }, []);
 
-  // 🔹 Keep ticking if synced to real time
+  // se è sincronizzata con il tempo reale continua a ticchettare in avanti
   useEffect(() => {
     if (isSynced) {
       const interval = setInterval(() => setVirtualNow(new Date()), 1000);
@@ -33,7 +33,7 @@ export const TimeMachineProvider = ({ children }) => {
     }
   }, [isSynced]);
 
-  // 🔹 Update time (frontend + backend)
+  // aggiorna il tempo sia frontend che backend
   const updateTime = async (e) => {
     const newTime = new Date(e.target.value);
     setIsSynced(false);
@@ -47,7 +47,7 @@ export const TimeMachineProvider = ({ children }) => {
     }
   };
 
-  // 🔹 Reset time (frontend + backend)
+  // resetta il tempo ancora frontend e backend
   const resetTime = async () => {
     setIsSynced(true);
     setVirtualNow(new Date());
@@ -61,29 +61,17 @@ export const TimeMachineProvider = ({ children }) => {
   };
 
   return (
-    <TimeMachineContext.Provider
-      value={{ virtualNow, isSynced, setIsSynced, lastManualChange }}
-    >
+    <TimeMachineContext.Provider value={{ virtualNow, isSynced, setIsSynced, lastManualChange }}>
       {children}
 
-      {/* Pallino TM */}
-      <div
-        className="tm-toggle-button"
-        onClick={() => setIsVisible((prev) => !prev)}
-      >
-        TM
-      </div>
+      {/* pallino time machine */}
+      <div className="tm-toggle-button" onClick={() => setIsVisible((prev) => !prev)}> TM </div>
 
-      {/* Barra Time Machine visibile solo se attiva */}
+      {/* barra della time machine che è visibile solo se attiva */}
       {isVisible && (
         <div className="time-machine-bar">
           <label className="tm-label">🕓 Time Machine:</label>
-          <input
-            type="datetime-local"
-            className="tm-input"
-            value={new Date(
-              virtualNow.getTime() - virtualNow.getTimezoneOffset() * 60000
-            )
+          <input type="datetime-local" className="tm-input" value={new Date( virtualNow.getTime() - virtualNow.getTimezoneOffset() * 60000)
               .toISOString()
               .slice(0, 16)}
             onChange={updateTime}

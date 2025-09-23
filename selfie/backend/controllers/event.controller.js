@@ -85,7 +85,7 @@ export const createEvent = async (req, res) => {
             .json({ error: "Invalid pomodoro.totalMinutes" });
         }
       } else {
-        // mode 'fixed' or default
+        // modalità base oppure fissata
         const { studyMinutes, breakMinutes, cycles } = p;
         if (
           ![studyMinutes, breakMinutes, cycles].every(
@@ -180,7 +180,7 @@ export const excludeOccurrence = async (req, res) => {
   }
 };
 
-// getsice il toggle del completamento attivita' lato db
+// gestisce il toggle del completamento attivita' lato db
 export const toggleActivityCompletion = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
