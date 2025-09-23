@@ -214,6 +214,18 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
       setIsComplete(true);
       handleSaveSession();
       setSecondsLeft(0);
+    
+      // Salva sessione e cancella evento pomodoro dopo il completamento di tutti i cicli  
+      await handleSaveSession();
+      if (eventId) {
+        try {
+          await api.delete(`/events/${eventId}`);
+        } catch (err) {
+          console.error("Errore cancellazione evento pomodoro:", err);
+        }
+      }
+
+
       await patchState({ reason: "finishCycle-complete" });
     }
   };
