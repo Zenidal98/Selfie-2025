@@ -1,4 +1,3 @@
-/* === Reset / Globals === */
 * {
   box-sizing: border-box;
 }
@@ -54,7 +53,7 @@ body {
 
 .notes-main {
   display: flex;
-  flex-direction: column; /* stacked su mobile, tba swap button */
+  flex-direction: column; 
   gap: 1rem;
   overflow: hidden;
 }
@@ -169,9 +168,8 @@ body {
   text-overflow: ellipsis;
 }
 
-/* === Delete button on card === */
 .note-card .btn {
-  z-index: 5; /* keeps button above card content */
+  z-index: 5; 
 }
 
 .preview-box h1 {
@@ -182,4 +180,23 @@ body {
 .preview-box h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+}
+/* fix responsive per le toolbar*/
+.btn-group.btn-group-sm {
+  flex-wrap: wrap;  
+  gap: 0.25rem;     
+}
+
+
+@media (max-width: 576px) {
+  .btn-group.btn-group-sm .btn {
+    font-size: 0.75rem;  
+    padding: 0.25rem 0.5rem; 
+    flex: 1 1 45%;       
+    margin-bottom: 0.25rem;
+  }
+  .notes-buttons .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
 }

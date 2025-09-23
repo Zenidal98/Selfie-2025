@@ -324,11 +324,7 @@ const NoteEditor = () => {
                 e.key === "Enter" && addTag()
               }}
             />
-            <button onClick={() => {
-              if (lastEdited > virtualNow) return alert("Non puoi modificare una nota futura!");
-              addTag();
-              }} 
-              className="btn btn-outline-secondary">Add</button>
+           
           </div>
         )}
 

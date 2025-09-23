@@ -1,6 +1,11 @@
+/* Dimensione font base reattiva: scala con viewport ma rimane leggibile */
+html {
+  font-size: clamp(12px, 1.5vw, 16px); 
+}
+
 .home-page {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto; /* scroll principale */
   font-family: 'Raleway', sans-serif;
 }
 
@@ -12,6 +17,7 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+
 }
 
 .logout-btn {
@@ -26,73 +32,162 @@
 .section-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px);
-  transition: all 0.4s ease;
+  padding: 0;
 }
 
+/* Sezioni principali */
 .section {
-  flex: 1;
+  min-height: 300px; /* altezza minima per contenuto */
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* evita compressione contenuti */
   align-items: center;
   background-size: cover;
   background-position: center;
   color: white;
   text-shadow: 0 0 5px #000;
-  transition: flex 0.5s ease, transform 0.3s ease;
-  cursor: pointer;
-  overflow: hidden;
+  margin: 0; /* spazio tra le sezioni */
   padding: 1rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.3s ease;
 }
-
-.section:hover {
-  flex: 3;
-  transform: scale(1.01);
+/** Disattiva espansione hover su schermi piccoli o zoom alto 
+@media (max-width: 1200px), (max-height: 900px) {
+  .section:hover {
+    flex: none;
+    transform: none;
+  }
 }
-
+*/
 .section-label {
-  font-size: 3rem;
-  margin: 0;
-  z-index: 2;
+  font-size: 2rem; 
+  text-shadow: 0 0 6px rgba(0,0,0,0.85); 
+  margin-bottom: 0.5rem;
 }
 
 .section-details {
-  background: none; /* ✅ RIMOSSO sfondo grigio */
-  padding: 1rem;
+  max-height: 50vh; /* contenuto scrollabile se troppo alto */
+  overflow-y: auto;
   width: 100%;
-  margin-top: 1rem;
   text-align: center;
+  padding: 1rem;
   color: white;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7); /* ✅ leggibilità su immagine */
-  transition: all 0.5s ease;
-  opacity: 0;
-  max-height: 0;
+  text-shadow: 0 0 6px rgba(0,0,0,0.85);
+  transition: opacity 0.5s ease, max-height 0.5s ease;
 }
 
-.section:hover .section-details {
-  opacity: 1;
-  max-height: 500px;
-}
-
-/* Sezioni specifiche con immagini via CSS */
-
+/* Sezioni specifiche con immagini */
 .section.note {
-  background-image: url('../../img/notes2.jpg'); /** Image by Jess Bailey from Pixabay **/
-} /* https://pixabay.com/service/license-summary/ */
+  background-image: url('../../img/notes2.jpg'); /* Image by Jess Bailey from Pixabay */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
 
 .section.calendario {
-  background-image: url('../../img/calendar2.jpg'); /** Image by StockSnap from Pixabay **/ 
-} /* https://pixabay.com/service/license-summary/ */
+  background-image: url('../../img/calendar2.jpg'); /* Image by StockSnap from Pixabay */
+}
 
 .section.pomodoro {
   background-image: url('../../img/pomodorotimer.jpg');
 }
 
-/*Per ora lo lascio cosi altrimenti le parole dentro al riquadro in alto sono nere su sfondo nere e non si vede nulla*/ 
+/* Preview nota */
+.note-preview {
+  max-height: 40vh; 
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+}
 
+.note-preview p {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+  margin: 0;
+  text-align: center;
+  line-height: 1.5rem; 
+}
+
+/* Bottone all’interno delle sezioni */
+.section-details .btn {
+  font-size: 1rem; 
+  padding: 0.5em 1em;
+  margin-bottom: 0.5rem;
+}
+
+/* Lista attività calendario */
+.calendar-report {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.calendar-report ul li {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  margin-bottom: 0.25rem;
+  line-height: 1.5rem; 
+}
+
+/* Pomodoro details scrollabile se troppo lungo */
+.section.pomodoro .section-details {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Pomodoro timer testi */
 .pomodoro-timer h5,
 .pomodoro-timer h1 {
   color: white !important;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
 }
+
+/* Media query per piccoli schermi */
+@media (max-width: 576px) {
+  .section.note,
+  .section.calendario,
+  .section.pomodoro {
+    min-height: 250px; /* ridotta su mobile */
+  }
+
+  .section-label {
+    font-size: 1.2rem;
+  }
+
+  .section-details .btn {
+    font-size: 1rem;
+    padding: 0.5em 1em;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Line-height generale per testi */
+body, .section-details, .note-preview p, .calendar-report ul li {
+  line-height: 1.5rem;
+}
+
+/* dettagli scrollbar  */
+.section-details::-webkit-scrollbar,
+.note-preview::-webkit-scrollbar,
+.calendar-report::-webkit-scrollbar {
+  width: 6px;
+}
+
+.section-details::-webkit-scrollbar-thumb,
+.note-preview::-webkit-scrollbar-thumb,
+.calendar-report::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 3px;
+}
+
+/* Evita overflow orizzontale */
+body {
+  overflow-x: hidden;
+}
+
