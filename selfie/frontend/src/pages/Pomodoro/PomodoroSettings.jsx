@@ -161,7 +161,6 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         <div className="alert alert-info mt-3 text-center">
           <strong>Output:</strong><br />
           {outputPreview.cicli} cicli da {outputPreview.studio} min studio + {outputPreview.pausa} min pausa<br />
-          {outputPreview.resto > 0 && (<>Ultima pausa estesa a {outputPreview.pausaFinale} minuti</>)}
         </div>
       )}
     </div>

@@ -48,6 +48,13 @@ const Calendar = () => {
     setCurrentDate(virtualNow);
   }, []);
 
+  // permesso notifiche
+  useEffect(() => {
+    if (window.Notification && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // aggiorna quando ti sposti con la tm
   useEffect(() => {
     if (lastManualChange !== null) {
