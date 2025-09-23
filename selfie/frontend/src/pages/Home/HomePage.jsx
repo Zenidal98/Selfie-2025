@@ -125,16 +125,23 @@ const HomePage = () => {
                 Vai a {sec.label}
               </button>
 
-              {sec.id === "pomodoro" && report && (
-                <div className="text-dark text-center">
-                  <p className="text-center mb-2">Puoi creare e organizzare cicli di studio.</p>
-                  <strong>Report ultimo Pomodoro:</strong><br />
-                  Cicli completati: {report.cyclesCompleted}<br />
-                  Studio: {report.studyDuration} min<br />
-                  Pausa: {report.breakDuration} min<br />
-                  Studio Totale: {report.totalStudyTime} min
-                </div>
-              )}
+               {sec.id === "pomodoro" && (
+                 <div className="text-dark text-center">
+                   <p className="text-center mb-2">Puoi creare e organizzare cicli di studio.</p>
+    
+                     {report ? (
+                       <>
+                          <strong>Report ultimo Pomodoro:</strong><br />
+                           Cicli completati: {report.cyclesCompleted}<br />
+                           Studio: {report.studyDuration} min<br />
+                           Pausa: {report.breakDuration} min<br />
+                          Studio Totale: {report.totalStudyTime} min
+                         </>
+                       ) : (
+                            <p className="text-muted">Nessuna sessione pomodoro registrata</p>
+                           )}
+                   </div>
+                 )}
 
 
               {sec.id === "note" && (

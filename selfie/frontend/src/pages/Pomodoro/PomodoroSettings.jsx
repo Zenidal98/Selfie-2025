@@ -83,7 +83,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         {mode === "total" ? (
           <>
             <p className="text-muted small text-center mb-2">
-              Inserisci ore e minuti disponibili. Useremo lo schema 30’ studio + 5’ pausa (ultima pausa estesa).
+              Inserisci ore e minuti a piacimento, verrà calcolato un pomodoro composto da cicli 30 + 5 
             </p>
             <div className="row mb-3">
               <div className="col">
