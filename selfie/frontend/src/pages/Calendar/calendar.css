@@ -2,7 +2,9 @@
 .calendar-grid-header,
 .calendar-grid-body {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr)); /** per evitare overflow su schermi piccollissimi **/
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-cell {
@@ -291,6 +293,8 @@ body {
   .note-icon,
   .manual-icon,
   .activity-icon,
+  .due-activity-icon,
+  .manual-icon-complex,
   .delayed-activity-icon {
     font-size: 1rem;
   }
