@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
+import path from 'path';
+import { fileURLToPath } from "url";
 
 import registerRoutes from "./routes/register.route.js";
 import loginRoutes from "./routes/login.route.js";
@@ -10,13 +12,18 @@ import noteRoutes from "./routes/notes.routes.js";
 import pomodoroRoutes from "./routes/pomodoro.route.js";
 import eventRoutes from "./routes/event.route.js";
 import timeMachineRoutes from "./routes/timemachine.route.js";
+
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const PORT = process.env.PORT || 5000;
 const app = express();
 
 // consenti dev server classici (CRA 3000, Vite 5173)
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:5173", "http://site242520.tw.cs.unibo.it"];
 
 app.use(
   cors({
@@ -38,6 +45,13 @@ app.use("/api/pomodoro", pomodoroRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/time-machine", timeMachineRoutes);
+
+// Serve il frontend build
+app.use(express.static(path.join(__dirname, "build")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
 app.listen(PORT, async () => {
   await connectDB();
   console.log("Server attivato sulla porta " + PORT);

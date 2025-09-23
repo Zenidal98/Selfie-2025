@@ -543,7 +543,7 @@ const CalendarModal = ({
                     onChange={e => setNewDate(e.target.value)}
                     className="form-control"
                   />
-                  <p className="mt-2">
+                  <p className="ms-2">
                     ⚠️  Spostare l'evento lo rimuoverà dalla data originale.
                   </p>
                   </div>
