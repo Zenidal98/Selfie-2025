@@ -5,22 +5,16 @@ export const calcolaCicliStandard = (
   pausaBase = 5
 ) => {
   const tempoCiclo = studioBase + pausaBase;
+  
   // se un utente inserisce un tempo inferiore all'unità minima di pomodoro ossia 35 minuti (30 di studio e 5 di pausa)
-  if (totaleMinuti < tempoCiclo) {
-    return { error: `Non ha senso lavorare meno di ${tempoCiclo} minuti :(` };
-  }
 
   const cicli = Math.floor(totaleMinuti / tempoCiclo);
-  const resto = totaleMinuti % tempoCiclo;
 
   // per compatibilità manteniamo la stessa struttura di ritorno
   return {
     cicli,
     studio: studioBase,
     pausa: pausaBase,
-    pausaFinale: pausaBase + resto, // ultima pausa estesa
-    resto,
-    totaleUsato: cicli * tempoCiclo + resto,
     totaleInput: totaleMinuti,
   };
 };
