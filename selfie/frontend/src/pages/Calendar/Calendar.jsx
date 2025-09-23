@@ -194,7 +194,7 @@ const Calendar = () => {
     }
   }, [eventsCache, selectedDate, monthKey, virtualNow]);
 
-  // notifiche browser controllate dalla time machine, calcola quali eventi vanno notificati nell’istante corrente
+  // NOTIFICHE browser controllate dalla time machine, calcola quali eventi vanno notificati nell’istante corrente
   useEffect(() => {
 
 
@@ -222,15 +222,15 @@ const Calendar = () => {
                 acc.push(event);
               }
               
-              // 1b) Urgency notifications for overdue activities
+              // 1b) Notifiche urgenti per attività in scadenza
               if (!event.isComplete && event.notificationPrefs?.urgency && event.dueDate && event.dueTime) {
                 const dueDateTime = new Date(`${event.dueDate}T${event.dueTime}:00`);
                 if (now > dueDateTime) {
-                  // Calculate days overdue
+                  // Calcola i giorni di ritardo per capire l'urgenza
                   const diffTime = now - dueDateTime;
                   const daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
                   
-                  // Add urgency notification info to the event
+                  // aggiunge all'evento informazioni sulle notifiche di urgenza
                   const urgencyEvent = {
                     ...event,
                     isUrgencyNotification: true,
@@ -283,11 +283,14 @@ const Calendar = () => {
           const daysOverdue = event.daysOverdue;
           const [baseHour, baseMinute] = event.dueTime.split(':').map(n => Number(n));
           
-          // Calculate how many notifications for today (max 10)
+          // punto che calcola quante notifiche avere al giorno
+          // l'urgenza è data dal fatto che ogni giorno di ritardo fa avere una notifica in più al giorno fino ad un massimo di 
+          // 10 giorni di ritardo ed a 10 notifiche al giorno
           const notificationsToday = Math.min(daysOverdue, 10);
           
           for (let i = 0; i < notificationsToday; i++) {
-            // Each notification is 1 hour later than the previous
+            // ogni notifica nuova viene lanciata un'ora dopo rispetto alla precedente
+            // credo abbia più senso rispetto ad avere tipo 10 notifiche in una singola ora al decimo giorno
             const urgencyHour = baseHour + i;
             const urgencyTime = new Date(now);
             urgencyTime.setHours(urgencyHour, baseMinute, 0, 0);
@@ -295,11 +298,11 @@ const Calendar = () => {
             const urgencyMin = Math.floor(urgencyTime.getTime() / 60_000);
             const baseKey = `urgency-${event._id}-${today}-${i}`;
             
-            // Check if it's time for this urgency notification (within 5 minute window)
+            // controllo per vedere se è ora della notifica di ugenza entro i 5 minuti dati da grace
             const inWindow = nowMin >= urgencyMin && nowMin < urgencyMin + GRACE_MINUTES;
             if (!inWindow) continue;
             
-            // Browser urgency notification
+            // notifiche di urgenza via browser
             if (event.notificationPrefs?.browser) {
               const uniqueId = `browser-${baseKey}`;
               const ackKey = `event-ack-browser-${baseKey}`;
@@ -315,7 +318,7 @@ const Calendar = () => {
               }
             }
           }
-          return; // Skip normal notification processing for urgency events
+          return; // questo non avviene per gli eventi come da richiesta
         }
         // decidi le stringhe di data/ora dell’occorrenza
         let eventDateStr, eventTimeStr;

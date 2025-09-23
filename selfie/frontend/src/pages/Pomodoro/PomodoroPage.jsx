@@ -18,7 +18,7 @@ const PomodoroPage = () => {
 
   const [loading, setLoading] = useState(!!eventId);
   const [error, setError] = useState("");
-  const [eventMeta, setEventMeta] = useState(null); // title/date/time preview
+  const [eventMeta, setEventMeta] = useState(null); 
 
   const [settings, setSettings] = useState({
     studyMinutes: 30,
@@ -26,7 +26,7 @@ const PomodoroPage = () => {
     cycles: 5,
   });
 
-  // Load event if eventId is present
+  // carica l'evento se eventId è presente
   useEffect(() => {
     let isMounted = true;
     async function fetchEvent() {
@@ -63,7 +63,7 @@ const PomodoroPage = () => {
               });
             }
           } else {
-            // mode 'fixed'
+            // modalità fixed 
             setSettings({
               studyMinutes: Number(p.studyMinutes) || 30,
               breakMinutes: Number(p.breakMinutes) || 5,
@@ -71,7 +71,7 @@ const PomodoroPage = () => {
             });
           }
         } else {
-          // Not a pomodoro event → use defaults
+          // se non è un evento pomodoro usa defaults
         }
       } catch (e) {
         console.error("Failed to load event", e);
@@ -131,7 +131,6 @@ const PomodoroPage = () => {
           studyDuration={settings.studyMinutes}
           breakDuration={settings.breakMinutes}
           cycles={settings.cycles}
-          // optional, for future PATCH of state/carryover
           eventId={eventId || null}
         />
 
