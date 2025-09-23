@@ -1,22 +1,18 @@
-// File per calcolare i vari tempi nei cicli personalizzati
+// File per calcolare i vari tempi nei cicli personalizzati e settare le due modalità principali di organizzazione pomodoro
 import React, { useState, useEffect } from "react";
 import { calcolaCicliStandard } from "./PomodoroUtils";
 
-/**
- * Props:
- * - onSettingsChange({ studyMinutes, breakMinutes, cycles })
- * - initial (optional): { studyMinutes, breakMinutes, cycles } to precompilare i valori fissi
- */
+
 const PomodoroSettings = ({ onSettingsChange, initial }) => {
   // Modalità: calcolo da tempo totale (default) oppure valori fissi
   const [mode, setMode] = useState("total"); // 'total' | 'fixed'
 
-  // --- TOTAL mode inputs ---
+  // input della modalità totale, metti il tempo e lui calcola 
   const [totalHours, setTotalHours] = useState("");
   const [totalMinutes, setTotalMinutes] = useState("");
   const [outputPreview, setOutputPreview] = useState(null);
 
-  // --- FIXED mode inputs ---
+  // input della modalità fissata a destra che permette di cliccare su tempo pausa e cicli 
   const [studyFixed, setStudyFixed] = useState(initial?.studyMinutes ?? 30);
   const [breakFixed, setBreakFixed] = useState(initial?.breakMinutes ?? 5);
   const [cyclesFixed, setCyclesFixed] = useState(initial?.cycles ?? 5);
@@ -52,7 +48,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         cycles: result.cicli,
       });
     } else {
-      // fixed mode validation minima
+      // validazione minima per modalità fissata
       if (
         !Number.isFinite(+studyFixed) || +studyFixed <= 0 ||
         !Number.isFinite(+breakFixed) || +breakFixed <= 0 ||
@@ -75,18 +71,10 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
 
       {/* Toggle modalità */}
       <div className="d-flex justify-content-center gap-2 mb-3">
-        <button
-          type="button"
-          className={`btn btn-sm ${mode === "total" ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => setMode("total")}
-        >
+        <button type="button" className={`btn btn-sm ${mode === "total" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setMode("total")}>
           Calcola da tempo totale
         </button>
-        <button
-          type="button"
-          className={`btn btn-sm ${mode === "fixed" ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => setMode("fixed")}
-        >
+        <button type="button" className={`btn btn-sm ${mode === "fixed" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setMode("fixed")}>
           Imposta valori fissi
         </button>
       </div>
@@ -173,9 +161,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         <div className="alert alert-info mt-3 text-center">
           <strong>Output:</strong><br />
           {outputPreview.cicli} cicli da {outputPreview.studio} min studio + {outputPreview.pausa} min pausa<br />
-          {outputPreview.resto > 0 && (
-            <>Ultima pausa estesa a {outputPreview.pausaFinale} minuti</>
-          )}
+          {outputPreview.resto > 0 && (<>Ultima pausa estesa a {outputPreview.pausaFinale} minuti</>)}
         </div>
       )}
     </div>

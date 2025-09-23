@@ -18,7 +18,7 @@ const CalendarModal = ({
   onEventUpdated
 }) => {
   const navigate = useNavigate();
-  const { virtualNow } = useTimeMachine(); // 👈 virtual time
+  const { virtualNow } = useTimeMachine(); 
 
   // small helper to format HH:mm from a Date using TM time
   const hhmm = (d) => {
@@ -27,7 +27,7 @@ const CalendarModal = ({
     return `${h}:${m}`;
   };
 
-  // Base event/activity fields
+  // campi base di eventi ed attività
   const [newText, setNewText] = useState("");
   const [newTime, setNewTime] = useState("00:00");
   const [newEndTime, setNewEndTime] = useState("00:00");
@@ -41,11 +41,11 @@ const CalendarModal = ({
   const [newDueTime, setNewDueTime] = useState("09:00");
   const [newLocation, setNewLocation] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [itemType, setItemType] = useState("event");  // "activity" | "event"
+  const [itemType, setItemType] = useState("event");  // evento o attività
 
   // Pomodoro fields
   const [isPomodoro, setIsPomodoro] = useState(false);
-  const [pomoMode, setPomoMode] = useState("total"); // 'total' | 'fixed'
+  const [pomoMode, setPomoMode] = useState("total"); // totale o fissata
   const [pomoTotalMinutes, setPomoTotalMinutes] = useState("");
   const [pomoStudy, setPomoStudy] = useState(30);
   const [pomoBreak, setPomoBreak] = useState(5);
@@ -132,17 +132,6 @@ const CalendarModal = ({
       setNewDate(null);
     }
   }, [selectedDate]);
-/**
-  useEffect(() => {
-    if (selectedDate) {
-      const tmNowHHmm = hhmm(virtualNow);
-
-      setNewTime(tmNowHHmm);
-      setNewEndTime(tmNowHHmm);
-      setNewDueTime(tmNowHHmm);
-    }
-  }, [virtualNow]);
-**/
 
   // Accorgimenti per rendere le UI di eventi e attivita' mutuamente esclusive, per evitare mixup
   const handleDueDateChange = (e) => {
@@ -432,19 +421,15 @@ const CalendarModal = ({
                     </div>
 
                     <div className="d-flex align-items-center ms-2 mt-2 mt-md-0">
-                      {/* Start/Resume Pomodoro */}
+                      {/* start e resume di pomodoro, per navigare fra calendario e view pomodoro */}
                       {event.isPomodoro && (
-                        <button
-                          className={`btn btn-sm me-2 ${
-                            event.pomodoro?.state?.lastRunAt ? "btn-warning" : "btn-outline-primary"
-                          }`}
+                        <button className={`btn btn-sm me-2 ${ event.pomodoro?.state?.lastRunAt ? "btn-warning" : "btn-outline-primary" }`}
                           onClick={() => {
                             // chiudi modale e naviga alla pagina Pomodoro
                             document.querySelector(".modal.show .btn-close")?.click();
                             navigate(`/pomodoro?eventId=${event._id}`);
                           }}
-                          title={event.pomodoro?.state?.lastRunAt ? "Riprendi Pomodoro" : "Avvia Pomodoro"}
-                        >
+                          title={event.pomodoro?.state?.lastRunAt ? "Riprendi Pomodoro" : "Avvia Pomodoro"} >
                           {event.pomodoro?.state?.lastRunAt ? "Resume" : "Start"}
                         </button>
                       )}
@@ -628,7 +613,7 @@ const CalendarModal = ({
                   type="checkbox"
                   id="isPomodoro"
                   checked={isPomodoro}
-                  disabled={itemType === "activity" || editingEvent} // 🔒 disabilitato se Attività o in fase di editing
+                  disabled={itemType === "activity" || editingEvent} // tolto se è un'attività
                   onChange={(e) => setIsPomodoro(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="isPomodoro">

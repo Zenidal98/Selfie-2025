@@ -1,19 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./PomodoroPage.css";
-import api from "../../utils/api"; // shared axios instance with JWT
+import api from "../../utils/api"; 
 import { jwtDecode } from "jwt-decode";
 import { useTimeMachine } from "../../utils/TimeMachine";
 import { useNavigate } from "react-router-dom";
 
-/**
- * Props:
- * - studyDuration (min)
- * - breakDuration (min)
- * - cycles (count)
- * - eventId? (string) -> if provided, runtime state will be PATCHed to the event
- */
 const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null }) => {
-  // Time Machine
+  // setting Time Machine
   const { virtualNow } = useTimeMachine();
   const navigate = useNavigate();
 
@@ -21,7 +14,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   const [secondsLeft, setSecondsLeft] = useState(studyDuration * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [isStudyTime, setIsStudyTime] = useState(true);
-  const [currentCycle, setCurrentCycle] = useState(1); // 1-based for UI
+  const [currentCycle, setCurrentCycle] = useState(1);
   const [isComplete, setIsComplete] = useState(false);
   const [stateLoaded, setStateLoaded] = useState(false);
   const [currentDay, setCurrentDay] = useState(null);
@@ -31,7 +24,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
   const autosaveRef = useRef(null);
   const dayCheckRef = useRef(null);
 
-  // Load saved state for calendar events
+  // carica gli stati salvati per gli eventi del calendario (cioè i pomodori speciali)
   useEffect(() => {
     if (eventId && !stateLoaded) {
       loadSavedState();
@@ -46,7 +39,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
 
       if (event.pomodoro?.state?.lastRunAt) {
         const state = event.pomodoro.state;
-        setCurrentCycle(state.cycleIndex + 1); // Convert to 1-based for UI
+        setCurrentCycle(state.cycleIndex + 1); 
         setIsStudyTime(state.phase === "study");
         setSecondsLeft(state.secondsLeft !== undefined ? state.secondsLeft : (state.phase === "study" ? studyDuration * 60 : breakDuration * 60));
       }
@@ -71,7 +64,13 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     }
   }, [studyDuration, breakDuration, cycles, stateLoaded, eventId]);
 
-  // notification permission
+  useEffect(() => {
+  if (!eventId) {
+    setSecondsLeft(studyDuration * 60);
+     }
+  }, [studyDuration, breakDuration, cycles]);
+
+  // permesso notifiche
   useEffect(() => {
     if (window.Notification && Notification.permission !== "granted") {
       Notification.requestPermission();
@@ -82,8 +81,6 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     if (window.Notification && Notification.permission === "granted") {
       new Notification(msg);
     } else {
-      // Fallback so users still get feedback
-      // eslint-disable-next-line no-alert
       alert(msg);
     }
   };
@@ -150,6 +147,9 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     }
   };
 
+  // questi sono tutti i pulsanti che si possono premere durante l'uso di pomodoro
+
+  // fa ripartire una fase ( non un ciclo, cosa che viene fatta sotto)
   const resetTimer = async () => {
     if (isComplete) return;
     await stopTick("reset");
@@ -158,7 +158,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     await patchState({ reason: "reset" });
   };
 
-  // move to next phase/cycle (force)
+  // forza al prossimo ciclo 
   const nextTime = async () => {
     if (isComplete) return;
     await stopTick("nextTime");
@@ -179,7 +179,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
       } else {
         sendNotification("🎉 Tutti i cicli completati!");
         setIsComplete(true);
-        // finalize state with 0 seconds left
+        // metti a 0 il tempo rimasto
         setSecondsLeft(0);
         await patchState({ reason: "complete" });
       }
@@ -197,7 +197,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     await patchState({ reason: "restartCycle" });
   };
 
-  // finish current cycle early (advance to next study cycle, or complete)
+  // va avanti o completa se sei alla fine
   const finishCycle = async () => {
     if (isComplete) return;
     await stopTick("finishCycle");
@@ -218,7 +218,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     }
   };
 
-  // auto-advance when a phase ends
+  // auto avanzamento quando una fase finisce
   useEffect(() => {
     if (!isRunning) return;
     if (secondsLeft === 0) {
@@ -232,7 +232,6 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         await nextTime();
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft]);
 
   // cleanup on unmount
@@ -241,35 +240,10 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
       clearInterval(tickRef.current);
       clearInterval(autosaveRef.current);
       clearInterval(dayCheckRef.current);
-      // best-effort save on unmount
-      // patchState({ reason: "unmount" });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Monitor for day changes and auto-move to next day
-  useEffect(() => {
-    if (!eventId) return;
-
-    // Initialize current day
-    const today = getDayISO();
-    setCurrentDay(today);
-
-    // Check for day change every 30 seconds for more responsive detection
-    dayCheckRef.current = setInterval(() => {
-      const newDay = getDayISO();
-      if (currentDay && newDay !== currentDay && secondsLeft > 0 && !isComplete) {
-        console.log(`Day changed from ${currentDay} to ${newDay}, auto-moving Pomodoro`);
-        autoMoveToNextDay();
-      }
-      setCurrentDay(newDay);
-    }, 30000); // Check every 30 seconds
-
-    return () => {
-      clearInterval(dayCheckRef.current);
-    };
-  }, [eventId, currentDay, secondsLeft, isComplete]);
-
+  //tool per salvare la sessione di pomodoro e non far perdere i progressi con resume
   const handleSaveSession = async () => {
     try {
       const token = sessionStorage.getItem("token");
@@ -306,71 +280,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const autoMoveToNextDay = async () => {
-    if (!eventId || isComplete || secondsLeft <= 0) return;
-
-    try {
-      // Get current event to calculate remaining time
-      const res = await api.get(`/events/${eventId}`);
-      const currentEvent = res.data;
-
-      if (!currentEvent.pomodoro?.state) return;
-
-      const remainingMinutes = Math.ceil(secondsLeft / 60);
-
-      if (remainingMinutes <= 0) return;
-
-      // Calculate next day
-      const currentDate = new Date(currentEvent.date);
-      const nextDay = new Date(currentDate);
-      nextDay.setDate(currentDate.getDate() + 1);
-      const nextDayISO = nextDay.toISOString().slice(0, 10);
-
-      // Create new Pomodoro event for next day with remaining time
-      const newEventPayload = {
-        type: "manual",
-        text: `${currentEvent.text} (continua automaticamente)`,
-        date: nextDayISO,
-        time: currentEvent.time,
-        isPomodoro: true,
-        pomodoro: {
-          mode: "total",
-          totalMinutes: remainingMinutes
-        },
-        location: currentEvent.location,
-        notificationPrefs: currentEvent.notificationPrefs
-      };
-
-      // Create new event and get its ID
-      const newEventResponse = await api.post("/events", newEventPayload);
-      const newEventId = newEventResponse.data._id;
-
-      // Transfer current state to the new event
-      await api.patch(`/events/${newEventId}/pomodoro/state`, {
-        dayISO: getDayISO(),
-        phase: isStudyTime ? "study" : "break",
-        cycleIndex: Math.max(0, currentCycle - 1),
-        secondsLeft: secondsLeft
-      });
-
-      // Delete the current event
-      await api.delete(`/events/${eventId}`);
-
-      // Show notification about auto-move
-      sendNotification(`⏰ Tempo rimanente (${remainingMinutes} min) spostato automaticamente a ${nextDayISO}`);
-
-      // Stop the current timer
-      setIsRunning(false);
-      setIsComplete(true);
-      clearInterval(tickRef.current);
-      clearInterval(autosaveRef.current);
-      clearInterval(dayCheckRef.current);
-
-    } catch (err) {
-      console.error("Failed to auto-move to next day", err);
-    }
-  };
-
+  // gestisce lo spostamento al giorno dopo, ossia il pulsante che appare solo nei pomodori evento
   const handleMoveToNextDay = async () => {
     if (!eventId) {
       alert("Questa funzione è disponibile solo per eventi calendario.");
@@ -384,7 +294,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
     if (!confirmMove) return;
 
     try {
-      // Get current event to calculate remaining time
+      // calcola il tempo rimanente dell'evento attuale
       const res = await api.get(`/events/${eventId}`);
       const currentEvent = res.data;
 
@@ -400,13 +310,13 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         return;
       }
 
-      // Calculate next day
+      // calcola il prossimo giorno
       const currentDate = new Date(currentEvent.date);
       const nextDay = new Date(currentDate);
       nextDay.setDate(currentDate.getDate() + 1);
       const nextDayISO = nextDay.toISOString().slice(0, 10);
 
-      // Create new Pomodoro event for next day with remaining time
+      // crea un nuovo evento pomodoro per il giorno successivo con il tempo rimanente
       const newEventPayload = {
         type: "manual",
         text: `${currentEvent.text}`,
@@ -421,11 +331,11 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         notificationPrefs: currentEvent.notificationPrefs
       };
 
-      // Create new event and get its ID
+      // crea un nuovo evento e ne prende l id
       const newEventResponse = await api.post("/events", newEventPayload);
       const newEventId = newEventResponse.data._id;
 
-      // Transfer current state to the new event
+      // anche qui trasferisco lo stato corrente al nuovo evento
       await api.patch(`/events/${newEventId}/pomodoro/state`, {
         dayISO: getDayISO(),
         phase: isStudyTime ? "study" : "break",
@@ -433,7 +343,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
         secondsLeft: secondsLeft
       });
 
-      // Delete the current event
+      // cancella l'evento attuale
       await api.delete(`/events/${eventId}`);
 
       alert(`Nuovo evento Pomodoro creato per ${nextDayISO} con ${remainingMinutes} minuti rimanenti.`);
