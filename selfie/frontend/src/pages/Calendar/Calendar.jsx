@@ -568,15 +568,15 @@ const Calendar = () => {
               {types.includes('manual') && (
                 expandedToday.some(e => e.isPomodoro) ? (<span className="manual-icon" title="Pomodoro">🍅</span>) 
                   : expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) 
-                  ? (<i className="bi bi-plus-circle manual-icon" title="Simple Event" />) 
-                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Complex Event" />)
+                  ? (<i className="bi bi-plus-circle manual-icon" title="Evento Semplice" />) 
+                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Evento Complesso" />)
               )} 
  
               {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
-                <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
+                <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Attività in scadenza" />
               )}
               {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
-                <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity" />
+                <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Attività in ritardo" />
               )}
             </div>
           )}
@@ -603,18 +603,18 @@ const Calendar = () => {
         <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : ''}`} onClick={() => showModal(dateStr)}>
           <div className="day-number">{format(day, 'EEE dd MMM')}</div>
           <div className="event-indicators">
-            {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
+            {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Nota"/>}
             {types.includes('manual') && (
                 expandedToday.some(e => e.isPomodoro) ? (<span className="manual-icon" title="Pomodoro">🍅</span>) 
                   : expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) 
-                  ? (<i className="bi bi-plus-circle manual-icon" title="Simple Event" />) 
-                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Complex Event" />)
+                  ? (<i className="bi bi-plus-circle manual-icon" title="Evento Semplice" />) 
+                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Evento Complesso" />)
             )}
             {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
-              <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
+              <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Attività in scadenza" />
             )}
             {expandedToday.some(e => e.type === 'activity' && e.status === 'red') && (
-              <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Delayed Activity" />
+              <i className="bi bi-exclamation-triangle-fill delayed-activity-icon" title="Attività in ritardo" />
             )}
           </div>
         </div>
@@ -644,7 +644,7 @@ const Calendar = () => {
 
     return (
       <div className="activities-panel">
-        <h4>Activities this {viewMode === 'month' ? 'month' : 'week'}</h4>
+        <h4>Attività questo {viewMode === 'month' ? 'mese' : 'settimana'}</h4>
 
         {collected.length === 0 ? (
           <div className="text-muted">No activities</div>

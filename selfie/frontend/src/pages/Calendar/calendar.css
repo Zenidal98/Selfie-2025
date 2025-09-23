@@ -110,6 +110,7 @@ body {
 .manual-icon,
 .manual-icon-complex,
 .activity-icon,
+.due-activity-icon,
 .delayed-activity-icon {
   font-size: 1.5rem;
 }
