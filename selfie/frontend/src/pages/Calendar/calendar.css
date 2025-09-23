@@ -279,6 +279,8 @@ body {
   .note-icon,
   .manual-icon,
   .activity-icon,
+  .due-activity-icon,
+  .manual-icon-complex,
   .delayed-activity-icon {
     font-size: 1.2rem;
   }
