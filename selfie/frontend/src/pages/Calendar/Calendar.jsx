@@ -98,6 +98,7 @@ const Calendar = () => {
     const currentDay = parseISO(dateStr);
 
     for (const evt of rawEvents) {
+      //if (evt.type ==='note') continue;
 
       if (evt.type === 'activity') {
         if (evt.isComplete) continue;
@@ -564,13 +565,15 @@ const Calendar = () => {
           <div className="day-number">{dayNum}</div>
           {expandedToday.length > 0 && (
             <div className="event-indicators">
-              {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note" />}
+              {expandedToday.some(e => e.type === 'note') && <i className="bi bi-stickies-fill note-icon" title="Note" />}
               {types.includes('manual') && (
                 expandedToday.some(e => e.isPomodoro) ? (<span className="manual-icon" title="Pomodoro">🍅</span>) 
                   : expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) 
                   ? (<i className="bi bi-plus-circle manual-icon" title="Evento Semplice" />) 
                   : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Evento Complesso" />)
               )} 
+
+              {}
  
               {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
                 <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Attività in scadenza" />

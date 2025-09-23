@@ -289,7 +289,7 @@ body {
 }
 
 /* piccoli schermi / mobile */
-@media (max-width: 576px) {
+@media (max-width: 600px) {
   .note-icon,
   .manual-icon,
   .activity-icon,
@@ -297,5 +297,30 @@ body {
   .manual-icon-complex,
   .delayed-activity-icon {
     font-size: 1rem;
+  }
+}
+
+/** limita il numero di icone per dimensione schermo **/
+.event-indicators > *:nth-child(n+5) {
+  display: none;
+}
+
+/* tablet / schermi medi*/
+@media (max-width: 1000px) {
+  .event-indicators > *:nth-child(n+4) {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-indicators > *:nth-child(n+3) {
+    display: none;
+  }
+}
+
+
+@media (max-width: 400px) {
+  .event-indicators > *:nth-child(n+2) {
+    display: none;
   }
 }
