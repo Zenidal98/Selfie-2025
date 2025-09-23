@@ -24,7 +24,7 @@ const app = express();
 
 // consenti dev server classici (CRA 3000, Vite 5173)
 const allowedOrigins = ["http://localhost:3000", "http://localhost:5173", "http://site242520.tw.cs.unibo.it"];
-
+//commenta in prod
 app.use(
   cors({
     origin(origin, cb) {
