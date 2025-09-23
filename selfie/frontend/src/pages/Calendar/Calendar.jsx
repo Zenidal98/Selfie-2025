@@ -565,7 +565,13 @@ const Calendar = () => {
           {expandedToday.length > 0 && (
             <div className="event-indicators">
               {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note" />}
-              {types.includes('manual') && (expandedToday.some(e => e.isPomodoro) ? <span className="manual-icon" title="Pomodoro">🍅</span>: <i className="bi bi-plus-circle manual-icon" title="Event" />)}
+              {types.includes('manual') && (
+                expandedToday.some(e => e.isPomodoro) ? (<span className="manual-icon" title="Pomodoro">🍅</span>) 
+                  : expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) 
+                  ? (<i className="bi bi-plus-circle manual-icon" title="Simple Event" />) 
+                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Complex Event" />)
+              )} 
+ 
               {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
                 <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
               )}
@@ -598,7 +604,12 @@ const Calendar = () => {
           <div className="day-number">{format(day, 'EEE dd MMM')}</div>
           <div className="event-indicators">
             {types.includes('note') && <i className="bi bi-stickies-fill note-icon" title="Note"/>}
-            {types.includes('manual') && (expandedToday.some(e => e.isPomodoro) ? <span className='manual-icon' title="Pomodoro">🍅</span> : <i className="bi bi-plus-circle manual-icon" title="Event"/>)}
+            {types.includes('manual') && (
+                expandedToday.some(e => e.isPomodoro) ? (<span className="manual-icon" title="Pomodoro">🍅</span>) 
+                  : expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) 
+                  ? (<i className="bi bi-plus-circle manual-icon" title="Simple Event" />) 
+                  : (<i className="bi bi-plus-circle-fill manual-icon-complex" title="Complex Event" />)
+            )}
             {expandedToday.some(e => e.type === 'activity' && e.status === 'yellow') && (
               <i className="bi bi-exclamation-circle-fill due-activity-icon" title="Activity In Progress / Due" />
             )}

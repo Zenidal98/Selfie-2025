@@ -108,6 +108,7 @@ body {
 
 .note-icon,
 .manual-icon,
+.manual-icon-complex,
 .activity-icon,
 .delayed-activity-icon {
   font-size: 1.5rem;
@@ -127,6 +128,10 @@ body {
 
 .delayed-activity-icon {
   color: #dc3545;
+}
+
+.manual-icon-complex {
+  color: purple;
 }
 
 /* === pannello attività sotto al calendario === */
