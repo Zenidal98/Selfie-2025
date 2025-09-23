@@ -66,12 +66,13 @@ const eventSchema = new mongoose.Schema(
       enum: ["manual", "note", "activity"],
       default: "manual",
     },
+    
     noteId: {
       // la "foreign key" per gli eventi di tipo nota
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",
       default: null,
-    },
+    }, 
 
     recurrence: recurrenceSchema,
     recurrenceId: {

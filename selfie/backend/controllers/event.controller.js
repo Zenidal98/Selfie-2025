@@ -22,7 +22,7 @@ export const getEvents = async (req, res) => {
       $or: [
         // eventi non ricorrenti
         {
-          type: { $in: ["manual", "note"] },
+          type: { $in: ["manual"] },
           date: { $gte: start, $lte: end },
           $or: [
             { "recurrence.frequency": null },

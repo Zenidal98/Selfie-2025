@@ -404,8 +404,7 @@ const CalendarModal = ({
                           {event.isDelayed ? " - IN RITARDO!" : ""}
                         </small>
                       )}
-                      {event.type === "note" && <small className="text-muted">Nota</small>}
-
+                      
                       {/* Pomodoro plan preview */}
                       {event.isPomodoro && event.pomodoro?.mode === "total" && (
                         <div>

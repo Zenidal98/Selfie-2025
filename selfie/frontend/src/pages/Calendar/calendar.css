@@ -108,7 +108,6 @@ body {
   gap: 4px;
 }
 
-.note-icon,
 .manual-icon,
 .manual-icon-complex,
 .activity-icon,
@@ -117,9 +116,6 @@ body {
   font-size: 1.5rem;
 }
 
-.note-icon {
-  color: #0d6efd;
-}
 
 .manual-icon {
   color: #198754;
@@ -278,7 +274,6 @@ body {
 
 /** responsive fix icone**/
 @media (max-width: 768px) {
-  .note-icon,
   .manual-icon,
   .activity-icon,
   .due-activity-icon,
@@ -290,7 +285,6 @@ body {
 
 /* piccoli schermi / mobile */
 @media (max-width: 600px) {
-  .note-icon,
   .manual-icon,
   .activity-icon,
   .due-activity-icon,

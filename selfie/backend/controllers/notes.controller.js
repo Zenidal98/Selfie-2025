@@ -28,21 +28,6 @@ export const saveNotes = async (req, res) => {
 
     await newNote.save();
 
-    // Crea un evento associato per il calendario
-    //const eventDate = format(createdDate, "yyyy-MM-dd");
-    //const eventTime = format(createdDate, "HH:mm");
-
-    const newNoteEvent = new Event({
-      userId: authUserId, // <-- force ownership for the event too
-      date: req.body.createdAt.slice(0, 10), // yyyy-MM-dd
-      time: req.body.createdAt.slice(11, 16), // HH:mm
-      text: `Note created: "${title}"`,
-      type: "note",
-      noteId: newNote._id,
-    });
-
-    await newNoteEvent.save();
-
     res
       .status(201)
       .json({ message: "Nota salvata con successo", note: newNote });
@@ -109,9 +94,6 @@ export const deleteNote = async (req, res) => {
     if (!deletedNote) {
       return res.status(404).json({ error: "Note not found or not yours" });
     }
-
-    // cancella anche l'evento associato
-    await Event.deleteOne({ noteId: noteId, userId: req.user.id });
 
     res.status(200).json({ message: "Deleted with success" });
   } catch (err) {
