@@ -571,7 +571,7 @@ const Calendar = () => {
               
                
               {expandedToday.some(e => e.type === "manual" && e.isPomodoro ) && (<span className="manual-icon" title="Pomodoro">🍅</span>)} 
-              {expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) &&
+              {expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1 && !e.isPomodoro) &&
                 <i className="bi bi-plus-circle manual-icon" title="Evento Semplice" /> }
               {expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays >1)) && 
                 <i className="bi bi-plus-circle-fill manual-icon-complex" title="Evento Complesso" />
@@ -611,7 +611,7 @@ const Calendar = () => {
           <div className="event-indicators">
             
             {expandedToday.some(e => e.type === "manual" && e.isPomodoro ) && <span className="manual-icon" title="Pomodoro">🍅</span>} 
-            {expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1) &&
+            {expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1 && !e.isPomodoro) &&
               <i className="bi bi-plus-circle manual-icon" title="Evento Semplice" /> }
             {expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays >1)) && 
               <i className="bi bi-plus-circle-fill manual-icon-complex" title="Evento Complesso" />
