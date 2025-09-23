@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 
 // file extra creato per risolvere il problema del database condiviso 
-
 // il middleware per passare il token JWT mette nell’header HTTP Authorization un Bearer <token>
 // dopo la verifica del token, il middleware prende i dati salvati dentro il JWT (id, nome, cognome, username) e li mette in req.user.
 // così i controller possono direttamente usare req.user senza dover decodificare di nuovo il token.

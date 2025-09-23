@@ -690,7 +690,7 @@ const CalendarModal = ({
                         <input
                           type="number"
                           className="form-control"
-                          min={1}
+                          min={30}
                           value={pomoStudy}
                           onChange={(e) => setPomoStudy(Number(e.target.value) || 30)}
                         />
@@ -700,7 +700,7 @@ const CalendarModal = ({
                         <input
                           type="number"
                           className="form-control"
-                          min={1}
+                          min={5}
                           value={pomoBreak}
                           onChange={(e) => setPomoBreak(Number(e.target.value) || 5)}
                         />
@@ -719,7 +719,9 @@ const CalendarModal = ({
                   )}
 
                   <small className="text-muted d-block mt-2">
-                    Suggerimento: l’ora di inizio dell’evento determinerà quando partire con il primo ciclo.
+                    Suggerimento: l’ora di inizio dell’evento determinerà quando partire con il primo ciclo.<br/>
+                    Tempo minimo fase studio: 30 min.<br/>
+                    Tempo minimo fase pausa: 5 min.
                   </small>
                 </div>
               )}

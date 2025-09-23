@@ -1,4 +1,4 @@
-// file che servirà per proteggere le varie parti da chi non ha fatto l'accesso in login
+// file che serve per proteggere le varie sezioni del sito da chi non ha fatto l'accesso in login
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";

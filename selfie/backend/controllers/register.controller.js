@@ -24,6 +24,14 @@ export const registerUser = async (req, res) => {
       .status(409)
       .json({ success: false, message: "Username già in uso" });
   }
+  
+  // Verifica che l'email non esista già
+  const emailExists = await Register.findOne({ email });
+  if (emailExists) {
+    return res
+      .status(409)
+      .json({ success: false, message: "Email già in uso" });
+  }
 
   // Hash della password
   const salt = await bcrypt.genSalt(10);

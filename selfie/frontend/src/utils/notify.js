@@ -1,4 +1,7 @@
 // utils/notify.js
+
+//file che gestisce alcune funzionalità delle notifiche come il permesso e l'apparizione in sè
+
 export const requestNotificationPermission = async () => {
   if (!("Notification" in window)) return false;
   if (Notification.permission === "granted") return true;
@@ -13,7 +16,7 @@ export const showNotification = ({ title, body }) => {
   if (Notification.permission === "granted") {
     new Notification(title, {
       body,
-      icon: "/icons/bell.png", // metti un'icona se vuoi, o rimuovi la proprietà
+      icon: "/icons/bell.png", 
     });
   }
 };

@@ -465,7 +465,7 @@ const PomodoroTimer = ({ studyDuration, breakDuration, cycles, eventId = null })
           {isRunning ? "Pausa" : "Start"}
         </button>
         <button className="btn btn-secondary" onClick={resetTimer} disabled={isComplete}>
-          Reset
+          Ricomincia fase
         </button>
         <button className="btn btn-warning" onClick={nextTime} disabled={isComplete}>
           Prossimo tempo
