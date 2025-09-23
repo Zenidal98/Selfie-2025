@@ -295,11 +295,17 @@ body {
 }
 
 /** limita il numero di icone per dimensione schermo **/
-.event-indicators > *:nth-child(n+5) {
+.event-indicators > *:nth-child(n+6) {
   display: none;
 }
 
-/* tablet / schermi medi*/
+@media (max-width: 1200px) {
+  .event-indicators > *:nth-child(n+5) {
+    display: none;
+  }
+}
+
+
 @media (max-width: 1000px) {
   .event-indicators > *:nth-child(n+4) {
     display: none;
