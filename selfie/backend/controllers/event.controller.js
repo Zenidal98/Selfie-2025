@@ -3,7 +3,7 @@ import ical from "ical-generator";
 import { addDays } from "date-fns";
 import { parseISO } from "date-fns";
 //import { RRule } from "rrule";
-
+import { DateTime } from "luxon";
 import { getNow, applyOffset } from "../utils/timemachine.util.js";
 
 // fetch degli eventi in una finestra di tempo (specificata in query, usata mese per mese)
@@ -196,7 +196,6 @@ export const toggleActivityCompletion = async (req, res) => {
   }
 };
 
-// esporta il calendario di un utente come formato iCalendar (.ics) per essere usato su servizi di terze parti
 export const exportIcal = async (req, res) => {
   const userId = req.user.id;
   if (!userId) {
@@ -205,54 +204,49 @@ export const exportIcal = async (req, res) => {
 
   try {
     const events = await Event.find({ userId }).lean();
+
     const calendar = ical({
       name: "Selfie - Calendar",
       timezone: "Europe/Rome",
     });
 
     events.forEach((event) => {
-      let start, end;
+      // calcola start e end in Europe/Rome
+      const start = DateTime.fromISO(
+        `${event.date || event.dueDate}T${event.time || event.dueTime || "09:00"}`,
+        { zone: "Europe/Rome" }
+      );
 
-      if (event.type === "activity") {
-        start = applyOffset(
-          new Date(`${event.dueDate}T${event.dueTime || "09:00"}:00`)
-        );
-        end = applyOffset(new Date(start.getTime() + 60 * 60 * 1000));
-      } else {
-        start = applyOffset(
-          new Date(`${event.date}T${event.time || "00:00"}:00`)
-        );
-        end = event.endTime
-          ? applyOffset(new Date(`${event.date}T${event.endTime}:00`))
-          : applyOffset(new Date(start.getTime() + 60 * 60 * 1000));
-      }
-
-      if (event.spanningDays && event.spanningDays > 1) {
-        end = addDays(end, event.spanningDays - 1);
-      }
+      const end = event.endTime
+        ? DateTime.fromISO(`${event.date || event.dueDate}T${event.endTime}`, { zone: "Europe/Rome" })
+        : start.plus({ hours: 1 });
 
       const calEvent = {
-        start,
-        end,
+        start: start,
+        end: end,
         summary: event.text,
         description: `Type: ${event.type}`,
         location: event.location || "",
+	timezone: "Europe/Rome",
       };
 
+      // gestione della ricorrenza
       if (event.recurrence?.frequency) {
         calEvent.repeating = {
           freq: event.recurrence.frequency.toUpperCase(),
           interval: event.recurrence.interval,
           until: event.recurrence.endDate
-            ? applyOffset(new Date(event.recurrence.endDate))
+            ? DateTime.fromISO(event.recurrence.endDate, { zone: "Europe/Rome" }).endOf("day").toJSDate()
             : undefined,
+          wkst: "MO", // corregge lo shift settimanale
         };
+      }
 
-        if (event.exclusions?.length) {
-          calEvent.exdate = event.exclusions.map(
-            (d) => new Date(`${d}T${event.time || "00:00"}:00`)
-          );
-        }
+      // gestione delle esclusioni
+      if (event.exclusions?.length) {
+        calEvent.exdate = event.exclusions.map((d) =>
+          DateTime.fromISO(`${d}T${event.time || event.dueTime || "09:00"}`, { zone: "Europe/Rome" }).toJSDate()
+        );
       }
 
       calendar.createEvent(calEvent);
@@ -406,3 +400,4 @@ export const updateEvent = async (req, res) => {
     res.status(500).json({ error: "Failed to update event" });
   }
 };
+

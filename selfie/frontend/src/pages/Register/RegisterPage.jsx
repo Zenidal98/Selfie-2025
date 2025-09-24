@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./RegisterPage.css";
-import axios from "axios";
+import api from '../../utils/api';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ const RegisterPage = () => {
       return;
     }
 
-    try { const response = await axios.post("http://localhost:5000/api/register",formData);
+    try { const response = await api.post("/register",formData);
       console.log("Registrazione avvenuta:", response.data);
       alert("Utente registrato con successo!");
       navigate("/login");
