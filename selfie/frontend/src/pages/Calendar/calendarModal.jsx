@@ -651,7 +651,13 @@ const CalendarModal = ({
                         className="form-control"
                         min={35}
                         value={pomoTotalMinutes}
-                        onChange={(e) => setPomoTotalMinutes(e.target.value)}
+                        onChange={(e) => {setPomoTotalMinutes(e.target.valure);}}
+                        onBlur={(e) => {
+                          const v = Number(e.target.value);
+                          if (!isNaN(v) && v < 35) {
+                            setPomoTotalMinutes(35);
+                          }
+                        }}
                         placeholder="Es. 200"
                       />
                       {!!pomoTotalMinutes &&
@@ -703,7 +709,7 @@ const CalendarModal = ({
                   )}
 
                   <small className="text-muted d-block mt-2">
-                    Suggerimento: l’ora di inizio dell’evento determinerà quando partire con il primo ciclo.<br/>
+                    Suggerimento: l’ora di inizio dell’evento determinerà quando partire con il primo ciclo. (minimo 35 minuti)<br/>
                     Tempo minimo fase studio: 30 min.<br/>
                     Tempo minimo fase pausa: 5 min.
                   </small>

@@ -83,7 +83,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
         {mode === "total" ? (
           <>
             <p className="text-muted small text-center mb-2">
-              Inserisci ore e minuti a piacimento, verrà calcolato un pomodoro composto da cicli 30 + 5 
+              Inserisci ore e minuti a piacimento, verrà calcolato un pomodoro composto da cicli 30 + 5 (minimo 35 minuti) 
             </p>
             <div className="row mb-3">
               <div className="col">
@@ -103,7 +103,7 @@ const PomodoroSettings = ({ onSettingsChange, initial }) => {
                   placeholder="Minuti"
                   value={totalMinutes}
                   onChange={(e) => setTotalMinutes(e.target.value)}
-                  min={0}
+                  min={35}
                 />
               </div>
             </div>
