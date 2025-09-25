@@ -205,6 +205,8 @@ export const exportIcal = async (req, res) => {
   try {
     const events = await Event.find({ userId }).lean();
 
+    
+
     const calendar = ical({
       name: "Selfie - Calendar",
       timezone: "Europe/Rome",
@@ -212,6 +214,8 @@ export const exportIcal = async (req, res) => {
 
     events.forEach((event) => {
       // calcola start e end in Europe/Rome
+      if (event.type = "activity" && event.isComplete) return;
+
       const start = DateTime.fromISO(
         `${event.date || event.dueDate}T${event.time || event.dueTime || "09:00"}`,
         { zone: "Europe/Rome" }

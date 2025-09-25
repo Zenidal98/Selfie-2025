@@ -568,8 +568,8 @@ const Calendar = () => {
       const types = [...new Set(expandedToday.map(e => e.type))];
       //const isAnyActivityDelayed = expandedToday.some(e => e.type === 'activity' && e.isDelayed);
       const manualPomodoro = expandedToday.some(e => e.type === "manual" && e.isPomodoro);
-      const manualSimple = !manualPomodoro && expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1);
-      const manualComplex = !manualPomodoro && expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays > 1));
+      const manualSimple = expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1 && !e.isPomodoro);
+      const manualComplex = expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays > 1) && !e.isPomodoro);
 
 
       cells.push(
@@ -615,8 +615,8 @@ const Calendar = () => {
       const dayClass = (getDay(day) === 0 || getDay(day) === 6) ? 'weekend' : 'weekday';
 
       const manualPomodoro = expandedToday.some(e => e.type === "manual" && e.isPomodoro);
-      const manualSimple = !manualPomodoro && expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1);
-      const manualComplex = !manualPomodoro && expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays > 1));
+      const manualSimple = expandedToday.some(e => e.type === "manual" && !e.recurrence && e.spanningDays === 1 && !e.isPomodoro);
+      const manualComplex = expandedToday.some(e => e.type === "manual" && (e.recurrence || e.spanningDays > 1) && !e.isPomodoro);
 
       return (
         <div key={dateStr} className={`calendar-cell week-day ${dayClass} ${dateStr === todayStr ? 'today-highlight' : ''}`} onClick={() => showModal(dateStr)}>
