@@ -651,7 +651,7 @@ const CalendarModal = ({
                         className="form-control"
                         min={35}
                         value={pomoTotalMinutes}
-                        onChange={(e) => {setPomoTotalMinutes(e.target.valure);}}
+                        onChange={(e) => {setPomoTotalMinutes(e.target.value);}}
                         onBlur={(e) => {
                           const v = Number(e.target.value);
                           if (!isNaN(v) && v < 35) {
